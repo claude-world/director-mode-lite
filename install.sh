@@ -53,7 +53,8 @@ for dir in "$SCRIPT_DIR/.claude/commands/"*/; do
         if [[ -d "$TARGET_DIR/.claude/commands/$dirname" ]]; then
             echo "  Skipped (exists): commands/$dirname/"
         else
-            cp -r "$dir" "$TARGET_DIR/.claude/commands/"
+            # Remove trailing slash to ensure cp -r creates subdirectory
+            cp -r "${dir%/}" "$TARGET_DIR/.claude/commands/"
             echo "  Installed: commands/$dirname/"
         fi
     fi
@@ -83,7 +84,8 @@ for dir in "$SCRIPT_DIR/.claude/skills/"*/; do
         if [[ -d "$TARGET_DIR/.claude/skills/$dirname" ]]; then
             echo "  Skipped (exists): skills/$dirname/"
         else
-            cp -r "$dir" "$TARGET_DIR/.claude/skills/"
+            # Remove trailing slash to ensure cp -r creates subdirectory
+            cp -r "${dir%/}" "$TARGET_DIR/.claude/skills/"
             echo "  Installed: skills/$dirname/"
         fi
     fi
