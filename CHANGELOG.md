@@ -12,10 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Light/dark mode support for banner images
 - Comparison table (Traditional vs Director Mode)
 - GitHub stars badge
+- Examples directory with calculator tutorial
+- Comprehensive FAQ documentation
+- Documentation section in README
 
 ### Changed
 - Restructured README with HTML tables for better visual hierarchy
 - Improved Quick Start section with collapsible details
+- Added navigation links to Examples and Documentation
 
 ## [1.0.0] - 2025-01-11
 
