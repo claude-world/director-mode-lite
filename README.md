@@ -21,8 +21,9 @@
 
 <p align="center">
   <a href="https://claude-world.com">Website</a> |
-  <a href="#-quick-start">Quick Start</a> |
-  <a href="#-whats-included">Features</a> |
+  <a href="#quick-start">Quick Start</a> |
+  <a href="#whats-included">Features</a> |
+  <a href="examples/">Examples</a> |
   <a href="https://discord.com/invite/rBtHzSD288">Discord</a>
 </p>
 
@@ -386,6 +387,21 @@ See [`docs/CLAUDE-TEMPLATE.md`](docs/CLAUDE-TEMPLATE.md) for a complete template
 <td>Auto-generated</td>
 </tr>
 </table>
+
+---
+
+## Examples
+
+Learn by doing with hands-on tutorials:
+
+| Example | Description | Time |
+|---------|-------------|------|
+| [Calculator](examples/01-calculator/) | Auto-Loop TDD demo | 5 min |
+| REST API | Building an API with TDD | 15 min |
+| Bug Fix | Systematic debugging | 10 min |
+| Code Review | Quality and security review | 5 min |
+
+See [examples/](examples/) for full tutorials.
 
 ---
 
