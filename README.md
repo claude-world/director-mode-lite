@@ -397,7 +397,7 @@ Learn by doing with hands-on tutorials:
 | Example | Description | Time |
 |---------|-------------|------|
 | [Calculator](examples/01-calculator/) | Auto-Loop TDD demo | 5 min |
-| REST API | Building an API with TDD | 15 min |
+| [REST API](examples/02-rest-api/) | Building an API with TDD | 15 min |
 | Bug Fix | Systematic debugging | 10 min |
 | Code Review | Quality and security review | 5 min |
 
