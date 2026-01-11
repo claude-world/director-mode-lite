@@ -12,6 +12,9 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
+# Script directory (capture before any cd)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Demo directory
 DEMO_DIR="${1:-$HOME/director-mode-demo}"
 
@@ -63,15 +66,19 @@ echo ""
 echo -e "${YELLOW}Step 2: Installing Director Mode Lite...${NC}"
 echo "────────────────────────────────────────"
 
-# Clone if not exists
-LITE_DIR="/tmp/director-mode-lite-$$"
-git clone --depth 1 https://github.com/claude-world/director-mode-lite.git "$LITE_DIR" 2>/dev/null
-
-# Run install
-"$LITE_DIR/install.sh" "$DEMO_DIR"
-
-# Cleanup
-rm -rf "$LITE_DIR"
+# Use local install.sh if available, otherwise clone from GitHub
+if [[ -f "$SCRIPT_DIR/install.sh" ]]; then
+    # Local installation
+    echo -e "  ${CYAN}Using local installation...${NC}"
+    "$SCRIPT_DIR/install.sh" "$DEMO_DIR"
+else
+    # Clone from GitHub
+    echo -e "  ${CYAN}Cloning from GitHub...${NC}"
+    LITE_DIR="/tmp/director-mode-lite-$$"
+    git clone --depth 1 https://github.com/claude-world/director-mode-lite.git "$LITE_DIR" 2>/dev/null
+    "$LITE_DIR/install.sh" "$DEMO_DIR"
+    rm -rf "$LITE_DIR"
+fi
 
 echo ""
 
