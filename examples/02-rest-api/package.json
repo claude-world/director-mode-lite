@@ -1,0 +1,20 @@
+{
+  "name": "todo-api-demo",
+  "version": "1.0.0",
+  "description": "REST API demo for Director Mode Lite workflow",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch"
+  },
+  "keywords": ["api", "rest", "demo", "director-mode", "tdd"],
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
+  }
+}
