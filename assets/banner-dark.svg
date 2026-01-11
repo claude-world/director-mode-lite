@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 150">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#818cf8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#c7d2fe;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ddd6fe;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="600" height="150" fill="#0f172a" rx="10"/>
+
+  <!-- Director Icon -->
+  <g transform="translate(40, 35)">
+    <!-- Clapperboard -->
+    <rect x="0" y="20" width="70" height="50" rx="5" fill="url(#grad1)"/>
+    <rect x="0" y="15" width="70" height="15" rx="3" fill="url(#grad2)"/>
+    <!-- Stripes -->
+    <line x1="10" y1="15" x2="20" y2="30" stroke="#0f172a" stroke-width="3"/>
+    <line x1="25" y1="15" x2="35" y2="30" stroke="#0f172a" stroke-width="3"/>
+    <line x1="40" y1="15" x2="50" y2="30" stroke="#0f172a" stroke-width="3"/>
+    <line x1="55" y1="15" x2="65" y2="30" stroke="#0f172a" stroke-width="3"/>
+    <!-- Play button -->
+    <polygon points="25,40 25,55 40,47.5" fill="#0f172a"/>
+  </g>
+
+  <!-- Text -->
+  <text x="140" y="70" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="700" fill="#f1f5f9">
+    Director Mode
+  </text>
+  <text x="140" y="105" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="400" fill="#a78bfa">
+    Lite
+  </text>
+
+  <!-- Tagline -->
+  <text x="140" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#94a3b8">
+    Use Claude Code like a Director, not a Programmer
+  </text>
+
+  <!-- Version badge -->
+  <g transform="translate(480, 20)">
+    <rect width="80" height="22" rx="11" fill="url(#grad1)"/>
+    <text x="40" y="15" font-family="system-ui, sans-serif" font-size="11" fill="#0f172a" text-anchor="middle">v2.1.4+</text>
+  </g>
+</svg>

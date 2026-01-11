@@ -1,100 +1,104 @@
-# Director Mode Lite
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/claude-world/director-mode-lite/main/assets/banner-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/claude-world/director-mode-lite/main/assets/banner-light.svg">
+    <img alt="Director Mode Lite" src="https://raw.githubusercontent.com/claude-world/director-mode-lite/main/assets/banner-light.svg" width="600">
+  </picture>
+</p>
 
-> **Use Claude Code like a Director, not a Programmer**
+<h1 align="center">Director Mode Lite</h1>
 
-A free, community-shared toolkit to transform your Claude Code experience. Based on the Director Mode methodology from [claude-world.com](https://claude-world.com).
+<p align="center">
+  <strong>Use Claude Code like a Director, not a Programmer</strong>
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-v2.1.4+-blue)](https://claude.ai/code)
-[![Discord](https://img.shields.io/discord/1234567890?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.com/invite/rBtHzSD288)
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://claude.ai/code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.4+-blueviolet?logo=anthropic" alt="Claude Code"></a>
+  <a href="https://discord.com/invite/rBtHzSD288"><img src="https://img.shields.io/discord/1234567890?color=7289da&label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="https://github.com/claude-world/director-mode-lite/stargazers"><img src="https://img.shields.io/github/stars/claude-world/director-mode-lite?style=social" alt="GitHub Stars"></a>
+</p>
+
+<p align="center">
+  <a href="https://claude-world.com">Website</a> |
+  <a href="#-quick-start">Quick Start</a> |
+  <a href="#-whats-included">Features</a> |
+  <a href="https://discord.com/invite/rBtHzSD288">Discord</a>
+</p>
 
 ---
 
-## ⭐ Key Feature: Auto-Loop
+<p align="center">
+  <i>"Don't write code. Direct Claude to write code for you."</i>
+</p>
 
-**Fully autonomous TDD development cycle** - Claude keeps iterating until all acceptance criteria are met.
+---
+
+## What is Director Mode?
+
+**Director Mode** is a paradigm shift in AI-assisted development. Instead of writing code line by line, you **direct** Claude to execute your vision autonomously.
 
 ```
-You: /auto-loop "Create a calculator module
+  Traditional Coding                    Director Mode
+  ━━━━━━━━━━━━━━━━━━                    ━━━━━━━━━━━━━━
+
+  You: Write code                       You: Define the vision
+  AI:  Follow orders                    AI:  Execute autonomously
+       ↓                                     ↓
+  Micromanagement                       Strategic oversight
+  One task at a time                    Parallel agent execution
+  Manual intervention                   Continuous automation
+```
+
+### Core Principles
+
+| Principle | Description |
+|-----------|-------------|
+| **Efficiency First** | Direct execution, minimal interruption |
+| **Parallel Processing** | Multiple agents working simultaneously |
+| **Autonomous Execution** | AI handles implementation details |
+| **Strategic Oversight** | You focus on "what" and "why" |
+
+---
+
+## Key Feature: Auto-Loop
+
+<table>
+<tr>
+<td width="50%">
+
+### Fully Autonomous TDD Cycle
+
+**Auto-Loop** keeps iterating through the Red-Green-Refactor cycle until all acceptance criteria are met.
+
+No manual intervention needed.
+
+**Stop anytime** with:
+```bash
+touch .auto-loop/stop
+```
+
+</td>
+<td width="50%">
+
+```
+/auto-loop "Create a calculator
 
 Acceptance Criteria:
 - [ ] add(a, b) function
 - [ ] subtract(a, b) function
 - [ ] Unit tests"
 
-Claude: [Iteration 1] RED → Write failing test...
-        [Iteration 2] GREEN → Implement add()...
-        [Iteration 3] REFACTOR → Clean up...
-        [Iteration 4] GREEN → Implement subtract()...
-        [Iteration 5] ✓ All criteria complete!
+[Iteration 1] RED    → Write test...
+[Iteration 2] GREEN  → Implement...
+[Iteration 3] REFACTOR → Clean...
+[Iteration 4] GREEN  → subtract()...
+[Iteration 5] All criteria complete!
 ```
 
-No manual intervention needed. Stop anytime with `touch .auto-loop/stop`.
-
----
-
-## What is Director Mode?
-
-Director Mode is a mindset shift in how you use AI coding assistants:
-
-```
-Traditional Mode          Director Mode
-━━━━━━━━━━━━━━━           ━━━━━━━━━━━━━━━
-You: Write code            You: Direct the vision
-AI: Follows orders         AI: Executes autonomously
-Micromanagement           High-level oversight
-One task at a time        Parallel agent execution
-```
-
-**Key Principles:**
-
-1. **Efficiency First** - Direct execution, minimal interruption
-2. **Parallel Processing** - Multiple agents working simultaneously
-3. **Autonomous Execution** - AI handles implementation details
-4. **Strategic Oversight** - You focus on the "what" and "why"
-
----
-
-## What's Included
-
-### Commands (13)
-
-| Command | Description |
-|---------|-------------|
-| `/workflow` | Complete 5-step development flow |
-| `/focus-problem` | Problem analysis with Explore agents |
-| `/test-first` | TDD: Red-Green-Refactor cycle |
-| `/smart-commit` | Conventional Commits automation |
-| `/plan` | Task breakdown and planning |
-| `/project-health-check` | 7-point project audit |
-| `/project-init` | Quick project setup with CLAUDE.md |
-| `/check-environment` | Verify development environment |
-| `/auto-loop` | **TDD-based autonomous loop** |
-| `/handoff-codex` | Delegate to Codex CLI (save tokens) |
-| `/handoff-gemini` | Delegate to Gemini CLI (save tokens) |
-| `/agents` | List available agents |
-| `/skills` | List available skills |
-
-### Agents (3)
-
-| Agent | Purpose |
-|-------|---------|
-| `code-reviewer` | Code quality, security, best practices |
-| `debugger` | Error analysis and fix recommendations |
-| `doc-writer` | README, API docs, code comments |
-
-### Skills (4)
-
-| Skill | Purpose |
-|-------|---------|
-| `code-reviewer` | Code quality checklist, security review |
-| `test-runner` | Test automation, TDD support |
-| `debugger` | 5-step debugging methodology |
-| `doc-writer` | Documentation templates |
-
-### CLAUDE.md Template
-
-A starter template for your project's AI behavior configuration.
+</td>
+</tr>
+</table>
 
 ---
 
@@ -107,16 +111,10 @@ A starter template for your project's AI behavior configuration.
 /plugin install https://github.com/claude-world/director-mode-lite
 ```
 
-### Option B: Script Install
+### Option B: One-Line Install
 
 ```bash
-# One-liner install to current project
 curl -fsSL https://raw.githubusercontent.com/claude-world/director-mode-lite/main/install.sh | bash -s .
-
-# Or clone and install
-git clone https://github.com/claude-world/director-mode-lite.git /tmp/dml
-/tmp/dml/install.sh /path/to/your-project
-rm -rf /tmp/dml
 ```
 
 ### Option C: Try Demo First
@@ -127,121 +125,195 @@ cd director-mode-lite
 ./demo.sh ~/director-mode-demo
 ```
 
-**Install script features:**
+<details>
+<summary><strong>Install Features</strong></summary>
+
 - Automatic backup of existing `.claude/` directory
 - Merge hooks.json (won't overwrite existing hooks)
 - Skip already-installed files
+- Uninstall script included
 
-### 2. Start Using Commands
+</details>
 
-```bash
-# In your project with Claude Code
-/workflow           # Start the 5-step development flow
-/focus-problem      # Analyze a specific problem
-/auto-loop          # Start TDD autonomous loop
-```
+---
 
-### 3. Uninstall (if needed)
+## What's Included
 
-```bash
-./director-mode-lite/uninstall.sh /path/to/your-project
-```
+<table>
+<tr>
+<td valign="top" width="33%">
 
-### 4. Customize CLAUDE.md
+### Commands (13)
 
-Edit `CLAUDE.md` in your project root to configure Claude's behavior.
+| Command | Purpose |
+|---------|---------|
+| `/workflow` | 5-step dev flow |
+| `/focus-problem` | Problem analysis |
+| `/test-first` | TDD cycle |
+| `/smart-commit` | Auto commits |
+| `/plan` | Task breakdown |
+| `/auto-loop` | **TDD loop** |
+| `/project-init` | Quick setup |
+| `/check-environment` | Env check |
+| `/project-health-check` | 7-point audit |
+| `/handoff-codex` | Delegate |
+| `/handoff-gemini` | Delegate |
+| `/agents` | List agents |
+| `/skills` | List skills |
+
+</td>
+<td valign="top" width="33%">
+
+### Agents (3)
+
+| Agent | Purpose |
+|-------|---------|
+| `code-reviewer` | Quality, security |
+| `debugger` | Error analysis |
+| `doc-writer` | Documentation |
+
+**Auto-triggered** when:
+- Code modified
+- Errors appear
+- Features added
+
+</td>
+<td valign="top" width="34%">
+
+### Skills (4)
+
+| Skill | Purpose |
+|-------|---------|
+| `code-reviewer` | Code checklist |
+| `test-runner` | TDD support |
+| `debugger` | 5-step method |
+| `doc-writer` | Doc templates |
+
+**Plus:**
+- CLAUDE.md template
+- Starter hooks
+- Best practices
+
+</td>
+</tr>
+</table>
 
 ---
 
 ## The 5-Step Workflow
 
-Director Mode Lite centers on a proven development workflow:
-
 ```
-Step 1: Focus Problem     (/focus-problem)
-   │    Understand before coding
-   ▼
-Step 2: Prevent Overdev   (YAGNI principle)
-   │    Only build what's needed
-   ▼
-Step 3: Test First        (/test-first)
-   │    Red → Green → Refactor
-   ▼
-Step 4: Document          (Auto-documented)
-   │    Code is self-explanatory
-   ▼
-Step 5: Smart Commit      (/smart-commit)
-        Conventional Commits
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│    Step 1                Step 2                Step 3           │
+│  ┌─────────┐           ┌─────────┐           ┌─────────┐        │
+│  │ FOCUS   │    ──►    │ PREVENT │    ──►    │  TEST   │        │
+│  │ PROBLEM │           │ OVERDEV │           │  FIRST  │        │
+│  └─────────┘           └─────────┘           └─────────┘        │
+│       │                     │                     │             │
+│  Understand             Only build            Red-Green-        │
+│  before coding          what's needed         Refactor          │
+│                                                                 │
+│                    Step 4                Step 5                 │
+│                  ┌─────────┐           ┌─────────┐              │
+│           ──►    │DOCUMENT │    ──►    │ COMMIT  │              │
+│                  └─────────┘           └─────────┘              │
+│                       │                     │                   │
+│                  Auto-generated         Conventional            │
+│                  documentation          Commits                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Parallel Agent Execution
 
-One of Director Mode's key advantages is parallel processing:
+One of Director Mode's key advantages is **parallel processing**:
 
-```markdown
-Traditional (Sequential):
-Agent 1 → Agent 2 → Agent 3 → Agent 4
+<table>
+<tr>
+<td width="50%">
+
+### Traditional (Sequential)
+
+```
+Agent 1 ─────►
+              Agent 2 ─────►
+                            Agent 3 ─────►
+                                          Agent 4 ─────►
+
 Total time: 4 × single_agent_time
+```
 
-Director Mode (Parallel):
-Agent 1 ─┐
-Agent 2 ─┼─→ Results aggregated
-Agent 3 ─┤
-Agent 4 ─┘
+</td>
+<td width="50%">
+
+### Director Mode (Parallel)
+
+```
+Agent 1 ─────┐
+Agent 2 ─────┼────► Results
+Agent 3 ─────┤
+Agent 4 ─────┘
+
 Total time: max(single_agent_time)
 ```
 
-### Example: Problem Analysis
+</td>
+</tr>
+</table>
 
-Instead of manually searching:
+### Example: Problem Analysis
 
 ```bash
 # Old way: Sequential manual searches
 grep -r "authentication" src/
 grep -r "login" src/
 cat src/auth/index.ts
-# ... (slow, tedious)
+# ... slow, tedious
 
-# Director Mode: Parallel Explore agent
+# Director Mode: One command, 5 parallel agents
 /focus-problem "understand the authentication flow"
-# Claude automatically launches 5 parallel agents
 ```
 
 ---
 
 ## Agents
 
-### code-reviewer
+<table>
+<tr>
+<td width="33%">
 
-Automatically reviews code for:
-- Code quality and readability
+### `code-reviewer`
+
+Automatically reviews:
+- Code quality
 - Security vulnerabilities
 - Error handling
-- Performance issues
+- Performance
 - Test coverage
 
-**Triggers automatically when:**
-- Code is modified
-- Before commits
-- User mentions "review"
+**Triggers:** Code changes, commits, "review"
 
-### debugger
+</td>
+<td width="33%">
 
-Systematic debugging process:
-1. Capture error information
-2. Isolate the problem
+### `debugger`
+
+5-step debugging:
+1. Capture error info
+2. Isolate problem
 3. Form hypotheses
-4. Investigate systematically
-5. Fix and verify
+4. Investigate
+5. Fix & verify
 
-**Triggers automatically when:**
-- Errors appear
-- Tests fail
-- User mentions "bug", "error", "debug"
+**Triggers:** Errors, test failures, "bug"
 
-### doc-writer
+</td>
+<td width="34%">
+
+### `doc-writer`
 
 Creates and maintains:
 - README files
@@ -249,45 +321,98 @@ Creates and maintains:
 - Code comments
 - Architecture docs
 
-**Triggers automatically when:**
-- New features added
-- Code structure changes
-- User mentions "document"
+**Triggers:** New features, structure changes
+
+</td>
+</tr>
+</table>
 
 ---
 
 ## CLAUDE.md Configuration
 
-The `CLAUDE.md` file in your project root configures Claude's behavior.
-
-### Key Sections
+The `CLAUDE.md` file configures Claude's behavior in your project:
 
 ```markdown
-# Project Information
-- Project name and purpose
-- Tech stack
-- Directory structure
+# Project: My App
+Tech: TypeScript, React, PostgreSQL
 
-# Development Policies
-- Code style preferences
-- Testing requirements
-- Documentation standards
+# Policies
+- Always write tests first
+- Use conventional commits
+- Document public APIs
 
-# Workflow Preferences
-- Parallel vs sequential execution
-- Confirmation requirements
-- Auto-commit policies
+# Workflow
+- Parallel agents: enabled
+- Auto-commit: disabled
+- Review before merge: required
 ```
 
-See `docs/CLAUDE-TEMPLATE.md` for a complete template.
+See [`docs/CLAUDE-TEMPLATE.md`](docs/CLAUDE-TEMPLATE.md) for a complete template.
+
+---
+
+## Comparison
+
+<table>
+<tr>
+<th></th>
+<th>Traditional AI Coding</th>
+<th>Director Mode Lite</th>
+</tr>
+<tr>
+<td><strong>Workflow</strong></td>
+<td>Ask → Wait → Copy → Test → Repeat</td>
+<td>Direct → Auto-execute → Review</td>
+</tr>
+<tr>
+<td><strong>Parallelism</strong></td>
+<td>One task at a time</td>
+<td>Multiple agents simultaneously</td>
+</tr>
+<tr>
+<td><strong>Automation</strong></td>
+<td>Manual intervention needed</td>
+<td>Auto-Loop runs until done</td>
+</tr>
+<tr>
+<td><strong>Testing</strong></td>
+<td>Often forgotten</td>
+<td>TDD built into workflow</td>
+</tr>
+<tr>
+<td><strong>Documentation</strong></td>
+<td>Afterthought</td>
+<td>Auto-generated</td>
+</tr>
+</table>
 
 ---
 
 ## Community
 
-- 🌐 **Website**: [claude-world.com](https://claude-world.com)
-- 💬 **Discord**: [Claude World Community](https://discord.com/invite/rBtHzSD288)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/claude-world/director-mode-lite/issues)
+<table>
+<tr>
+<td align="center" width="33%">
+<a href="https://claude-world.com">
+<strong>Website</strong><br>
+claude-world.com
+</a>
+</td>
+<td align="center" width="33%">
+<a href="https://discord.com/invite/rBtHzSD288">
+<strong>Discord</strong><br>
+Join the community
+</a>
+</td>
+<td align="center" width="34%">
+<a href="https://github.com/claude-world/director-mode-lite/issues">
+<strong>GitHub Issues</strong><br>
+Report bugs, request features
+</a>
+</td>
+</tr>
+</table>
 
 ---
 
@@ -304,29 +429,47 @@ See `docs/CLAUDE-TEMPLATE.md` for a complete template.
 
 MIT License - Free for personal and commercial use.
 
+See [LICENSE](LICENSE) for details.
+
 ---
 
-## About
+## About Director Mode Lite
 
-Director Mode Lite is a free, open-source toolkit from the [Claude World](https://claude-world.com) community. It represents the core concepts from the Director Mode methodology, shared freely to help developers work more effectively with Claude Code.
+This is a **free, open-source toolkit** from the [Claude World](https://claude-world.com) community.
 
-**What's included (free):**
-- 13 Commands, 3 Agents, 4 Skills
-- Auto-Loop with TDD cycle
+<table>
+<tr>
+<td width="50%">
+
+**What's included (FREE):**
+- 13 Commands
+- 3 Agents
+- 4 Skills
+- Auto-Loop with TDD
 - Complete documentation
 
-**Want more?** Visit [claude-world.com](https://claude-world.com) for advanced methodologies, enterprise support, and the full Director Mode experience.
+</td>
+<td width="50%">
+
+**Want more?**
+
+Visit [claude-world.com](https://claude-world.com) for:
+- Advanced methodologies
+- Enterprise support
+- Full Director Mode experience
+
+</td>
+</tr>
+</table>
 
 ---
 
 <p align="center">
-  <i>"Don't write code. Direct Claude to write code for you."</i>
+  <a href="https://claude-world.com">Website</a> |
+  <a href="https://discord.com/invite/rBtHzSD288">Discord</a> |
+  <a href="https://x.com/lukashanren1">Twitter</a>
 </p>
 
----
-
 <p align="center">
-  <a href="https://claude-world.com">Website</a> •
-  <a href="https://discord.com/invite/rBtHzSD288">Discord</a> •
-  <a href="https://x.com/lukashanren1">Twitter</a>
+  <sub>Made with direction by Claude World Taiwan</sub>
 </p>
