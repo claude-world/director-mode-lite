@@ -294,7 +294,7 @@ See `docs/CLAUDE-TEMPLATE.md` for a complete template.
 
 ## Author
 
-**Lukas Wang** ([@lukashanren1](https://x.com/lukashanren1))
+**Lucas Wang** ([@lukashanren1](https://x.com/lukashanren1))
 
 - GitHub: [@gn00295120](https://github.com/gn00295120)
 - Website: [claude-world.com](https://claude-world.com)
