@@ -1,0 +1,20 @@
+{
+  "name": "director-mode-lite",
+  "description": "Use Claude Code like a Director, not a Programmer. Complete toolkit with 13 commands, 3 agents, 4 skills, and TDD-based Auto-Loop.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Lucas Wang",
+    "url": "https://claude-world.com"
+  },
+  "repository": "https://github.com/claude-world/director-mode-lite",
+  "keywords": [
+    "director-mode",
+    "workflow",
+    "tdd",
+    "auto-loop",
+    "methodology",
+    "agents",
+    "skills"
+  ],
+  "license": "MIT"
+}

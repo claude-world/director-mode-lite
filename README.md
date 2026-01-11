@@ -104,8 +104,7 @@ A starter template for your project's AI behavior configuration.
 
 ```bash
 # In Claude Code, run:
-/plugin marketplace add claude-world/director-mode-marketplace
-/plugin install director-mode-lite
+/plugin install https://github.com/claude-world/director-mode-lite
 ```
 
 ### Option B: Script Install

@@ -34,7 +34,7 @@ echo "Installing commands..."
 mkdir -p "$TARGET_DIR/.claude/commands"
 
 # Copy top-level command files
-for file in "$SCRIPT_DIR/.claude/commands/"*.md; do
+for file in "$SCRIPT_DIR/commands/"*.md; do
     if [[ -f "$file" ]]; then
         filename=$(basename "$file")
         if [[ -f "$TARGET_DIR/.claude/commands/$filename" ]]; then
@@ -47,7 +47,7 @@ for file in "$SCRIPT_DIR/.claude/commands/"*.md; do
 done
 
 # Copy command subdirectories
-for dir in "$SCRIPT_DIR/.claude/commands/"*/; do
+for dir in "$SCRIPT_DIR/commands/"*/; do
     if [[ -d "$dir" ]]; then
         dirname=$(basename "$dir")
         if [[ -d "$TARGET_DIR/.claude/commands/$dirname" ]]; then
@@ -63,7 +63,7 @@ done
 # Copy agents (skip existing files)
 echo "Installing agents..."
 mkdir -p "$TARGET_DIR/.claude/agents"
-for file in "$SCRIPT_DIR/.claude/agents/"*.md; do
+for file in "$SCRIPT_DIR/agents/"*.md; do
     if [[ -f "$file" ]]; then
         filename=$(basename "$file")
         if [[ -f "$TARGET_DIR/.claude/agents/$filename" ]]; then
@@ -78,7 +78,7 @@ done
 # Copy skills (preserve directory structure: skills/<name>/SKILL.md)
 echo "Installing skills..."
 mkdir -p "$TARGET_DIR/.claude/skills"
-for dir in "$SCRIPT_DIR/.claude/skills/"*/; do
+for dir in "$SCRIPT_DIR/skills/"*/; do
     if [[ -d "$dir" ]]; then
         dirname=$(basename "$dir")
         if [[ -d "$TARGET_DIR/.claude/skills/$dirname" ]]; then
@@ -94,7 +94,7 @@ done
 # Install hooks (merge instead of overwrite)
 echo "Installing Auto-Loop hooks..."
 mkdir -p "$TARGET_DIR/.claude/hooks"
-cp "$SCRIPT_DIR/.claude/hooks/auto-loop-stop.sh" "$TARGET_DIR/.claude/hooks/"
+cp "$SCRIPT_DIR/hooks/auto-loop-stop.sh" "$TARGET_DIR/.claude/hooks/"
 chmod +x "$TARGET_DIR/.claude/hooks/auto-loop-stop.sh"
 
 if [[ -f "$TARGET_DIR/.claude/hooks.json" ]]; then
@@ -150,7 +150,7 @@ with open(hooks_file, 'w') as f:
     fi
 else
     # No existing hooks.json, copy directly
-    cp "$SCRIPT_DIR/.claude/hooks/hooks.json" "$TARGET_DIR/.claude/"
+    cp "$SCRIPT_DIR/hooks/hooks.json" "$TARGET_DIR/.claude/"
     echo "  Installed: hooks.json"
 fi
 
