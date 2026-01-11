@@ -432,6 +432,16 @@ Report bugs, request features
 
 ---
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [FAQ](docs/FAQ.md) | Common questions answered |
+| [Concepts](docs/DIRECTOR-MODE-CONCEPTS.md) | Deep dive into methodology |
+| [CLAUDE.md Template](docs/CLAUDE-TEMPLATE.md) | Project configuration guide |
+
+---
+
 ## Author
 
 **Lucas Wang** ([@lukashanren1](https://x.com/lukashanren1))
