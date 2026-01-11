@@ -4,6 +4,33 @@
 
 A free, community-shared toolkit to transform your Claude Code experience. Based on the Director Mode methodology from [claude-world.com](https://claude-world.com).
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-v2.1.4+-blue)](https://claude.ai/code)
+[![Discord](https://img.shields.io/discord/1234567890?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.com/invite/rBtHzSD288)
+
+---
+
+## ⭐ Key Feature: Auto-Loop
+
+**Fully autonomous TDD development cycle** - Claude keeps iterating until all acceptance criteria are met.
+
+```
+You: /auto-loop "Create a calculator module
+
+Acceptance Criteria:
+- [ ] add(a, b) function
+- [ ] subtract(a, b) function
+- [ ] Unit tests"
+
+Claude: [Iteration 1] RED → Write failing test...
+        [Iteration 2] GREEN → Implement add()...
+        [Iteration 3] REFACTOR → Clean up...
+        [Iteration 4] GREEN → Implement subtract()...
+        [Iteration 5] ✓ All criteria complete!
+```
+
+No manual intervention needed. Stop anytime with `touch .auto-loop/stop`.
+
 ---
 
 ## What is Director Mode?
@@ -73,18 +100,32 @@ A starter template for your project's AI behavior configuration.
 
 ## Quick Start
 
-### 1. Install to Your Project
+### Option A: Plugin Install (Recommended)
 
 ```bash
-# Clone this repository
+# In Claude Code, run:
+/plugin marketplace add claude-world/director-mode-marketplace
+/plugin install director-mode-lite
+```
+
+### Option B: Script Install
+
+```bash
+# One-liner install to current project
+curl -fsSL https://raw.githubusercontent.com/claude-world/director-mode-lite/main/install.sh | bash -s .
+
+# Or clone and install
+git clone https://github.com/claude-world/director-mode-lite.git /tmp/dml
+/tmp/dml/install.sh /path/to/your-project
+rm -rf /tmp/dml
+```
+
+### Option C: Try Demo First
+
+```bash
 git clone https://github.com/claude-world/director-mode-lite.git
-
-# Option A: Use install script (recommended - backup + merge)
-./director-mode-lite/install.sh /path/to/your-project
-
-# Option B: Manual copy
-cp -r director-mode-lite/.claude your-project/
-cp director-mode-lite/docs/CLAUDE-TEMPLATE.md your-project/CLAUDE.md
+cd director-mode-lite
+./demo.sh ~/director-mode-demo
 ```
 
 **Install script features:**
@@ -245,9 +286,18 @@ See `docs/CLAUDE-TEMPLATE.md` for a complete template.
 
 ## Community
 
-- **Website**: [claude-world.com](https://claude-world.com)
-- **Discord**: [Claude World Taiwan](https://discord.gg/claude-world)
-- **GitHub Issues**: Report bugs and request features
+- 🌐 **Website**: [claude-world.com](https://claude-world.com)
+- 💬 **Discord**: [Claude World Community](https://discord.com/invite/rBtHzSD288)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/claude-world/director-mode-lite/issues)
+
+---
+
+## Author
+
+**Lukas Wang** ([@lukashanren1](https://x.com/lukashanren1))
+
+- GitHub: [@gn00295120](https://github.com/gn00295120)
+- Website: [claude-world.com](https://claude-world.com)
 
 ---
 
@@ -259,10 +309,25 @@ MIT License - Free for personal and commercial use.
 
 ## About
 
-Director Mode Lite is maintained by the Claude World community. It represents the core concepts from Director Mode methodology, shared freely to help developers work more effectively with Claude Code.
+Director Mode Lite is a free, open-source toolkit from the [Claude World](https://claude-world.com) community. It represents the core concepts from the Director Mode methodology, shared freely to help developers work more effectively with Claude Code.
 
-For advanced features, enterprise support, or custom implementations, visit [claude-world.com](https://claude-world.com).
+**What's included (free):**
+- 13 Commands, 3 Agents, 4 Skills
+- Auto-Loop with TDD cycle
+- Complete documentation
+
+**Want more?** Visit [claude-world.com](https://claude-world.com) for advanced methodologies, enterprise support, and the full Director Mode experience.
 
 ---
 
-*"Don't write code. Direct Claude to write code for you."*
+<p align="center">
+  <i>"Don't write code. Direct Claude to write code for you."</i>
+</p>
+
+---
+
+<p align="center">
+  <a href="https://claude-world.com">Website</a> •
+  <a href="https://discord.com/invite/rBtHzSD288">Discord</a> •
+  <a href="https://x.com/lukashanren1">Twitter</a>
+</p>
