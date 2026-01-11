@@ -103,7 +103,7 @@ echo "    ├── debugger"
 echo "    └── doc-writer"
 
 # Check skills
-SKILL_COUNT=$(find .claude/skills -name "SKILL.md" 2>/dev/null | wc -l | tr -d ' ')
+SKILL_COUNT=$(ls -d .claude/skills/*/ 2>/dev/null | wc -l | tr -d ' ')
 echo -e "  ${GREEN}✓${NC} Skills:   ${CYAN}$SKILL_COUNT${NC} installed"
 echo "    ├── code-reviewer"
 echo "    ├── debugger"
@@ -121,28 +121,28 @@ echo ""
 echo -e "${YELLOW}Step 4: Available Commands${NC}"
 echo "───────────────────────────"
 echo ""
-echo "  ${CYAN}Workflow Commands:${NC}"
+echo -e "  ${CYAN}Workflow Commands:${NC}"
 echo "    /workflow           Complete 5-step development flow"
 echo "    /focus-problem      Problem analysis with Explore agents"
 echo "    /test-first         TDD: Red-Green-Refactor cycle"
 echo "    /smart-commit       Conventional Commits automation"
 echo "    /plan               Task breakdown and planning"
 echo ""
-echo "  ${CYAN}Automation:${NC}"
+echo -e "  ${CYAN}Automation:${NC}"
 echo "    /auto-loop          TDD-based autonomous loop (★ Key Feature)"
 echo ""
-echo "  ${CYAN}Diagnostics:${NC}"
+echo -e "  ${CYAN}Diagnostics:${NC}"
 echo "    /project-health-check   7-point project audit"
 echo ""
-echo "  ${CYAN}Setup:${NC}"
+echo -e "  ${CYAN}Setup:${NC}"
 echo "    /project-init       Quick project setup with CLAUDE.md"
 echo "    /check-environment  Verify development environment"
 echo ""
-echo "  ${CYAN}Multi-CLI:${NC}"
+echo -e "  ${CYAN}Multi-CLI:${NC}"
 echo "    /handoff-codex      Delegate to Codex CLI"
 echo "    /handoff-gemini     Delegate to Gemini CLI"
 echo ""
-echo "  ${CYAN}Info:${NC}"
+echo -e "  ${CYAN}Info:${NC}"
 echo "    /agents             List available agents"
 echo "    /skills             List available skills"
 echo ""
@@ -167,8 +167,7 @@ echo ''
 echo '       Acceptance Criteria:'
 echo '       - [ ] add(a, b) function'
 echo '       - [ ] subtract(a, b) function'
-echo '       - [ ] Unit tests'
-echo '       "'
+echo '       - [ ] Unit tests"'
 echo ""
 echo -e "    ${CYAN}3. Check project health:${NC}"
 echo "       /project-health-check"
