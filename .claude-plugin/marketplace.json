@@ -1,33 +1,23 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "director-mode-lite",
+  "version": "1.0.0",
+  "description": "Use Claude Code like a Director, not a Programmer",
   "owner": {
     "name": "Claude World",
     "email": "support@claude-world.com"
   },
-  "metadata": {
-    "description": "Use Claude Code like a Director, not a Programmer",
-    "version": "1.0.0",
-    "repository": "https://github.com/claude-world/director-mode-lite"
-  },
   "plugins": [
     {
       "name": "director-mode-lite",
-      "source": ".",
-      "description": "Complete toolkit with 13 commands, 3 agents, 4 skills, and TDD-based Auto-Loop",
+      "description": "Complete toolkit with 13 commands, 3 agents, 4 skills, and TDD-based Auto-Loop for autonomous development",
       "version": "1.0.0",
       "author": {
         "name": "Lucas Wang",
-        "url": "https://claude-world.com"
+        "email": "support@claude-world.com"
       },
-      "keywords": [
-        "director-mode",
-        "workflow",
-        "tdd",
-        "auto-loop",
-        "agents",
-        "skills"
-      ],
-      "license": "MIT"
+      "source": "./",
+      "category": "productivity"
     }
   ]
 }
