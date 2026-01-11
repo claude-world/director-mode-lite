@@ -1,11 +1,3 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/claude-world/director-mode-lite/main/assets/banner-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/claude-world/director-mode-lite/main/assets/banner-light.svg">
-    <img alt="Director Mode Lite" src="https://raw.githubusercontent.com/claude-world/director-mode-lite/main/assets/banner-light.svg" width="600">
-  </picture>
-</p>
-
 <h1 align="center">Director Mode Lite</h1>
 
 <p align="center">
