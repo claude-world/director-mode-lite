@@ -1,0 +1,11 @@
+{
+  "name": "calculator-demo",
+  "version": "1.0.0",
+  "description": "Calculator demo for Director Mode Lite Auto-Loop",
+  "main": "calculator.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": ["calculator", "demo", "director-mode"],
+  "license": "MIT"
+}
