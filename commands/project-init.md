@@ -1,123 +1,186 @@
 ---
-description: Quick project setup with CLAUDE.md
+description: Expert-guided project setup with 6 phases
 ---
 
 # Project Initialization
 
-> **Director Mode Lite** - Quick project setup for Director Mode workflow
+Execute a comprehensive project setup. Each phase uses specialized knowledge from Expert Agents.
 
 ---
 
-## Overview
+## Phase 1: Project Analysis
 
-This command helps you set up a new project with Director Mode Lite basics.
+Analyze the project:
 
-## Setup Steps
+1. **Check existing setup**: `ls -la .claude/ 2>/dev/null`
+2. **Detect language**:
+   - `package.json` → Node.js/TypeScript
+   - `requirements.txt` / `pyproject.toml` → Python
+   - `Cargo.toml` → Rust
+   - `go.mod` → Go
+3. **Detect framework**: Check dependencies in config files
+4. **Map structure**: `find . -type f -name "*.ts" -o -name "*.py" | head -20`
 
-### Step 1: Detect Project Type
+**Output**: Brief analysis report before proceeding.
 
-First, analyze the project to detect:
-- Programming language (check file extensions, package files)
-- Framework (check config files, dependencies)
-- Package manager (npm, pnpm, yarn, pip, cargo, etc.)
+---
 
-### Step 2: Create CLAUDE.md
+## Phase 2: CLAUDE.md Setup
 
-Create a `CLAUDE.md` file in the project root with this template:
+**Read the expert knowledge first**:
+```
+Read .claude/agents/claude-md-expert.md to understand best practices
+```
+
+**Then create CLAUDE.md** following the expert's template:
 
 ```markdown
 # [Project Name] - Project Instructions
 
-> **Purpose**: [Brief description of the project]
-> **Tech Stack**: [Detected tech stack]
+## Overview
+[Detected purpose from package.json description or README]
 
----
+## Tech Stack
+- Language: [detected]
+- Framework: [detected]
+- Package Manager: [detected]
 
-## Project Structure
-
-\`\`\`
-[Auto-generated project structure]
-\`\`\`
-
----
-
-## Development Commands
-
+## Commands
 \`\`\`bash
-# Install dependencies
-[detected package manager install command]
-
-# Run development server
 [detected dev command]
-
-# Run tests
 [detected test command]
-
-# Build
 [detected build command]
 \`\`\`
 
----
-
-## Coding Standards
-
-- Follow existing code style
-- Write tests for new features
-- Keep functions focused and small
-- Use meaningful variable names
-
----
+## Conventions
+- [Infer from existing code patterns]
+- [Check for .eslintrc, .prettierrc, etc.]
 
 ## Key Files
-
 | File | Purpose |
 |------|---------|
-| [main entry] | Application entry point |
-| [config file] | Configuration |
-| [test dir] | Test files |
+| [entry point] | Main entry |
+| [config] | Configuration |
+```
 
 ---
 
-## Notes
+## Phase 3: MCP Configuration
 
-[Add project-specific notes here]
+**Read the expert knowledge first**:
+```
+Read .claude/agents/mcp-expert.md to understand MCP setup
 ```
 
-### Step 3: Verify Setup
+**Essential MCP setup**:
 
-After creating CLAUDE.md:
-1. Read the file to confirm it was created
-2. Suggest any additional customizations
-3. Remind about Director Mode workflow commands
+1. **Memory MCP** (always add):
+```bash
+claude mcp add --scope project memory -e MEMORY_FILE_PATH=./.claude/memory.json -- npx -y @modelcontextprotocol/server-memory
+```
 
-## Output
+2. **GitHub MCP** (if .git exists and user has token):
+```bash
+# Ask user: "Do you want to add GitHub MCP? (requires GITHUB_PERSONAL_ACCESS_TOKEN)"
+```
+
+3. **Database MCP** (if DATABASE_URL in .env):
+```bash
+# Detect database type and suggest appropriate MCP
+```
+
+**Verify settings.json** has `"enableAllProjectMcpServers": true`
+
+---
+
+## Phase 4: Hooks Setup
+
+**Read the expert knowledge first**:
+```
+Read .claude/agents/hooks-expert.md to understand hook patterns
+```
+
+**Create essential hooks**:
+
+1. **Auto-Loop stop hook** - Create `.claude/hooks/auto-loop-stop.sh`:
+```bash
+#!/bin/bash
+CHECKPOINT=".auto-loop/checkpoint.json"
+if [[ ! -f "$CHECKPOINT" ]]; then
+  echo '{"decision": "allow"}'
+  exit 0
+fi
+if [[ -f ".auto-loop/stop" ]]; then
+  echo '{"decision": "allow"}'
+  exit 0
+fi
+# Continue logic...
+```
+
+2. **Update settings.json** with Stop hook configuration
+
+---
+
+## Phase 5: Review Expert Agents
+
+**List available experts** for user reference:
 
 ```markdown
-## Project Initialized
+### Expert Agents Installed
+
+These agents can help you anytime:
+
+| Ask about... | Expert Agent |
+|--------------|--------------|
+| CLAUDE.md design | Read `.claude/agents/claude-md-expert.md` |
+| MCP configuration | Read `.claude/agents/mcp-expert.md` |
+| Custom agents | Read `.claude/agents/agents-expert.md` |
+| Custom skills | Read `.claude/agents/skills-expert.md` |
+| Automation hooks | Read `.claude/agents/hooks-expert.md` |
+
+**Usage**: "Help me with MCP setup" → I'll read mcp-expert.md and assist
+```
+
+---
+
+## Phase 6: Summary
+
+```markdown
+## ✅ Project Initialized
 
 **Project**: [name]
-**Type**: [language/framework]
-**Package Manager**: [detected]
+**Tech Stack**: [stack]
 
-### Created Files
-- `CLAUDE.md` - Project instructions
+### Completed
+- [x] CLAUDE.md created
+- [x] Memory MCP configured
+- [x] Auto-Loop hook set up
+- [x] Expert Agents available
+
+### Files Created
+- `CLAUDE.md`
+- `.claude/settings.json`
+- `.claude/hooks/auto-loop-stop.sh`
+
+### Expert Agents
+Ask me to read any expert for specialized help:
+- "Read claude-md-expert and help me improve CLAUDE.md"
+- "Read mcp-expert and add Notion MCP"
+- "Read agents-expert and create a security-reviewer"
 
 ### Next Steps
 1. Review and customize `CLAUDE.md`
-2. Run `/workflow` to start development
-3. Use `/focus-problem` for bug fixes
-4. Use `/test-first` for TDD workflow
-
-### Available Commands
-- `/workflow` - 5-step development workflow
-- `/focus-problem` - Problem analysis
-- `/test-first` - TDD Red-Green-Refactor
-- `/smart-commit` - Conventional commits
-- `/plan` - Task breakdown
-- `/project-health-check` - 7-point audit
+2. Run `/workflow` to start developing
+3. Use `/auto-loop` for autonomous TDD
 ```
 
-## Notes
+---
 
-- This is a basic setup. Customize `CLAUDE.md` for your specific needs.
-- For questions or suggestions, join [Claude World](https://claude-world.com).
+## Quick Mode
+
+If user wants minimal setup, only do:
+1. Phase 1: Analysis
+2. Phase 2: Basic CLAUDE.md
+3. Phase 4: Auto-Loop hook
+
+Skip MCP and expert review.

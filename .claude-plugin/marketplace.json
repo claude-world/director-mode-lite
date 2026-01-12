@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "director-mode-lite",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Use Claude Code like a Director, not a Programmer",
   "owner": {
     "name": "Claude World",
@@ -10,8 +10,8 @@
   "plugins": [
     {
       "name": "director-mode-lite",
-      "description": "Complete toolkit with 13 commands, 3 agents, 4 skills, and TDD-based Auto-Loop for autonomous development",
-      "version": "1.0.0",
+      "description": "Complete toolkit with 22 commands, 8 agents, 4 skills, and TDD-based Auto-Loop for autonomous development",
+      "version": "1.1.0",
       "author": {
         "name": "Lucas Wang",
         "email": "support@claude-world.com"

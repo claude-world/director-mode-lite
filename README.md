@@ -140,8 +140,9 @@ cd director-mode-lite
 <tr>
 <td valign="top" width="33%">
 
-### Commands (13)
+### Commands (22)
 
+**Workflow:**
 | Command | Purpose |
 |---------|---------|
 | `/workflow` | 5-step dev flow |
@@ -150,9 +151,34 @@ cd director-mode-lite
 | `/smart-commit` | Auto commits |
 | `/plan` | Task breakdown |
 | `/auto-loop` | **TDD loop** |
+
+**Setup & Health:**
+| Command | Purpose |
+|---------|---------|
 | `/project-init` | Quick setup |
 | `/check-environment` | Env check |
 | `/project-health-check` | 7-point audit |
+
+**Validators (NEW):**
+| Command | Purpose |
+|---------|---------|
+| `/claude-md-check` | Validate CLAUDE.md |
+| `/mcp-check` | Validate MCP config |
+| `/agent-check` | Validate agent files |
+| `/skill-check` | Validate skill files |
+| `/hooks-check` | Validate hooks |
+
+**Generators (NEW):**
+| Command | Purpose |
+|---------|---------|
+| `/claude-md-template` | Generate CLAUDE.md |
+| `/agent-template` | Generate agents |
+| `/skill-template` | Generate skills |
+| `/hook-template` | Generate hooks |
+
+**Utilities:**
+| Command | Purpose |
+|---------|---------|
 | `/handoff-codex` | Delegate |
 | `/handoff-gemini` | Delegate |
 | `/agents` | List agents |
@@ -161,18 +187,23 @@ cd director-mode-lite
 </td>
 <td valign="top" width="33%">
 
-### Agents (3)
+### Agents (8)
 
+**Core Agents:**
 | Agent | Purpose |
 |-------|---------|
 | `code-reviewer` | Quality, security |
 | `debugger` | Error analysis |
 | `doc-writer` | Documentation |
 
-**Auto-triggered** when:
-- Code modified
-- Errors appear
-- Features added
+**Expert Agents:**
+| Agent | Purpose |
+|-------|---------|
+| `claude-md-expert` | CLAUDE.md design |
+| `mcp-expert` | MCP configuration |
+| `agents-expert` | Custom agents |
+| `skills-expert` | Custom skills |
+| `hooks-expert` | Automation hooks |
 
 </td>
 <td valign="top" width="34%">
@@ -187,9 +218,11 @@ cd director-mode-lite
 | `doc-writer` | Doc templates |
 
 **Plus:**
+- 5 Expert Agents
+- 5 Validator Commands
+- 4 Generator Commands
 - CLAUDE.md template
 - Starter hooks
-- Best practices
 
 </td>
 </tr>
@@ -319,6 +352,151 @@ Creates and maintains:
 - Architecture docs
 
 **Triggers:** New features, structure changes
+
+</td>
+</tr>
+</table>
+
+---
+
+## Expert Agents (NEW)
+
+Director Mode Lite includes **5 Expert Agents** that deeply understand Claude Code's official features:
+
+<table>
+<tr>
+<td width="20%">
+
+### `claude-md-expert`
+
+Your guide for:
+- CLAUDE.md design patterns
+- Project configuration
+- Best practices
+
+**Ask:** "How should I structure my CLAUDE.md?"
+
+</td>
+<td width="20%">
+
+### `mcp-expert`
+
+Your guide for:
+- MCP server setup
+- Available MCPs
+- Troubleshooting
+
+**Ask:** "How do I add a Notion MCP?"
+
+</td>
+<td width="20%">
+
+### `agents-expert`
+
+Your guide for:
+- Custom agent creation
+- Tool permissions
+- Agent patterns
+
+**Ask:** "Create a security-reviewer agent"
+
+</td>
+<td width="20%">
+
+### `skills-expert`
+
+Your guide for:
+- Slash command creation
+- Skill frontmatter
+- Workflow design
+
+**Ask:** "Make a /deploy command"
+
+</td>
+<td width="20%">
+
+### `hooks-expert`
+
+Your guide for:
+- Stop hooks (Auto-Loop)
+- PreToolUse/PostToolUse
+- Automation patterns
+
+**Ask:** "How do I protect .env files?"
+
+</td>
+</tr>
+</table>
+
+> **Why?** Anthropic provides documentation, but no specialized helpers. These experts know the official docs and help you implement correctly.
+
+---
+
+## Validators & Generators (NEW)
+
+Pair with Expert Agents for **validate-then-fix** or **template-then-customize** workflows:
+
+<table>
+<tr>
+<td width="50%">
+
+### Validators (5)
+
+Validate your configurations and get actionable fix suggestions:
+
+```bash
+/claude-md-check              # Check CLAUDE.md structure
+/mcp-check                    # Check MCP settings.json
+/agent-check [file.md]        # Check agent file format
+/skill-check [file.md]        # Check skill file format
+/hooks-check                  # Check hooks config + scripts
+```
+
+**Output format:**
+```markdown
+## Validation Report
+
+### Status: ✅ PASS / ⚠️ WARNINGS / ❌ FAIL
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| ...   | ✅/❌  | ...   |
+
+### Issues Found
+1. [Issue and recommendation]
+
+### Auto-Fix Available
+- Run command X to fix...
+```
+
+</td>
+<td width="50%">
+
+### Generators (4)
+
+Generate properly-formatted files from templates:
+
+```bash
+/claude-md-template           # Generate CLAUDE.md
+/agent-template [name] [purpose]  # Generate agent
+/skill-template [name] [purpose]  # Generate skill
+/hook-template [type] [purpose]   # Generate hook
+```
+
+**Example:**
+```bash
+/agent-template security-scanner "scan for vulnerabilities"
+
+# Creates: .claude/agents/security-scanner.md
+# with proper frontmatter, activation triggers,
+# output format, and guidelines
+```
+
+**Hook types:**
+- `PreToolUse` - Block/validate before tool runs
+- `PostToolUse` - Log/react after tool runs
+- `Stop` - Continue automation loops
+- `Notification` - External alerts (Slack, etc.)
 
 </td>
 </tr>
@@ -468,10 +646,12 @@ This is a **free, open-source toolkit** from the [Claude World](https://claude-w
 <td width="50%">
 
 **What's included (FREE):**
-- 13 Commands
-- 3 Agents
+- 22 Commands (incl. validators & generators)
+- 8 Agents (3 Core + 5 Experts)
 - 4 Skills
 - Auto-Loop with TDD
+- Expert-guided project setup
+- Validation & template generation
 - Complete documentation
 
 </td>
