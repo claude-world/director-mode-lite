@@ -63,7 +63,7 @@
 
 ### Test-Driven Development Automation
 
-Built on the [Ralph Wiggum](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) technique, **Auto-Loop** adds:
+Similar to [Ralph Wiggum](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum), **Auto-Loop** uses Stop hooks but focuses on TDD:
 
 - **Acceptance Criteria Tracking** - Parse `- [ ]` and auto-check completion
 - **TDD Methodology** - Red-Green-Refactor cycle guidance
