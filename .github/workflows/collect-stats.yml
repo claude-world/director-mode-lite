@@ -1,0 +1,92 @@
+name: Collect Stats
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  collect-github-stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect GitHub Traffic Data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANALYTICS_API_KEY: ${{ secrets.ANALYTICS_API_KEY }}
+        run: |
+          # Get repo stats
+          REPO="claude-world/director-mode-lite"
+          TODAY=$(date -u +%Y-%m-%d)
+
+          # Get traffic data (requires push access)
+          CLONES=$(gh api repos/$REPO/traffic/clones --jq '.count // 0')
+          UNIQUE_CLONERS=$(gh api repos/$REPO/traffic/clones --jq '.uniques // 0')
+          VIEWS=$(gh api repos/$REPO/traffic/views --jq '.count // 0')
+          UNIQUE_VISITORS=$(gh api repos/$REPO/traffic/views --jq '.uniques // 0')
+
+          # Get repo info
+          STARS=$(gh api repos/$REPO --jq '.stargazers_count // 0')
+          FORKS=$(gh api repos/$REPO --jq '.forks_count // 0')
+
+          echo "Date: $TODAY"
+          echo "Clones: $CLONES (unique: $UNIQUE_CLONERS)"
+          echo "Views: $VIEWS (unique: $UNIQUE_VISITORS)"
+          echo "Stars: $STARS"
+          echo "Forks: $FORKS"
+
+          # Send to analytics API
+          if [ -n "$ANALYTICS_API_KEY" ]; then
+            curl -s -X POST "https://claude-world.com/api/analytics/github" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $ANALYTICS_API_KEY" \
+              -d "{
+                \"project\": \"director-mode-lite\",
+                \"date\": \"$TODAY\",
+                \"clones\": $CLONES,
+                \"unique_cloners\": $UNIQUE_CLONERS,
+                \"views\": $VIEWS,
+                \"unique_visitors\": $UNIQUE_VISITORS,
+                \"stars\": $STARS,
+                \"forks\": $FORKS
+              }"
+            echo "Stats sent to analytics API"
+          else
+            echo "ANALYTICS_API_KEY not set, skipping API call"
+          fi
+
+  collect-discord-stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect Discord Stats
+        env:
+          ANALYTICS_API_KEY: ${{ secrets.ANALYTICS_API_KEY }}
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          INVITE_CODE="rBtHzSD288"
+
+          # Get Discord stats via invite API
+          DISCORD_DATA=$(curl -s "https://discord.com/api/v10/invites/$INVITE_CODE?with_counts=true")
+
+          MEMBER_COUNT=$(echo "$DISCORD_DATA" | jq '.approximate_member_count // 0')
+          ONLINE_COUNT=$(echo "$DISCORD_DATA" | jq '.approximate_presence_count // 0')
+
+          echo "Date: $TODAY"
+          echo "Members: $MEMBER_COUNT"
+          echo "Online: $ONLINE_COUNT"
+
+          # Send to analytics API
+          if [ -n "$ANALYTICS_API_KEY" ]; then
+            curl -s -X POST "https://claude-world.com/api/analytics/discord" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $ANALYTICS_API_KEY" \
+              -d "{
+                \"server_id\": \"$INVITE_CODE\",
+                \"date\": \"$TODAY\",
+                \"member_count\": $MEMBER_COUNT,
+                \"online_count\": $ONLINE_COUNT
+              }"
+            echo "Stats sent to analytics API"
+          else
+            echo "ANALYTICS_API_KEY not set, skipping API call"
+          fi
