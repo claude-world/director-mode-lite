@@ -7,8 +7,9 @@
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://claude.ai/code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.4+-blueviolet?logo=anthropic" alt="Claude Code"></a>
-  <a href="https://discord.com/invite/rBtHzSD288"><img src="https://img.shields.io/discord/1234567890?color=7289da&label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="https://discord.com/invite/rBtHzSD288"><img src="https://img.shields.io/discord/1459859959398531294?color=7289da&label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://github.com/claude-world/director-mode-lite/stargazers"><img src="https://img.shields.io/github/stars/claude-world/director-mode-lite?style=social" alt="GitHub Stars"></a>
+  <a href="https://claude-world.com/stats"><img src="https://img.shields.io/badge/📊_Live_Stats-claude--world.com-orange" alt="Live Stats"></a>
 </p>
 
 <p align="center">
@@ -401,21 +402,27 @@ See [examples/](examples/) for full tutorials.
 
 <table>
 <tr>
-<td align="center" width="33%">
+<td align="center" width="25%">
 <a href="https://claude-world.com">
-<strong>Website</strong><br>
+<strong>🌐 Website</strong><br>
 claude-world.com
 </a>
 </td>
-<td align="center" width="33%">
+<td align="center" width="25%">
 <a href="https://discord.com/invite/rBtHzSD288">
-<strong>Discord</strong><br>
-Join the community
+<strong>💬 Discord</strong><br>
+Join 96+ members
 </a>
 </td>
-<td align="center" width="34%">
+<td align="center" width="25%">
+<a href="https://claude-world.com/stats">
+<strong>📊 Live Stats</strong><br>
+Traffic & community growth
+</a>
+</td>
+<td align="center" width="25%">
 <a href="https://github.com/claude-world/director-mode-lite/issues">
-<strong>GitHub Issues</strong><br>
+<strong>🐛 Issues</strong><br>
 Report bugs, request features
 </a>
 </td>
