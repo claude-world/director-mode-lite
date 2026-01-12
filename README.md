@@ -55,17 +55,20 @@
 
 ---
 
-## Key Feature: Auto-Loop
+## Key Feature: TDD-Driven Auto-Loop
 
 <table>
 <tr>
 <td width="50%">
 
-### Fully Autonomous TDD Cycle
+### Test-Driven Development Automation
 
-**Auto-Loop** keeps iterating through the Red-Green-Refactor cycle until all acceptance criteria are met.
+Built on the [Ralph Wiggum](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) technique, **Auto-Loop** adds:
 
-No manual intervention needed.
+- **Acceptance Criteria Tracking** - Parse `- [ ]` and auto-check completion
+- **TDD Methodology** - Red-Green-Refactor cycle guidance
+- **Checkpoint Recovery** - Resume from `.auto-loop/checkpoint.json`
+- **Agent Collaboration** - code-reviewer, test-runner integration
 
 **Stop anytime** with:
 ```bash
