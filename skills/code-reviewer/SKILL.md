@@ -1,4 +1,5 @@
 ---
+name: code-reviewer
 description: Code review specialist for quality, security, and best practices
 allowed-tools: Read, Grep, Glob, Bash
 ---

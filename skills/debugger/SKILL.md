@@ -1,4 +1,5 @@
 ---
+name: debugger
 description: Debugging specialist for root cause analysis and problem resolution
 allowed-tools: Read, Grep, Glob, Bash, Edit
 ---

@@ -1,0 +1,345 @@
+name: Validate Director Mode Lite
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-skills:
+    name: Validate SKILL.md Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Skills Format
+        run: |
+          echo "🔍 Validating SKILL.md files against Agent Skills spec..."
+
+          ERRORS=0
+
+          for skill_dir in skills/*/; do
+            skill_name=$(basename "$skill_dir")
+            skill_file="$skill_dir/SKILL.md"
+
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "📁 Checking: $skill_name"
+
+            # Check SKILL.md exists
+            if [[ ! -f "$skill_file" ]]; then
+              echo "  ❌ SKILL.md not found"
+              ERRORS=$((ERRORS + 1))
+              continue
+            fi
+
+            # Extract frontmatter
+            frontmatter=$(sed -n '/^---$/,/^---$/p' "$skill_file" | sed '1d;$d')
+
+            # Check required 'name' field
+            name_value=$(echo "$frontmatter" | grep -E "^name:" | sed 's/name: *//')
+            if [[ -z "$name_value" ]]; then
+              echo "  ❌ Missing required 'name' field"
+              ERRORS=$((ERRORS + 1))
+            else
+              # Validate name format (lowercase, hyphens, numbers only)
+              if [[ ! "$name_value" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+                echo "  ❌ Invalid name format: '$name_value' (must be lowercase letters, numbers, hyphens)"
+                ERRORS=$((ERRORS + 1))
+              elif [[ "$name_value" != "$skill_name" ]]; then
+                echo "  ❌ Name mismatch: '$name_value' vs directory '$skill_name'"
+                ERRORS=$((ERRORS + 1))
+              elif [[ ${#name_value} -gt 64 ]]; then
+                echo "  ❌ Name too long: ${#name_value} chars (max 64)"
+                ERRORS=$((ERRORS + 1))
+              else
+                echo "  ✅ name: $name_value"
+              fi
+            fi
+
+            # Check required 'description' field
+            description_value=$(echo "$frontmatter" | grep -E "^description:" | sed 's/description: *//')
+            if [[ -z "$description_value" ]]; then
+              echo "  ❌ Missing required 'description' field"
+              ERRORS=$((ERRORS + 1))
+            elif [[ ${#description_value} -gt 1024 ]]; then
+              echo "  ❌ Description too long: ${#description_value} chars (max 1024)"
+              ERRORS=$((ERRORS + 1))
+            elif [[ ${#description_value} -lt 20 ]]; then
+              echo "  ⚠️ Description too short (recommend 20+ chars)"
+            else
+              echo "  ✅ description: ${description_value:0:50}..."
+            fi
+
+            # Check file length
+            line_count=$(wc -l < "$skill_file" | tr -d ' ')
+            if [[ $line_count -gt 500 ]]; then
+              echo "  ⚠️ SKILL.md is $line_count lines (recommend <500)"
+            else
+              echo "  ✅ Length: $line_count lines"
+            fi
+
+          done
+
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          if [[ $ERRORS -gt 0 ]]; then
+            echo "❌ Validation failed with $ERRORS error(s)"
+            exit 1
+          else
+            echo "✅ All skills validated successfully!"
+          fi
+
+  validate-commands:
+    name: Validate Commands
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Command Files
+        run: |
+          echo "🔍 Validating command files..."
+
+          ERRORS=0
+
+          for cmd_file in commands/*.md; do
+            if [[ -f "$cmd_file" ]]; then
+              filename=$(basename "$cmd_file")
+
+              # Check file is not empty
+              if [[ ! -s "$cmd_file" ]]; then
+                echo "❌ Empty file: $filename"
+                ERRORS=$((ERRORS + 1))
+              fi
+
+              # Check for basic markdown structure
+              if ! grep -q "^#" "$cmd_file"; then
+                echo "⚠️ Missing header in: $filename"
+              fi
+            fi
+          done
+
+          # Check subdirectories
+          for cmd_dir in commands/*/; do
+            if [[ -d "$cmd_dir" ]]; then
+              dir_name=$(basename "$cmd_dir")
+
+              # Check for at least one .md file
+              if ! ls "$cmd_dir"*.md &>/dev/null; then
+                echo "⚠️ No .md files in commands/$dir_name/"
+              fi
+            fi
+          done
+
+          echo ""
+          if [[ $ERRORS -gt 0 ]]; then
+            echo "❌ Command validation failed with $ERRORS error(s)"
+            exit 1
+          else
+            echo "✅ All commands validated!"
+          fi
+
+  validate-agents:
+    name: Validate Agents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Agent Files
+        run: |
+          echo "🔍 Validating agent files..."
+
+          ERRORS=0
+
+          for agent_file in agents/*.md; do
+            if [[ -f "$agent_file" ]]; then
+              filename=$(basename "$agent_file")
+
+              # Check file is not empty
+              if [[ ! -s "$agent_file" ]]; then
+                echo "❌ Empty file: $filename"
+                ERRORS=$((ERRORS + 1))
+              fi
+
+              # Check for frontmatter
+              if ! head -1 "$agent_file" | grep -q "^---$"; then
+                echo "⚠️ Missing frontmatter in: $filename"
+              fi
+            fi
+          done
+
+          echo ""
+          if [[ $ERRORS -gt 0 ]]; then
+            echo "❌ Agent validation failed with $ERRORS error(s)"
+            exit 1
+          else
+            echo "✅ All agents validated!"
+          fi
+
+  check-links:
+    name: Check Links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check README Links
+        run: |
+          echo "🔍 Checking links in README.md..."
+
+          ERRORS=0
+
+          # Extract markdown links
+          links=$(grep -oE '\[([^]]+)\]\(([^)]+)\)' README.md | grep -oE '\(([^)]+)\)' | tr -d '()')
+
+          for link in $links; do
+            # Skip external links for now, just check internal
+            if [[ "$link" =~ ^https?:// ]]; then
+              echo "  🌐 External: $link (skipped)"
+            elif [[ "$link" =~ ^# ]]; then
+              echo "  🔖 Anchor: $link (skipped)"
+            else
+              if [[ ! -e "$link" ]]; then
+                echo "  ❌ Broken internal link: $link"
+                ERRORS=$((ERRORS + 1))
+              else
+                echo "  ✅ $link"
+              fi
+            fi
+          done
+
+          echo ""
+          if [[ $ERRORS -gt 0 ]]; then
+            echo "❌ Found $ERRORS broken link(s)"
+            exit 1
+          else
+            echo "✅ All internal links valid!"
+          fi
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for Sensitive Data
+        run: |
+          echo "🔍 Scanning for sensitive data..."
+
+          ERRORS=0
+
+          # Check for common secrets patterns
+          patterns=(
+            "sk-[a-zA-Z0-9]{48}"          # OpenAI API key
+            "AKIA[0-9A-Z]{16}"            # AWS Access Key
+            "ghp_[a-zA-Z0-9]{36}"         # GitHub PAT
+            "xox[baprs]-[a-zA-Z0-9-]+"    # Slack token
+            "-----BEGIN.*PRIVATE KEY-----"
+          )
+
+          for pattern in "${patterns[@]}"; do
+            if grep -rE "$pattern" --include="*.md" --include="*.sh" --include="*.json" . 2>/dev/null; then
+              echo "❌ Potential secret found matching: $pattern"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+
+          # Check for hardcoded paths
+          if grep -rE "/Users/|/home/[^/]+/" --include="*.md" --include="*.sh" . 2>/dev/null | grep -v "example" | grep -v "#"; then
+            echo "⚠️ Potential hardcoded user paths found"
+          fi
+
+          echo ""
+          if [[ $ERRORS -gt 0 ]]; then
+            echo "❌ Security scan found $ERRORS issue(s)"
+            exit 1
+          else
+            echo "✅ No sensitive data detected!"
+          fi
+
+  install-test:
+    name: Test Installation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test Install Script
+        run: |
+          echo "🔍 Testing installation..."
+
+          # Create temp directory
+          mkdir -p /tmp/test-project
+
+          # Run install
+          ./install.sh /tmp/test-project
+
+          # Verify installation
+          echo ""
+          echo "Checking installed files..."
+
+          ERRORS=0
+
+          # Check commands
+          if [[ ! -d "/tmp/test-project/.claude/commands" ]]; then
+            echo "❌ Commands not installed"
+            ERRORS=$((ERRORS + 1))
+          else
+            cmd_count=$(ls /tmp/test-project/.claude/commands/*.md 2>/dev/null | wc -l)
+            echo "✅ Commands installed: $cmd_count files"
+          fi
+
+          # Check agents
+          if [[ ! -d "/tmp/test-project/.claude/agents" ]]; then
+            echo "❌ Agents not installed"
+            ERRORS=$((ERRORS + 1))
+          else
+            agent_count=$(ls /tmp/test-project/.claude/agents/*.md 2>/dev/null | wc -l)
+            echo "✅ Agents installed: $agent_count files"
+          fi
+
+          # Check skills
+          if [[ ! -d "/tmp/test-project/.claude/skills" ]]; then
+            echo "❌ Skills not installed"
+            ERRORS=$((ERRORS + 1))
+          else
+            skill_count=$(ls -d /tmp/test-project/.claude/skills/*/ 2>/dev/null | wc -l)
+            echo "✅ Skills installed: $skill_count directories"
+          fi
+
+          # Check hooks
+          if [[ ! -f "/tmp/test-project/.claude/hooks.json" ]]; then
+            echo "⚠️ hooks.json not found (may be intentional)"
+          else
+            echo "✅ hooks.json installed"
+          fi
+
+          echo ""
+          if [[ $ERRORS -gt 0 ]]; then
+            echo "❌ Installation test failed with $ERRORS error(s)"
+            exit 1
+          else
+            echo "✅ Installation test passed!"
+          fi
+
+      - name: Test Uninstall Script
+        run: |
+          echo "🔍 Testing uninstall (hooks only)..."
+
+          # Run uninstall with option 1 (hooks only)
+          echo "1" | ./uninstall.sh /tmp/test-project
+
+          # Verify hooks removed but content kept
+          if [[ -d "/tmp/test-project/.claude/commands" ]]; then
+            echo "✅ Commands preserved"
+          else
+            echo "❌ Commands should be preserved"
+            exit 1
+          fi
+
+          if [[ ! -f "/tmp/test-project/.claude/hooks.json" ]]; then
+            echo "✅ hooks.json removed"
+          else
+            echo "⚠️ hooks.json still exists"
+          fi
+
+          echo "✅ Uninstall test passed!"

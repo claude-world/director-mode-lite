@@ -1,4 +1,5 @@
 ---
+name: test-runner
 description: Test automation specialist for running tests and ensuring coverage
 allowed-tools: Read, Bash, Grep, Glob
 ---

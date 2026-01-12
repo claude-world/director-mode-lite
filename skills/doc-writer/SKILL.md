@@ -1,4 +1,5 @@
 ---
+name: doc-writer
 description: Documentation specialist for README, API docs, and code comments
 allowed-tools: Read, Write, Edit, Grep, Glob
 ---
