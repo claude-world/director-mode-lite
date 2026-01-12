@@ -8,8 +8,6 @@ Real-world examples demonstrating Director Mode workflows.
 |---------|-------------|------------|
 | [Calculator](./01-calculator/) | Basic Auto-Loop demo | Beginner |
 | [REST API](./02-rest-api/) | Building an API with TDD | Intermediate |
-| [Bug Fix](./03-bug-fix/) | Systematic debugging workflow | Intermediate |
-| [Code Review](./04-code-review/) | Reviewing a PR | Beginner |
 
 ---
 
@@ -64,30 +62,6 @@ Acceptance Criteria:
 
 ---
 
-## Example 3: Bug Fix (Debugging Workflow)
-
-**Goal:** Systematically find and fix a bug
-
-**Commands used:**
-- `/focus-problem` - Understand the issue
-- `/test-first` - Write regression test
-- `/smart-commit` - Document fix
-
-**Time:** ~10 minutes
-
----
-
-## Example 4: Code Review
-
-**Goal:** Review code quality and security
-
-**Commands used:**
-- `/agents` (code-reviewer agent)
-
-**Time:** ~5 minutes
-
----
-
 ## Creating Your Own Examples
 
 Want to contribute an example? Follow this structure:
@@ -101,4 +75,4 @@ examples/
     └── src/            # Sample code
 ```
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+Submit a PR to the [Director Mode Lite repo](https://github.com/claude-world/director-mode-lite).
