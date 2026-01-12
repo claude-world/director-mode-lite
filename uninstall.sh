@@ -71,16 +71,3 @@ esac
 
 echo ""
 echo "Uninstall complete!"
-
-# Anonymous usage tracking (opt-out with DISABLE_ANALYTICS=1)
-if [[ "${DISABLE_ANALYTICS:-0}" != "1" ]]; then
-    VERSION="1.0.0"
-    OS_NAME=$(uname -s 2>/dev/null || echo "unknown")
-    ARCH=$(uname -m 2>/dev/null || echo "unknown")
-    SHELL_NAME=$(basename "$SHELL" 2>/dev/null || echo "unknown")
-
-    curl -s -X POST "https://claude-world.com/api/analytics/install" \
-        -H "Content-Type: application/json" \
-        -d "{\"project\":\"director-mode-lite\",\"version\":\"$VERSION\",\"action\":\"uninstall\",\"os\":\"$OS_NAME\",\"arch\":\"$ARCH\",\"shell\":\"$SHELL_NAME\"}" \
-        > /dev/null 2>&1 &
-fi
