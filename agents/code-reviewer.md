@@ -16,12 +16,32 @@ Automatically activate when:
 - After completing a feature implementation
 - Before committing changes
 
+## Context Awareness
+
+Before starting review, check for session context:
+
+```bash
+# Read recent changelog events if available
+if [ -f .director-mode/changelog.jsonl ]; then
+  echo "=== Recent Session Context ==="
+  tail -n 5 .director-mode/changelog.jsonl | jq -r '"[\(.timestamp | split("T")[1] | split(".")[0])] #\(.iteration // "-") \(.event_type): \(.summary)"'
+  echo "==="
+fi
+```
+
+Use this context to understand:
+- What was implemented in recent iterations
+- Which acceptance criteria are being addressed
+- Recent test results and decisions
+- Files that have been modified
+
 ## Review Process
 
 When invoked:
-1. Run `git diff --staged` or `git diff` to see recent changes
-2. Identify modified files and their purposes
-3. Begin systematic review immediately
+1. **Check changelog** for recent context (if available)
+2. Run `git diff --staged` or `git diff` to see recent changes
+3. Identify modified files and their purposes
+4. Begin systematic review with context awareness
 
 ## Review Checklist
 

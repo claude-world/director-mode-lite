@@ -1,6 +1,10 @@
 #!/bin/bash
 # Auto-Loop Stop Hook - TDD-based autonomous loop
 # Director Mode Lite
+#
+# Note: This hook uses `set -euo pipefail` (strict mode) unlike other hooks
+# because it controls the auto-loop continuation logic and must fail fast
+# on any errors to avoid infinite loops or corrupted state.
 
 set -euo pipefail
 
@@ -12,20 +16,20 @@ STOP_FILE="$STATE_DIR/stop"
 # Check if auto-loop is active
 if [[ ! -f "$CHECKPOINT_FILE" ]]; then
     # No active loop, allow normal exit
-    echo '{"decision": "allow"}'
+    echo '{}'
     exit 0
 fi
 
 # Check for stop signal
 if [[ -f "$STOP_FILE" ]]; then
     rm -f "$STOP_FILE"
-    echo '{"decision": "allow"}'
+    echo '{}'
     exit 0
 fi
 
 # Read checkpoint
 if ! checkpoint=$(cat "$CHECKPOINT_FILE" 2>/dev/null); then
-    echo '{"decision": "allow"}'
+    echo '{}'
     exit 0
 fi
 
@@ -37,14 +41,14 @@ request=$(echo "$checkpoint" | grep -o '"request"[[:space:]]*:[[:space:]]*"[^"]*
 
 # Check if completed or max iterations reached
 if [[ "$status" == "completed" ]]; then
-    echo '{"decision": "allow"}'
+    echo '{}'
     exit 0
 fi
 
 if [[ "$current_iteration" -ge "$max_iterations" ]]; then
     # Update status to completed
     echo "$checkpoint" | sed 's/"status"[[:space:]]*:[[:space:]]*"[^"]*"/"status": "max_iterations_reached"/' > "$CHECKPOINT_FILE"
-    echo '{"decision": "allow"}'
+    echo '{}'
     exit 0
 fi
 
@@ -55,11 +59,11 @@ echo "$new_iteration" > "$ITERATION_FILE"
 # Update checkpoint
 echo "$checkpoint" | sed "s/\"current_iteration\"[[:space:]]*:[[:space:]]*[0-9]*/\"current_iteration\": $new_iteration/" > "$CHECKPOINT_FILE"
 
-# Extract AC status for prompt
-ac_status=$(python3 -c "
+# Extract AC status for prompt (safe: pass via stdin, not embedded in code)
+ac_status=$(echo "$checkpoint" | python3 -c "
 import json, sys
 try:
-    data = json.loads('''$checkpoint''')
+    data = json.load(sys.stdin)
     acs = data.get('acceptance_criteria', [])
     if not acs:
         print('No AC defined')
@@ -89,10 +93,16 @@ Follow the TDD cycle:
 
 If all ACs are complete, update status to \"completed\"."
 
-# Return block decision with prompt
+# Return continue=true with systemMessage for next iteration
+# Use Python to properly JSON-encode the prompt, with safe fallback
+json_prompt=$(echo "$tdd_prompt" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))' 2>/dev/null) || {
+    # Fallback: simple JSON string (iteration number is always safe integer)
+    json_prompt="\"Continue Auto-Loop iteration #$new_iteration\""
+}
+
 cat <<EOF
 {
-  "decision": "block",
-  "prompt": $(echo "$tdd_prompt" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))' 2>/dev/null || echo "\"Continue Auto-Loop iteration #$new_iteration\"")
+  "continue": true,
+  "systemMessage": $json_prompt
 }
 EOF

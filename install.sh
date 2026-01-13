@@ -53,7 +53,6 @@ for dir in "$SCRIPT_DIR/commands/"*/; do
         if [[ -d "$TARGET_DIR/.claude/commands/$dirname" ]]; then
             echo "  Skipped (exists): commands/$dirname/"
         else
-            # Remove trailing slash to ensure cp -r creates subdirectory
             cp -r "${dir%/}" "$TARGET_DIR/.claude/commands/"
             echo "  Installed: commands/$dirname/"
         fi
@@ -84,74 +83,118 @@ for dir in "$SCRIPT_DIR/skills/"*/; do
         if [[ -d "$TARGET_DIR/.claude/skills/$dirname" ]]; then
             echo "  Skipped (exists): skills/$dirname/"
         else
-            # Remove trailing slash to ensure cp -r creates subdirectory
             cp -r "${dir%/}" "$TARGET_DIR/.claude/skills/"
             echo "  Installed: skills/$dirname/"
         fi
     fi
 done
 
-# Install hooks (merge instead of overwrite)
-echo "Installing Auto-Loop hooks..."
+# Install hooks
+echo "Installing hooks..."
 mkdir -p "$TARGET_DIR/.claude/hooks"
-cp "$SCRIPT_DIR/hooks/auto-loop-stop.sh" "$TARGET_DIR/.claude/hooks/"
-chmod +x "$TARGET_DIR/.claude/hooks/auto-loop-stop.sh"
 
-if [[ -f "$TARGET_DIR/.claude/hooks.json" ]]; then
-    echo "  Detected existing hooks.json, attempting to merge..."
+# List of all hook scripts to install
+# Note: log-bash-event.sh replaces separate log-test-result.sh and log-commit.sh
+# to avoid stdin conflicts (only one hook can read stdin)
+HOOK_SCRIPTS=(
+    "auto-loop-stop.sh"
+    "changelog-logger.sh"
+    "log-file-change.sh"
+    "log-bash-event.sh"
+)
 
-    # Check if Stop hook already exists
-    if grep -q '"Stop"' "$TARGET_DIR/.claude/hooks.json" 2>/dev/null; then
-        echo "  Warning: Stop hook already exists. Please manually merge:"
-        echo ""
-        echo '    "Stop": ['
-        echo '      {'
-        echo '        "hooks": ['
-        echo '          {'
-        echo '            "type": "command",'
-        echo '            "command": ".claude/hooks/auto-loop-stop.sh"'
-        echo '          }'
-        echo '        ]'
-        echo '      }'
-        echo '    ]'
-        echo ""
-    else
-        # Use Python to merge JSON (more reliable)
-        if python3 -c "
+for hook in "${HOOK_SCRIPTS[@]}"; do
+    if [[ -f "$SCRIPT_DIR/hooks/$hook" ]]; then
+        cp "$SCRIPT_DIR/hooks/$hook" "$TARGET_DIR/.claude/hooks/"
+        chmod +x "$TARGET_DIR/.claude/hooks/$hook"
+        echo "  Installed: hooks/$hook"
+    fi
+done
+
+# Remove deprecated hooks (replaced by log-bash-event.sh in v1.1.0)
+DEPRECATED_HOOKS=(
+    "log-commit.sh"
+    "log-test-result.sh"
+)
+for deprecated in "${DEPRECATED_HOOKS[@]}"; do
+    if [[ -f "$TARGET_DIR/.claude/hooks/$deprecated" ]]; then
+        rm -f "$TARGET_DIR/.claude/hooks/$deprecated"
+        echo "  Removed deprecated: hooks/$deprecated"
+    fi
+done
+
+# Handle settings.local.json merging (Claude Code reads hooks from here)
+# IMPORTANT: This preserves all existing user settings and only adds/merges hooks
+echo "Configuring hooks in settings.local.json..."
+
+# Use Python to safely merge hooks into existing settings
+if TARGET_DIR="$TARGET_DIR" SCRIPT_DIR="$SCRIPT_DIR" python3 -c "
 import json
-import sys
+import os
 
-hooks_file = '$TARGET_DIR/.claude/hooks.json'
+settings_file = os.path.join(os.environ['TARGET_DIR'], '.claude', 'settings.local.json')
+source_file = os.path.join(os.environ['SCRIPT_DIR'], 'hooks', 'settings-hooks.json')
 
-with open(hooks_file, 'r') as f:
-    existing = json.load(f)
+# Read existing settings (or create empty)
+existing = {}
+if os.path.exists(settings_file):
+    try:
+        with open(settings_file, 'r') as f:
+            existing = json.load(f)
+        print('  Found existing settings.local.json')
+    except:
+        existing = {}
+
+# Read source hooks
+with open(source_file, 'r') as f:
+    source = json.load(f)
 
 if 'hooks' not in existing:
     existing['hooks'] = {}
 
-existing['hooks']['Stop'] = [
-    {
-        'hooks': [
-            {
-                'type': 'command',
-                'command': '.claude/hooks/auto-loop-stop.sh'
-            }
-        ]
-    }
-]
+# Merge Stop hooks
+if 'Stop' in source.get('hooks', {}):
+    if 'Stop' not in existing['hooks']:
+        existing['hooks']['Stop'] = source['hooks']['Stop']
+        print('  Merged: Stop hooks')
+    else:
+        print('  Skipped: Stop hooks (already exists)')
 
-with open(hooks_file, 'w') as f:
+# Merge PostToolUse hooks
+if 'PostToolUse' in source.get('hooks', {}):
+    if 'PostToolUse' not in existing['hooks']:
+        existing['hooks']['PostToolUse'] = source['hooks']['PostToolUse']
+        print('  Merged: PostToolUse hooks (changelog)')
+    else:
+        # Append new PostToolUse hooks if not already present
+        existing_commands = set()
+        for hook_group in existing['hooks']['PostToolUse']:
+            for hook in hook_group.get('hooks', []):
+                existing_commands.add(hook.get('command', ''))
+
+        added = 0
+        for hook_group in source['hooks']['PostToolUse']:
+            for hook in hook_group.get('hooks', []):
+                if hook.get('command', '') not in existing_commands:
+                    existing['hooks']['PostToolUse'].append(hook_group)
+                    added += 1
+                    break
+
+        if added > 0:
+            print(f'  Merged: {added} PostToolUse hook(s)')
+        else:
+            print('  Skipped: PostToolUse hooks (already exists)')
+
+# Write merged settings (preserves all other user settings)
+with open(settings_file, 'w') as f:
     json.dump(existing, f, indent=2)
+
+print('  settings.local.json configured')
 " 2>/dev/null; then
-            echo "  Merged Stop hook into hooks.json"
-        else
-            echo "  Warning: Could not auto-merge. Please manually add Stop hook."
-        fi
-    fi
+    :  # Success, Python already printed status
 else
-    # No existing hooks.json, copy directly
-    cp "$SCRIPT_DIR/hooks/hooks.json" "$TARGET_DIR/.claude/"
-    echo "  Installed: hooks.json"
+    echo "  Warning: Could not auto-configure hooks"
+    echo "  Please manually add hooks from: $SCRIPT_DIR/hooks/settings-hooks.json"
 fi
 
 # Copy CLAUDE.md template (if target doesn't have one)
@@ -164,10 +207,15 @@ echo ""
 echo "Installation complete!"
 echo ""
 echo "Installed:"
-echo "  - .claude/commands/     (22 commands)"
-echo "  - .claude/agents/       (8 agents)"
-echo "  - .claude/skills/       (4 skills)"
-echo "  - .claude/hooks/        (Auto-Loop Stop Hook)"
+echo "  - .claude/commands/     (slash commands)"
+echo "  - .claude/agents/       (specialized agents)"
+echo "  - .claude/skills/       (reusable skills)"
+echo "  - .claude/hooks/        (Auto-Loop + Changelog hooks)"
+echo ""
+echo "Features:"
+echo "  - /auto-loop     TDD-based autonomous development"
+echo "  - /changelog     Observability changelog (experimental)"
+echo "  - /workflow      Complete 5-step development flow"
 echo ""
 if [[ -d "$BACKUP_DIR" ]]; then
     echo "Backup location: $BACKUP_DIR"
