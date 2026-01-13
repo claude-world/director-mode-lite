@@ -1,3 +1,8 @@
+---
+name: changelog
+description: View and manage the runtime changelog for observability
+---
+
 # Changelog Skill
 
 > **Status: Experimental**
