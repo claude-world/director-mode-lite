@@ -111,6 +111,18 @@ for hook in "${HOOK_SCRIPTS[@]}"; do
     fi
 done
 
+# Remove deprecated hooks (replaced by log-bash-event.sh in v1.1.0)
+DEPRECATED_HOOKS=(
+    "log-commit.sh"
+    "log-test-result.sh"
+)
+for deprecated in "${DEPRECATED_HOOKS[@]}"; do
+    if [[ -f "$TARGET_DIR/.claude/hooks/$deprecated" ]]; then
+        rm -f "$TARGET_DIR/.claude/hooks/$deprecated"
+        echo "  Removed deprecated: hooks/$deprecated"
+    fi
+done
+
 # Handle hooks.json merging
 echo "Configuring hooks.json..."
 if [[ -f "$TARGET_DIR/.claude/hooks.json" ]]; then

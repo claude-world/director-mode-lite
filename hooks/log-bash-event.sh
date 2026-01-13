@@ -15,12 +15,17 @@ set +e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || SCRIPT_DIR="$(pwd)/.claude/hooks"
 
+# Check for jq availability (before sourcing, in case source fails)
+HAS_JQ=false
+command -v jq &>/dev/null && HAS_JQ=true
+
 # Source the logger
 if [[ -f "$SCRIPT_DIR/changelog-logger.sh" ]]; then
     source "$SCRIPT_DIR/changelog-logger.sh"
 elif [[ -f ".claude/hooks/changelog-logger.sh" ]]; then
     source ".claude/hooks/changelog-logger.sh"
 else
+    # Minimal inline fallback if changelog-logger.sh not found
     log_event() {
         mkdir -p ".director-mode" 2>/dev/null
         local ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")
@@ -28,8 +33,6 @@ else
         [[ -f ".auto-loop/iteration.txt" ]] && iter=$(cat ".auto-loop/iteration.txt" 2>/dev/null || echo "null")
         echo "{\"id\":\"evt_$(date +%s)_$RANDOM\",\"timestamp\":\"$ts\",\"event_type\":\"$1\",\"agent\":\"$3\",\"iteration\":$iter,\"summary\":\"$2\",\"files\":$4}" >> ".director-mode/changelog.jsonl" 2>/dev/null
     }
-    HAS_JQ=false
-    command -v jq &>/dev/null && HAS_JQ=true
 fi
 
 # Read JSON from stdin ONCE
@@ -37,7 +40,7 @@ INPUT=$(cat 2>/dev/null) || INPUT=""
 [[ -z "$INPUT" ]] && exit 0
 
 # Parse fields
-if ${HAS_JQ:-false}; then
+if $HAS_JQ; then
     TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null) || TOOL_NAME=""
     COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null) || COMMAND=""
     OUTPUT=$(echo "$INPUT" | jq -r '.tool_response // empty' 2>/dev/null) || OUTPUT=""
@@ -165,10 +168,10 @@ handle_commit() {
     # Build summary
     local summary=""
     if [[ -n "$commit_msg" ]]; then
-        # Truncate and basic escape
-        commit_msg="${commit_msg:0:60}"
+        # Truncate and proper JSON escape
+        commit_msg="${commit_msg:0:100}"
         commit_msg="${commit_msg//\\/\\\\}"
-        commit_msg="${commit_msg//\"/\'}"  # Replace quotes with single quotes for safety
+        commit_msg="${commit_msg//\"/\\\"}"
         summary="commit: $commit_msg"
     elif [[ -n "$commit_sha" ]]; then
         summary="commit: $commit_sha"

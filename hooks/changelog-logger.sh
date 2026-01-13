@@ -12,7 +12,8 @@ set +e
 
 CHANGELOG_DIR=".director-mode"
 CHANGELOG_FILE="$CHANGELOG_DIR/changelog.jsonl"
-MAX_LINES=500
+# Configurable via environment variable
+MAX_LINES="${DIRECTOR_MODE_MAX_CHANGELOG_LINES:-500}"
 
 # Check if jq is available
 HAS_JQ=false
@@ -89,8 +90,8 @@ escape_json() {
     str="${str//$'\r'/\\r}"
     str="${str//$'\b'/\\b}"
     str="${str//$'\f'/\\f}"
-    # Truncate to max length
-    echo "${str:0:200}"
+    # Truncate to max length (consistent with log-bash-event.sh)
+    echo "${str:0:100}"
 }
 
 # Log an event to changelog

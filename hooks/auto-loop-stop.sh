@@ -1,6 +1,10 @@
 #!/bin/bash
 # Auto-Loop Stop Hook - TDD-based autonomous loop
 # Director Mode Lite
+#
+# Note: This hook uses `set -euo pipefail` (strict mode) unlike other hooks
+# because it controls the auto-loop continuation logic and must fail fast
+# on any errors to avoid infinite loops or corrupted state.
 
 set -euo pipefail
 
@@ -90,9 +94,15 @@ Follow the TDD cycle:
 If all ACs are complete, update status to \"completed\"."
 
 # Return block decision with prompt
+# Use Python to properly JSON-encode the prompt, with safe fallback
+json_prompt=$(echo "$tdd_prompt" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))' 2>/dev/null) || {
+    # Fallback: simple JSON string (iteration number is always safe integer)
+    json_prompt="\"Continue Auto-Loop iteration #$new_iteration\""
+}
+
 cat <<EOF
 {
   "decision": "block",
-  "prompt": $(echo "$tdd_prompt" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))' 2>/dev/null || echo "\"Continue Auto-Loop iteration #$new_iteration\"")
+  "prompt": $json_prompt
 }
 EOF
