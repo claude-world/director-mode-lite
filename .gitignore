@@ -1,0 +1,13 @@
+# Installed files (created by install.sh)
+.claude/
+CLAUDE.md
+
+# Runtime state
+.auto-loop/
+.director-mode/
+
+# Test files
+test-*.txt
+
+# OS files
+.DS_Store
