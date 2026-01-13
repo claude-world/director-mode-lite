@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Observability Changelog System** - Runtime changelog for tracking all development session events
-  - **Automatic logging via PostToolUse Hooks** - no manual logging required
+- **Observability Changelog System** (Experimental) - Runtime changelog for tracking all development session events
+  - **Automatic logging via PostToolUse Hooks** - no manual logging required (hook interface may change)
   - New `/changelog` command for querying session activity
   - New `changelog` skill with JSONL-based event logging
   - Subagent context injection - agents now read recent changelog for context

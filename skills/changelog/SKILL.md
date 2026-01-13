@@ -1,5 +1,9 @@
 # Changelog Skill
 
+> **Status: Experimental**
+> This feature uses Claude Code's PostToolUse hooks. The hook interface may change in future versions.
+> If hooks don't trigger as expected, events can still be logged manually via auto-loop prompts.
+
 Runtime observability changelog for tracking all changes during development sessions.
 
 ---
