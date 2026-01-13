@@ -1,6 +1,7 @@
 # Installed files (created by install.sh)
 .claude/
 CLAUDE.md
+.claude-backup-*/
 
 # Runtime state
 .auto-loop/

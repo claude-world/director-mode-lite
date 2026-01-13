@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-01-13
+
 ### Added
 - **Observability Changelog System** (Experimental) - Runtime changelog for tracking all development session events
   - **Automatic logging via PostToolUse Hooks** - no manual logging required (hook interface may change)
@@ -102,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.2.0 | 2025-01-13 | Observability Changelog System, Session Conflict Prevention |
 | 1.0.0 | 2025-01-11 | Initial release with 13 commands, 3 agents, 4 skills |
 
 ---
