@@ -2,9 +2,7 @@
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": {
-          "tool_name": "Write"
-        },
+        "matcher": "Write",
         "hooks": [
           {
             "type": "command",
@@ -13,9 +11,7 @@
         ]
       },
       {
-        "matcher": {
-          "tool_name": "Edit"
-        },
+        "matcher": "Edit",
         "hooks": [
           {
             "type": "command",
@@ -24,9 +20,7 @@
         ]
       },
       {
-        "matcher": {
-          "tool_name": "Bash"
-        },
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
