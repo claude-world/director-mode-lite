@@ -51,12 +51,14 @@ fi
 [[ -z "$TOOL_NAME" ]] && exit 0
 
 # Determine event type
+# Note: Write tool overwrites files, so we use "file_write" (not "file_created")
+# since we can't know if the file existed before without PreToolUse context
 case "$TOOL_NAME" in
     Write)
-        EVENT_TYPE="file_created"
+        EVENT_TYPE="file_write"
         ;;
     Edit)
-        EVENT_TYPE="file_modified"
+        EVENT_TYPE="file_edit"
         ;;
     *)
         # Not a file change tool, exit silently

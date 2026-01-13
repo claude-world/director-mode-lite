@@ -30,11 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/log-test-result.sh"
-          },
-          {
-            "type": "command",
-            "command": ".claude/hooks/log-commit.sh"
+            "command": ".claude/hooks/log-bash-event.sh"
           }
         ]
       }

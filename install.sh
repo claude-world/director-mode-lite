@@ -94,12 +94,13 @@ echo "Installing hooks..."
 mkdir -p "$TARGET_DIR/.claude/hooks"
 
 # List of all hook scripts to install
+# Note: log-bash-event.sh replaces separate log-test-result.sh and log-commit.sh
+# to avoid stdin conflicts (only one hook can read stdin)
 HOOK_SCRIPTS=(
     "auto-loop-stop.sh"
     "changelog-logger.sh"
     "log-file-change.sh"
-    "log-test-result.sh"
-    "log-commit.sh"
+    "log-bash-event.sh"
 )
 
 for hook in "${HOOK_SCRIPTS[@]}"; do
@@ -116,12 +117,14 @@ if [[ -f "$TARGET_DIR/.claude/hooks.json" ]]; then
     echo "  Detected existing hooks.json, attempting to merge..."
     
     # Use Python to merge hooks.json (handles both Stop and PostToolUse)
-    if python3 -c "
+    # Pass paths via environment variables to avoid shell injection
+    if TARGET_DIR="$TARGET_DIR" SCRIPT_DIR="$SCRIPT_DIR" python3 -c "
 import json
 import sys
+import os
 
-hooks_file = '$TARGET_DIR/.claude/hooks.json'
-source_file = '$SCRIPT_DIR/hooks/hooks.json'
+hooks_file = os.path.join(os.environ['TARGET_DIR'], '.claude', 'hooks.json')
+source_file = os.path.join(os.environ['SCRIPT_DIR'], 'hooks', 'hooks.json')
 
 # Read existing hooks
 with open(hooks_file, 'r') as f:

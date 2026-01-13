@@ -55,11 +55,11 @@ echo "$new_iteration" > "$ITERATION_FILE"
 # Update checkpoint
 echo "$checkpoint" | sed "s/\"current_iteration\"[[:space:]]*:[[:space:]]*[0-9]*/\"current_iteration\": $new_iteration/" > "$CHECKPOINT_FILE"
 
-# Extract AC status for prompt
-ac_status=$(python3 -c "
+# Extract AC status for prompt (safe: pass via stdin, not embedded in code)
+ac_status=$(echo "$checkpoint" | python3 -c "
 import json, sys
 try:
-    data = json.loads('''$checkpoint''')
+    data = json.load(sys.stdin)
     acs = data.get('acceptance_criteria', [])
     if not acs:
         print('No AC defined')

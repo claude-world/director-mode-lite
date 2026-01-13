@@ -13,10 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New `/changelog` command for querying session activity
   - New `changelog` skill with JSONL-based event logging
   - Subagent context injection - agents now read recent changelog for context
-  - Event types: file_created, file_modified, test_pass, test_fail, commit
+  - Event types: file_write, file_edit, test_pass, test_fail, test_run, commit
   - Automatic rotation when exceeding 500 lines
   - Archive management (`--archive`, `--list-archives`)
   - Support for filtering, export, and summary statistics
+  - Merged bash hooks (log-bash-event.sh) to avoid stdin conflicts
 - **Session Conflict Prevention** - Detects interrupted sessions and prompts user
   - `--resume` flag to continue interrupted session
   - `--force` flag to clear old state and start fresh
@@ -28,6 +29,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Examples directory with calculator tutorial
 - Comprehensive FAQ documentation
 - Documentation section in README
+
+### Fixed
+- **stdin conflict** - Merged log-test-result.sh and log-commit.sh into single log-bash-event.sh
+  - PostToolUse hooks for same tool share stdin, only one can read it
+- **JSON escape** - Added \r, \b, \f character escaping in changelog-logger.sh
+- **Python injection** - Fixed auto-loop-stop.sh to use stdin instead of embedding JSON in code
+- **Path injection** - Fixed install.sh to use environment variables instead of string interpolation
+- **Event type semantics** - Changed file_created → file_write, file_modified → file_edit
+  - Write tool can overwrite existing files, so "created" was misleading
 
 ### Changed
 - `/auto-loop` now logs all TDD phases to changelog for observability

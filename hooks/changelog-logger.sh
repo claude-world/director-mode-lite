@@ -81,11 +81,14 @@ rotate_if_needed() {
 # Escape string for JSON
 escape_json() {
     local str="$1"
-    # Basic escaping: backslash, quotes, newlines, tabs
+    # Escape backslash first, then other special characters
     str="${str//\\/\\\\}"
     str="${str//\"/\\\"}"
     str="${str//$'\n'/\\n}"
     str="${str//$'\t'/\\t}"
+    str="${str//$'\r'/\\r}"
+    str="${str//$'\b'/\\b}"
+    str="${str//$'\f'/\\f}"
     # Truncate to max length
     echo "${str:0:200}"
 }
