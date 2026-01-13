@@ -17,13 +17,13 @@ Query and manage the runtime changelog that tracks all development session event
 # Show more events
 /changelog --limit 20
 
-# Show all events
+# Show all events in current session
 /changelog --all
 
 # Filter by event type
-/changelog --type test
-/changelog --type file
-/changelog --type commit
+/changelog --type test      # test_pass, test_fail
+/changelog --type file      # file_created, file_modified
+/changelog --type commit    # commit
 
 # Filter by iteration
 /changelog --iteration 3
@@ -31,12 +31,45 @@ Query and manage the runtime changelog that tracks all development session event
 # Show summary statistics
 /changelog --summary
 
-# Clear changelog (start fresh)
-/changelog --clear
+# Manage changelog
+/changelog --clear          # Clear current changelog
+/changelog --archive        # Archive current to timestamped file
+/changelog --list-archives  # Show archived changelogs
 
 # Export to file
 /changelog --export session-log.json
 ```
+
+---
+
+## How It Works
+
+The changelog is **automatically populated** by PostToolUse hooks:
+
+| Event | Trigger | Auto-logged |
+|-------|---------|-------------|
+| `file_created` | Write tool | Yes |
+| `file_modified` | Edit tool | Yes |
+| `test_pass` | Bash (test commands) | Yes |
+| `test_fail` | Bash (test commands) | Yes |
+| `commit` | Bash (git commit) | Yes |
+
+**No manual logging required** for these events.
+
+---
+
+## Automatic Rotation
+
+Changelog automatically rotates when exceeding 500 lines:
+
+```
+.director-mode/
+├── changelog.jsonl                    ← Current (active)
+├── changelog.20250113_103000.jsonl    ← Archived
+└── changelog.20250112_150000.jsonl    ← Archived
+```
+
+Rotation happens automatically during logging. Old changelogs are preserved for historical analysis.
 
 ---
 
@@ -47,17 +80,18 @@ When user runs `/changelog`:
 ### Default (Recent Events)
 
 ```bash
-# Check if changelog exists
-if [ ! -f .director-mode/changelog.jsonl ]; then
-  echo "No changelog found. Start a session with /auto-loop to begin logging."
+CHANGELOG=".director-mode/changelog.jsonl"
+
+if [ ! -f "$CHANGELOG" ]; then
+  echo "No changelog found."
+  echo "Events are automatically logged when you use Write/Edit tools or run tests."
   exit 0
 fi
 
-# Show last 10 events in readable format
 echo "=== Recent Development Activity ==="
 echo ""
 
-tail -n 10 .director-mode/changelog.jsonl | while read line; do
+tail -n 10 "$CHANGELOG" | while read line; do
   timestamp=$(echo "$line" | jq -r '.timestamp' | cut -d'T' -f2 | cut -d'.' -f1)
   event_type=$(echo "$line" | jq -r '.event_type')
   summary=$(echo "$line" | jq -r '.summary')
@@ -72,40 +106,9 @@ done
 
 echo ""
 echo "---"
-echo "Total events: $(wc -l < .director-mode/changelog.jsonl | tr -d ' ')"
-```
-
-### With `--limit N`
-
-```bash
-tail -n $N .director-mode/changelog.jsonl | # same formatting as above
-```
-
-### With `--all`
-
-```bash
-cat .director-mode/changelog.jsonl | # same formatting as above
-```
-
-### With `--type TYPE`
-
-Filter by event type prefix:
-
-```bash
-# --type test → test_run, test_pass, test_fail
-# --type file → file_created, file_modified, file_deleted
-# --type commit → commit
-# --type iteration → iteration_start, iteration_end
-# --type ac → ac_completed
-# --type error → error
-
-grep "\"event_type\":\"${TYPE}" .director-mode/changelog.jsonl | # format
-```
-
-### With `--iteration N`
-
-```bash
-grep "\"iteration\":$N" .director-mode/changelog.jsonl | # format
+total=$(wc -l < "$CHANGELOG" | tr -d ' ')
+echo "Total events: $total"
+echo "Location: $CHANGELOG"
 ```
 
 ### With `--summary`
@@ -114,65 +117,98 @@ grep "\"iteration\":$N" .director-mode/changelog.jsonl | # format
 echo "=== Changelog Summary ==="
 echo ""
 
+# Session info
+if [ -f ".auto-loop/checkpoint.json" ]; then
+    status=$(jq -r '.status' .auto-loop/checkpoint.json 2>/dev/null || echo "unknown")
+    iteration=$(jq -r '.current_iteration' .auto-loop/checkpoint.json 2>/dev/null || echo "0")
+    echo "Session status: $status"
+    echo "Current iteration: $iteration"
+    echo ""
+fi
+
 # Total events
-total=$(wc -l < .director-mode/changelog.jsonl | tr -d ' ')
+total=$(wc -l < "$CHANGELOG" | tr -d ' ')
 echo "Total events: $total"
 
 # Events by type
 echo ""
 echo "Events by type:"
-cat .director-mode/changelog.jsonl | jq -r '.event_type' | sort | uniq -c | sort -rn
+jq -r '.event_type' "$CHANGELOG" | sort | uniq -c | sort -rn
 
 # Files changed
 echo ""
 echo "Files touched:"
-cat .director-mode/changelog.jsonl | jq -r '.files[]? // empty' | sort | uniq
+jq -r '.files[]? // empty' "$CHANGELOG" | sort | uniq | head -20
 
-# Iterations
+# Test results
 echo ""
-echo "Iterations completed:"
-grep '"event_type":"iteration_end"' .director-mode/changelog.jsonl | wc -l | tr -d ' '
+echo "Test results:"
+echo "  Passes: $(grep -c '"event_type":"test_pass"' "$CHANGELOG" || echo 0)"
+echo "  Fails:  $(grep -c '"event_type":"test_fail"' "$CHANGELOG" || echo 0)"
 
-# AC completed
+# Commits
 echo ""
-echo "Acceptance criteria completed:"
-grep '"event_type":"ac_completed"' .director-mode/changelog.jsonl | jq -r '.summary'
+echo "Commits: $(grep -c '"event_type":"commit"' "$CHANGELOG" || echo 0)"
+
+# Archives
+archive_count=$(ls -1 .director-mode/changelog.*.jsonl 2>/dev/null | wc -l | tr -d ' ')
+echo ""
+echo "Archived changelogs: $archive_count"
 ```
 
 ### With `--clear`
 
 ```bash
-echo "This will clear the changelog. Are you sure? (y/n)"
-# If confirmed:
 rm -f .director-mode/changelog.jsonl
 echo "Changelog cleared."
+```
+
+### With `--archive`
+
+```bash
+source .claude/hooks/changelog-logger.sh 2>/dev/null
+archive_changelog
+```
+
+### With `--list-archives`
+
+```bash
+echo "=== Archived Changelogs ==="
+echo ""
+ls -lh .director-mode/changelog.*.jsonl 2>/dev/null | while read line; do
+    echo "$line"
+done || echo "No archives found."
+
+echo ""
+echo "To view an archive:"
+echo "  cat .director-mode/changelog.TIMESTAMP.jsonl | jq '.'"
 ```
 
 ### With `--export FILENAME`
 
 ```bash
-cat .director-mode/changelog.jsonl | jq -s '.' > "$FILENAME"
-echo "Exported $(wc -l < .director-mode/changelog.jsonl | tr -d ' ') events to $FILENAME"
+jq -s '.' "$CHANGELOG" > "$FILENAME"
+echo "Exported $(wc -l < "$CHANGELOG" | tr -d ' ') events to $FILENAME"
 ```
 
 ---
 
-## Output Format
+## Output Formats
 
 ### Default View
 
 ```
 === Recent Development Activity ===
 
-[10:30:00] #3 file_modified: Updated Login.tsx with validation
-[10:28:00] #3 test_fail: Expected validation error test
-[10:25:00] #3 iteration_start: Starting iteration 3 - Error handling
-[10:20:00] #2 ac_completed: AC #2 complete: JWT token generation
-[10:18:00] #2 commit: feat(auth): add JWT token service
-...
+[10:30:00] #3 file_modified: file_modified: Login.tsx
+[10:28:00] #3 test_fail: 1 tests failing
+[10:25:00] #2 test_pass: 3 tests passing
+[10:20:00] #2 commit: feat(auth): add JWT service
+[10:15:00] #2 file_created: file_created: auth.ts
 
 ---
 Total events: 45
+Location: .director-mode/changelog.jsonl
 ```
 
 ### Summary View
@@ -180,45 +216,50 @@ Total events: 45
 ```
 === Changelog Summary ===
 
+Session status: in_progress
+Current iteration: 3
+
 Total events: 45
 
 Events by type:
-  12 file_modified
-   8 test_run
-   6 test_pass
-   5 iteration_start
-   5 iteration_end
-   4 commit
-   3 ac_completed
-   2 file_created
+  15 file_modified
+  12 test_pass
+   8 file_created
+   5 test_fail
+   5 commit
 
 Files touched:
   src/components/Login.tsx
   src/components/Login.test.tsx
   src/services/auth.ts
-  src/services/auth.test.ts
 
-Iterations completed: 5
+Test results:
+  Passes: 12
+  Fails: 5
 
-Acceptance criteria completed:
-  AC #1 complete: Login form
-  AC #2 complete: JWT token generation
-  AC #3 complete: Error handling
+Commits: 5
+
+Archived changelogs: 2
 ```
 
 ---
 
-## Integration with Subagents
+## Integration with Auto-Loop
 
-When reviewing code or debugging, agents can reference the changelog:
+The changelog works seamlessly with `/auto-loop`:
 
-```markdown
-Before analysis, I checked the changelog:
-- Last 3 iterations focused on authentication
-- Login.tsx was modified 4 times
-- 2 test failures were resolved in iteration #2
+1. **Start**: Session start is logged
+2. **During**: All file changes, tests, commits auto-logged
+3. **Resume**: Changelog provides context for what happened before interruption
+4. **Complete**: Full history available for review
 
-Based on this context...
+```bash
+# Before resuming, check what happened
+/changelog --summary
+/changelog --type test
+
+# Then resume
+/auto-loop --resume
 ```
 
 ---
@@ -227,5 +268,5 @@ Based on this context...
 
 1. Run `/changelog --summary` before `/auto-loop --resume` to understand session state
 2. Use `/changelog --type error` to quickly find issues
-3. Export changelog before clearing for historical reference
-4. The changelog persists across sessions in `.director-mode/`
+3. Archive before starting new major task: `/changelog --archive`
+4. Export for sharing: `/changelog --export debug-session.json`

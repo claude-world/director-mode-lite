@@ -1,5 +1,44 @@
 {
   "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": {
+          "tool_name": "Write"
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/log-file-change.sh"
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "tool_name": "Edit"
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/log-file-change.sh"
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "tool_name": "Bash"
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/log-test-result.sh"
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/log-commit.sh"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

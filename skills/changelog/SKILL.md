@@ -6,21 +6,158 @@ Runtime observability changelog for tracking all changes during development sess
 
 ## Overview
 
-This skill provides a structured changelog system that:
-- Records all significant events during development
+This skill provides an **automated** changelog system that:
+- **Automatically** records file changes via PostToolUse hooks
+- **Automatically** logs test results when tests are run
+- **Automatically** records git commits
+- **Automatically** rotates when exceeding 500 lines
 - Enables subagents to understand context from previous actions
 - Supports session recovery and debugging
-- Provides observability into the development process
 
 ---
 
-## Changelog Location
+## Architecture
 
 ```
-.director-mode/changelog.jsonl
+┌─────────────────────────────────────────────────────────────────┐
+│                    Observability System                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐       │
+│  │ Write/Edit  │     │    Bash     │     │    Bash     │       │
+│  │    Tool     │     │   (test)    │     │  (commit)   │       │
+│  └──────┬──────┘     └──────┬──────┘     └──────┬──────┘       │
+│         │                   │                   │               │
+│         ▼                   ▼                   ▼               │
+│  ┌─────────────────────────────────────────────────────┐       │
+│  │              PostToolUse Hooks                       │       │
+│  │  log-file-change.sh  log-test-result.sh  log-commit │       │
+│  └─────────────────────────┬───────────────────────────┘       │
+│                            │                                    │
+│                            ▼                                    │
+│  ┌─────────────────────────────────────────────────────┐       │
+│  │           changelog-logger.sh                        │       │
+│  │  • log_event()      • rotate_if_needed()            │       │
+│  │  • archive_changelog()  • clear_changelog()         │       │
+│  └─────────────────────────┬───────────────────────────┘       │
+│                            │                                    │
+│                            ▼                                    │
+│  ┌─────────────────────────────────────────────────────┐       │
+│  │         .director-mode/changelog.jsonl               │       │
+│  │                                                      │       │
+│  │  {"event_type":"file_created",...}                  │       │
+│  │  {"event_type":"test_pass",...}                     │       │
+│  │  {"event_type":"commit",...}                        │       │
+│  └─────────────────────────────────────────────────────┘       │
+│                            │                                    │
+│              ┌─────────────┴─────────────┐                     │
+│              ▼                           ▼                     │
+│  ┌─────────────────┐         ┌─────────────────┐               │
+│  │  /changelog     │         │    Subagents    │               │
+│  │   command       │         │ code-reviewer   │               │
+│  │                 │         │ debugger        │               │
+│  └─────────────────┘         └─────────────────┘               │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-JSONL format (one JSON object per line) for efficient append and read operations.
+---
+
+## Relationship with Checkpoint
+
+| Aspect | Checkpoint | Changelog |
+|--------|------------|-----------|
+| Location | `.auto-loop/checkpoint.json` | `.director-mode/changelog.jsonl` |
+| Purpose | Current state snapshot | Historical event stream |
+| Question answered | "Where am I now?" | "How did I get here?" |
+| Used by | Stop Hook (continue/stop decision) | Subagents (context) |
+| Format | Single JSON object | JSONL (append-only) |
+| Persistence | Overwritten each iteration | Accumulated, then rotated |
+
+**They complement each other:**
+- **Checkpoint** = Save point for resume
+- **Changelog** = Audit trail for observability
+
+---
+
+## Automatic Logging via Hooks
+
+### Hook Configuration (`hooks/hooks.json`)
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": { "tool_name": "Write" },
+        "hooks": [{ "type": "command", "command": ".claude/hooks/log-file-change.sh" }]
+      },
+      {
+        "matcher": { "tool_name": "Edit" },
+        "hooks": [{ "type": "command", "command": ".claude/hooks/log-file-change.sh" }]
+      },
+      {
+        "matcher": { "tool_name": "Bash" },
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/log-test-result.sh" },
+          { "type": "command", "command": ".claude/hooks/log-commit.sh" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Hook Scripts
+
+| Script | Trigger | Events Logged |
+|--------|---------|---------------|
+| `log-file-change.sh` | Write, Edit | `file_created`, `file_modified` |
+| `log-test-result.sh` | Bash (test commands) | `test_pass`, `test_fail` |
+| `log-commit.sh` | Bash (git commit) | `commit` |
+
+---
+
+## Automatic Rotation
+
+**Prevents unbounded growth:**
+
+```bash
+MAX_LINES=500
+
+# When changelog exceeds 500 lines:
+# 1. Move current to changelog.YYYYMMDD_HHMMSS.jsonl
+# 2. Start fresh changelog.jsonl
+# 3. Log rotation event
+```
+
+**Result:**
+
+```
+.director-mode/
+├── changelog.jsonl                    ← Current (< 500 lines)
+├── changelog.20250113_103000.jsonl    ← Archived
+├── changelog.20250112_150000.jsonl    ← Archived
+└── changelog.20250111_090000.jsonl    ← Archived
+```
+
+---
+
+## Session Conflict Prevention
+
+**Only one auto-loop session per project:**
+
+```bash
+# When starting /auto-loop:
+if checkpoint exists AND status == "in_progress":
+    → Block with message:
+      "Found interrupted session at iteration #N"
+      "Use --resume or --force"
+```
+
+**Options:**
+- `/auto-loop --resume` → Continue with existing checkpoint + changelog
+- `/auto-loop --force "task"` → Archive old, start fresh
 
 ---
 
@@ -28,208 +165,172 @@ JSONL format (one JSON object per line) for efficient append and read operations
 
 ```json
 {
-  "id": "evt_001",
+  "id": "evt_1705142400_12345",
   "timestamp": "2025-01-13T10:30:00.000Z",
   "event_type": "file_modified",
-  "agent": "auto-loop",
+  "agent": "hook",
   "iteration": 3,
-  "summary": "Updated login component with form validation",
-  "details": {
-    "action": "edit",
-    "reason": "Implement email validation for AC #1"
-  },
-  "files": ["src/components/Login.tsx"],
-  "tags": ["feature", "auth"]
+  "summary": "file_modified: Login.tsx",
+  "files": ["src/components/Login.tsx"]
 }
 ```
 
 ### Event Types
 
-| Type | Description | When Used |
-|------|-------------|-----------|
-| `session_start` | New development session begins | `/auto-loop` start |
-| `session_end` | Session completes or stops | Loop completion |
-| `iteration_start` | TDD iteration begins | Each RED phase start |
-| `iteration_end` | TDD iteration completes | After COMMIT phase |
-| `file_created` | New file created | Write tool |
-| `file_modified` | File edited | Edit tool |
-| `file_deleted` | File removed | Delete operation |
-| `test_run` | Test execution | RED/GREEN/VALIDATE |
-| `test_pass` | Tests passing | GREEN phase success |
-| `test_fail` | Tests failing | RED phase expected |
-| `commit` | Git commit made | COMMIT phase |
-| `decision` | Choice point recorded | Architecture decisions |
-| `ac_completed` | Acceptance criteria done | AC verification |
-| `error` | Error occurred | Any error |
-| `agent_invoked` | Subagent called | Delegating to agent |
-| `user_input` | User provided input | User interaction |
-
----
-
-## Operations
-
-### 1. Initialize Changelog
-
-When starting a new session:
-
-```bash
-mkdir -p .director-mode
-
-# Write session start event
-cat >> .director-mode/changelog.jsonl << 'EOF'
-{"id":"evt_001","timestamp":"{{TIMESTAMP}}","event_type":"session_start","agent":"user","summary":"Started: {{REQUEST}}","details":{"request":"{{REQUEST}}","max_iterations":20}}
-EOF
-```
-
-### 2. Log Event
-
-Append a new event:
-
-```bash
-# Generate timestamp and ID
-TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
-EVENT_ID="evt_$(date +%s)"
-
-# Append event (single line JSON)
-echo '{"id":"'$EVENT_ID'","timestamp":"'$TIMESTAMP'","event_type":"file_modified","agent":"auto-loop","iteration":3,"summary":"Updated Login.tsx","files":["src/Login.tsx"]}' >> .director-mode/changelog.jsonl
-```
-
-### 3. Read Recent Events
-
-Get last N events:
-
-```bash
-# Last 10 events
-tail -n 10 .director-mode/changelog.jsonl
-
-# Last 5 events, formatted
-tail -n 5 .director-mode/changelog.jsonl | jq -s '.'
-```
-
-### 4. Query Events
-
-Filter by type or criteria:
-
-```bash
-# All test events
-grep '"event_type":"test_' .director-mode/changelog.jsonl
-
-# Events from iteration 3
-grep '"iteration":3' .director-mode/changelog.jsonl
-
-# All file changes
-grep -E '"event_type":"file_(created|modified|deleted)"' .director-mode/changelog.jsonl
-```
-
-### 5. Generate Summary
-
-Create a human-readable summary:
-
-```bash
-# Count events by type
-cat .director-mode/changelog.jsonl | jq -s 'group_by(.event_type) | map({type: .[0].event_type, count: length})'
-
-# List all changed files
-cat .director-mode/changelog.jsonl | jq -s '[.[].files // []] | flatten | unique'
-```
+| Type | Source | Description |
+|------|--------|-------------|
+| `file_created` | Hook (Write) | New file created |
+| `file_modified` | Hook (Edit) | File edited |
+| `test_pass` | Hook (Bash) | Tests passing |
+| `test_fail` | Hook (Bash) | Tests failing |
+| `commit` | Hook (Bash) | Git commit made |
+| `session_start` | auto-loop | Session begins |
+| `session_end` | auto-loop | Session completes |
+| `changelog_rotated` | System | Changelog was rotated |
 
 ---
 
 ## Subagent Integration
 
-When invoking a subagent, inject recent context:
+### code-reviewer
 
-```markdown
-## Recent Context
+Before review, checks changelog for:
+- What files were changed recently
+- What iteration we're on
+- Recent test results
 
-The following events occurred before your invocation:
+### debugger
 
-{{LAST_5_EVENTS}}
-
-Use this context to understand what has been done and what remains.
-```
-
-### Reading Changelog in Agent Prompts
-
-Before invoking `code-reviewer`, `debugger`, or other agents:
-
-1. Read last 5-10 relevant events
-2. Format as context block
-3. Include in agent prompt
-
-Example:
-
-```
-Recent activity:
-- [10:30] file_modified: Updated Login.tsx (validation logic)
-- [10:28] test_fail: LoginForm.test.tsx - expected validation error
-- [10:25] iteration_start: Iteration #3 - AC: Error handling
-```
+Before debugging, checks changelog for:
+- When errors first occurred
+- What files changed before errors
+- Pattern of test failures
 
 ---
 
-## Integration Points
-
-### With Auto-Loop
-
-The auto-loop command should log at these points:
-
-| Phase | Event Type | What to Log |
-|-------|------------|-------------|
-| Start | `session_start` | Request, AC list |
-| RED | `iteration_start`, `test_fail` | Test name, expected failure |
-| GREEN | `file_modified`, `test_pass` | Files changed, test results |
-| REFACTOR | `file_modified` | Refactoring details |
-| DEBUG | `agent_invoked`, `error` | Debugger findings |
-| VALIDATE | `test_run` | Full test results |
-| COMMIT | `commit` | Commit message, SHA |
-| DECIDE | `ac_completed` or `iteration_end` | AC status |
-
-### With Agents
-
-Each agent should:
-
-1. **Read** recent changelog before analysis
-2. **Write** their findings/actions to changelog
-3. **Reference** changelog entries in their output
-
----
-
-## Best Practices
-
-1. **Keep summaries concise** - One line, under 80 chars
-2. **Include file paths** - Always list affected files
-3. **Tag appropriately** - Use tags for filtering
-4. **Log decisions** - Record why, not just what
-5. **Don't over-log** - Focus on significant events
-
----
-
-## Example Session
-
-```jsonl
-{"id":"evt_001","timestamp":"2025-01-13T10:00:00.000Z","event_type":"session_start","agent":"user","summary":"Started: Implement user login","details":{"request":"Implement user login with email/password","ac":["Login form","Validation","JWT token"]}}
-{"id":"evt_002","timestamp":"2025-01-13T10:01:00.000Z","event_type":"iteration_start","agent":"auto-loop","iteration":1,"summary":"RED: Login form test"}
-{"id":"evt_003","timestamp":"2025-01-13T10:02:00.000Z","event_type":"file_created","agent":"auto-loop","iteration":1,"summary":"Created Login.test.tsx","files":["src/components/Login.test.tsx"]}
-{"id":"evt_004","timestamp":"2025-01-13T10:02:30.000Z","event_type":"test_fail","agent":"auto-loop","iteration":1,"summary":"Test fails as expected: Login component not found","details":{"test":"Login.test.tsx","status":"fail"}}
-{"id":"evt_005","timestamp":"2025-01-13T10:05:00.000Z","event_type":"file_created","agent":"auto-loop","iteration":1,"summary":"Created Login.tsx","files":["src/components/Login.tsx"]}
-{"id":"evt_006","timestamp":"2025-01-13T10:06:00.000Z","event_type":"test_pass","agent":"auto-loop","iteration":1,"summary":"All tests passing","details":{"passed":1,"failed":0}}
-{"id":"evt_007","timestamp":"2025-01-13T10:07:00.000Z","event_type":"commit","agent":"auto-loop","iteration":1,"summary":"feat(auth): add Login component","details":{"sha":"abc1234"}}
-{"id":"evt_008","timestamp":"2025-01-13T10:07:30.000Z","event_type":"ac_completed","agent":"auto-loop","iteration":1,"summary":"AC #1 complete: Login form","details":{"ac_id":1}}
-```
-
----
-
-## Clear Changelog
-
-When starting fresh:
+## Core Functions (`changelog-logger.sh`)
 
 ```bash
-rm -f .director-mode/changelog.jsonl
+# Log an event
+log_event "file_created" "Created Login.tsx" "hook" '["src/Login.tsx"]'
+
+# Archive current changelog
+archive_changelog
+
+# Clear changelog
+clear_changelog
+
+# List archives
+list_archives
 ```
 
-Or archive:
+---
+
+## Querying
+
+### Via Command
 
 ```bash
-mv .director-mode/changelog.jsonl .director-mode/changelog.$(date +%Y%m%d_%H%M%S).jsonl
+/changelog                  # Recent 10 events
+/changelog --summary        # Statistics
+/changelog --type test      # Filter by type
+/changelog --list-archives  # Show old changelogs
+/changelog --export log.json
+```
+
+### Via Bash
+
+```bash
+# Last 5 events
+tail -n 5 .director-mode/changelog.jsonl | jq '.'
+
+# All file changes
+grep '"event_type":"file_' .director-mode/changelog.jsonl
+
+# Count by type
+jq -r '.event_type' .director-mode/changelog.jsonl | sort | uniq -c
+```
+
+---
+
+## Example Session Flow
+
+```
+1. /auto-loop "Implement login"
+   → Check: No existing session
+   → Archive old changelog (if > 100 lines)
+   → Create checkpoint (status: in_progress)
+   → Log: session_start
+
+2. TDD Iteration #1
+   → Write test file
+   → Hook logs: file_created
+   → Run tests (fail)
+   → Hook logs: test_fail
+   → Write implementation
+   → Hook logs: file_created
+   → Run tests (pass)
+   → Hook logs: test_pass
+   → Commit
+   → Hook logs: commit
+
+3. Session interrupted (crash/exit)
+   → Checkpoint remains: iteration=1, status=in_progress
+   → Changelog has full history
+
+4. /auto-loop "something"
+   → Check: Found in_progress session!
+   → Block: "Use --resume or --force"
+
+5. /auto-loop --resume
+   → Read checkpoint: iteration=1
+   → Read changelog: understand context
+   → Continue from iteration #2
+```
+
+---
+
+## Installation
+
+Hooks are installed with Director Mode Lite:
+
+```bash
+# After install, verify:
+ls .claude/hooks/
+# → changelog-logger.sh
+# → log-file-change.sh
+# → log-test-result.sh
+# → log-commit.sh
+
+cat .claude/settings.local.json | jq '.hooks'
+```
+
+---
+
+## Troubleshooting
+
+### Events not logged
+
+1. Check hooks exist: `ls .claude/hooks/*.sh`
+2. Check hooks.json: `cat hooks/hooks.json`
+3. Check scripts are executable: `chmod +x .claude/hooks/*.sh`
+
+### Stale session blocking
+
+```bash
+# Check what's there
+cat .auto-loop/checkpoint.json | jq '.status'
+
+# Force restart
+/auto-loop --force "New task"
+```
+
+### Changelog too large
+
+```bash
+# Manual archive
+/changelog --archive
+
+# Or clear
+/changelog --clear
 ```

@@ -9,11 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Observability Changelog System** - Runtime changelog for tracking all development session events
+  - **Automatic logging via PostToolUse Hooks** - no manual logging required
   - New `/changelog` command for querying session activity
   - New `changelog` skill with JSONL-based event logging
   - Subagent context injection - agents now read recent changelog for context
-  - Event types: session_start, iteration_start/end, file changes, test results, commits, decisions
+  - Event types: file_created, file_modified, test_pass, test_fail, commit
+  - Automatic rotation when exceeding 500 lines
+  - Archive management (`--archive`, `--list-archives`)
   - Support for filtering, export, and summary statistics
+- **Session Conflict Prevention** - Detects interrupted sessions and prompts user
+  - `--resume` flag to continue interrupted session
+  - `--force` flag to clear old state and start fresh
+  - No more stale lock file issues
 - Professional README with responsive SVG banner
 - Light/dark mode support for banner images
 - Comparison table (Traditional vs Director Mode)
