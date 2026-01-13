@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Observability Changelog System** - Runtime changelog for tracking all development session events
+  - New `/changelog` command for querying session activity
+  - New `changelog` skill with JSONL-based event logging
+  - Subagent context injection - agents now read recent changelog for context
+  - Event types: session_start, iteration_start/end, file changes, test results, commits, decisions
+  - Support for filtering, export, and summary statistics
 - Professional README with responsive SVG banner
 - Light/dark mode support for banner images
 - Comparison table (Traditional vs Director Mode)
@@ -17,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation section in README
 
 ### Changed
+- `/auto-loop` now logs all TDD phases to changelog for observability
+- `code-reviewer` agent now checks changelog for context before review
+- `debugger` agent now checks changelog for recent errors and file changes
 - Restructured README with HTML tables for better visual hierarchy
 - Improved Quick Start section with collapsible details
 - Added navigation links to Examples and Documentation

@@ -16,7 +16,35 @@ Automatically activate when:
 - User mentions "bug", "error", "not working", "debug"
 - Unexpected behavior is observed
 
+## Context Awareness
+
+Before starting debug session, check for session context:
+
+```bash
+# Read recent changelog events if available
+if [ -f .director-mode/changelog.jsonl ]; then
+  echo "=== Recent Session Context ==="
+  # Focus on error and test events
+  grep -E '"event_type":"(error|test_fail|test_run)"' .director-mode/changelog.jsonl | tail -n 5 | jq -r '"[\(.timestamp | split("T")[1] | split(".")[0])] #\(.iteration // "-") \(.event_type): \(.summary)"'
+  echo ""
+  echo "Recent file changes:"
+  grep '"event_type":"file_' .director-mode/changelog.jsonl | tail -n 3 | jq -r '.files[]?'
+  echo "==="
+fi
+```
+
+Use this context to understand:
+- When errors first occurred
+- What files were changed before the error
+- Recent test failures and their patterns
+- The current iteration and acceptance criteria
+
 ## Debugging Methodology
+
+### Phase 0: Check Context
+1. Review changelog for recent errors and test failures
+2. Identify files changed just before the error
+3. Check if this is a recurring issue
 
 ### Phase 1: Capture Information
 1. Collect the complete error message and stack trace
