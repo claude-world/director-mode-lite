@@ -123,24 +123,27 @@ for deprecated in "${DEPRECATED_HOOKS[@]}"; do
     fi
 done
 
-# Handle hooks.json merging
-echo "Configuring hooks.json..."
-if [[ -f "$TARGET_DIR/.claude/hooks.json" ]]; then
-    echo "  Detected existing hooks.json, attempting to merge..."
-    
-    # Use Python to merge hooks.json (handles both Stop and PostToolUse)
-    # Pass paths via environment variables to avoid shell injection
-    if TARGET_DIR="$TARGET_DIR" SCRIPT_DIR="$SCRIPT_DIR" python3 -c "
+# Handle settings.local.json merging (Claude Code reads hooks from here)
+# IMPORTANT: This preserves all existing user settings and only adds/merges hooks
+echo "Configuring hooks in settings.local.json..."
+
+# Use Python to safely merge hooks into existing settings
+if TARGET_DIR="$TARGET_DIR" SCRIPT_DIR="$SCRIPT_DIR" python3 -c "
 import json
-import sys
 import os
 
-hooks_file = os.path.join(os.environ['TARGET_DIR'], '.claude', 'hooks.json')
-source_file = os.path.join(os.environ['SCRIPT_DIR'], 'hooks', 'hooks.json')
+settings_file = os.path.join(os.environ['TARGET_DIR'], '.claude', 'settings.local.json')
+source_file = os.path.join(os.environ['SCRIPT_DIR'], 'hooks', 'settings-hooks.json')
 
-# Read existing hooks
-with open(hooks_file, 'r') as f:
-    existing = json.load(f)
+# Read existing settings (or create empty)
+existing = {}
+if os.path.exists(settings_file):
+    try:
+        with open(settings_file, 'r') as f:
+            existing = json.load(f)
+        print('  Found existing settings.local.json')
+    except:
+        existing = {}
 
 # Read source hooks
 with open(source_file, 'r') as f:
@@ -168,7 +171,7 @@ if 'PostToolUse' in source.get('hooks', {}):
         for hook_group in existing['hooks']['PostToolUse']:
             for hook in hook_group.get('hooks', []):
                 existing_commands.add(hook.get('command', ''))
-        
+
         added = 0
         for hook_group in source['hooks']['PostToolUse']:
             for hook in hook_group.get('hooks', []):
@@ -176,27 +179,22 @@ if 'PostToolUse' in source.get('hooks', {}):
                     existing['hooks']['PostToolUse'].append(hook_group)
                     added += 1
                     break
-        
+
         if added > 0:
             print(f'  Merged: {added} PostToolUse hook(s)')
         else:
             print('  Skipped: PostToolUse hooks (already exists)')
 
-# Write merged hooks
-with open(hooks_file, 'w') as f:
+# Write merged settings (preserves all other user settings)
+with open(settings_file, 'w') as f:
     json.dump(existing, f, indent=2)
 
-print('  hooks.json merge complete')
+print('  settings.local.json configured')
 " 2>/dev/null; then
-        :  # Success, Python already printed status
-    else
-        echo "  Warning: Could not auto-merge hooks.json"
-        echo "  Please manually merge from: $SCRIPT_DIR/hooks/hooks.json"
-    fi
+    :  # Success, Python already printed status
 else
-    # No existing hooks.json, copy directly
-    cp "$SCRIPT_DIR/hooks/hooks.json" "$TARGET_DIR/.claude/"
-    echo "  Installed: hooks.json (fresh)"
+    echo "  Warning: Could not auto-configure hooks"
+    echo "  Please manually add hooks from: $SCRIPT_DIR/hooks/settings-hooks.json"
 fi
 
 # Copy CLAUDE.md template (if target doesn't have one)
