@@ -60,24 +60,24 @@ The system embodies three core principles:
 The Self-Evolving Loop implements a **meta-cognitive architecture** inspired by human problem-solving:
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     Meta-Cognitive Layers                            │
-├─────────────────────────────────────────────────────────────────────┤
-│  Layer 3: Meta-Learning                                              │
-│  ├── Pattern recognition across sessions                             │
-│  ├── Strategy optimization                                           │
-│  └── Tool evolution decisions                                        │
-├─────────────────────────────────────────────────────────────────────┤
-│  Layer 2: Planning & Control                                         │
-│  ├── Phase orchestration                                             │
-│  ├── Decision making (SHIP/FIX/EVOLVE/ABORT)                        │
-│  └── Resource allocation                                             │
-├─────────────────────────────────────────────────────────────────────┤
-│  Layer 1: Execution                                                  │
-│  ├── TDD implementation (Red-Green-Refactor)                        │
-│  ├── Code generation                                                 │
-│  └── Validation                                                      │
-└─────────────────────────────────────────────────────────────────────┘
++---------------------------------------------------------------------+
+|                     Meta-Cognitive Layers                            |
++---------------------------------------------------------------------+
+|  Layer 3: Meta-Learning                                              |
+|  +-- Pattern recognition across sessions                             |
+|  +-- Strategy optimization                                           |
+|  +-- Tool evolution decisions                                        |
++---------------------------------------------------------------------+
+|  Layer 2: Planning & Control                                         |
+|  +-- Phase orchestration                                             |
+|  +-- Decision making (SHIP/FIX/EVOLVE/ABORT)                        |
+|  +-- Resource allocation                                             |
++---------------------------------------------------------------------+
+|  Layer 1: Execution                                                  |
+|  +-- TDD implementation (Red-Green-Refactor)                        |
+|  +-- Code generation                                                 |
+|  +-- Validation                                                      |
++---------------------------------------------------------------------+
 ```
 
 ### 2. Reinforcement Learning Principles
@@ -113,16 +113,16 @@ The memory system implements a simplified knowledge graph:
 
 ```
 Entities:
-├── Tasks (with type classification)
-├── Tools (agents, skills)
-├── Patterns (success/failure patterns)
-└── Outcomes (execution results)
++-- Tasks (with type classification)
++-- Tools (agents, skills)
++-- Patterns (success/failure patterns)
++-- Outcomes (execution results)
 
 Relations:
-├── task HAS_TYPE pattern
-├── tool USED_FOR task
-├── pattern CORRELATES_WITH outcome
-└── tool CO_OCCURS_WITH tool
++-- task HAS_TYPE pattern
++-- tool USED_FOR task
++-- pattern CORRELATES_WITH outcome
++-- tool CO_OCCURS_WITH tool
 ```
 
 ---
@@ -132,103 +132,103 @@ Relations:
 ### System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         SELF-EVOLVING LOOP v2.0                              │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌───────────────────┐                                                      │
-│  │   User Request    │                                                      │
-│  │  "/evolving-loop" │                                                      │
-│  └─────────┬─────────┘                                                      │
-│            │                                                                 │
-│            ▼                                                                 │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                    ORCHESTRATOR (Fork Context)                        │    │
-│  │  ┌─────────────────────────────────────────────────────────────┐     │    │
-│  │  │ Pre-Phases                                                   │     │    │
-│  │  │ ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │     │    │
-│  │  │ │Phase -2      │  │Phase -1A     │  │Phase -1C     │       │     │    │
-│  │  │ │CONTEXT CHECK │─▶│PATTERN LOOKUP│  │EVOLUTION     │       │     │    │
-│  │  │ │(pressure)    │  │(memory read) │  │(on SHIP)     │       │     │    │
-│  │  │ └──────────────┘  └──────────────┘  └──────────────┘       │     │    │
-│  │  └─────────────────────────────────────────────────────────────┘     │    │
-│  │                                                                       │    │
-│  │  ┌─────────────────────────────────────────────────────────────┐     │    │
-│  │  │ Main Loop (each phase in fork context)                       │     │    │
-│  │  │                                                               │     │    │
-│  │  │  ┌────────┐   ┌────────┐   ┌────────┐   ┌────────┐          │     │    │
-│  │  │  │ANALYZE │──▶│GENERATE│──▶│EXECUTE │──▶│VALIDATE│          │     │    │
-│  │  │  │Phase 1 │   │Phase 2 │   │Phase 3 │   │Phase 4 │          │     │    │
-│  │  │  └────────┘   └────────┘   └────────┘   └───┬────┘          │     │    │
-│  │  │       ▲                                     │                │     │    │
-│  │  │       │       ┌────────┐   ┌────────┐   ┌──▼─────┐          │     │    │
-│  │  │       │       │EVOLVE  │◀──│ LEARN  │◀──│ DECIDE │          │     │    │
-│  │  │       └───────│Phase 7 │   │Phase 6 │   │Phase 5 │          │     │    │
-│  │  │               └────────┘   └────────┘   └────────┘          │     │    │
-│  │  │                                              │                │     │    │
-│  │  │                                    SHIP ─────┼──▶ Phase 8     │     │    │
-│  │  └─────────────────────────────────────────────────────────────┘     │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                       PERSISTENCE LAYER                               │    │
-│  │  ┌───────────────────┐        ┌───────────────────┐                  │    │
-│  │  │ Session State      │        │ Persistent Memory  │                  │    │
-│  │  │ .self-evolving-   │        │ .claude/memory/    │                  │    │
-│  │  │  loop/            │        │  meta-engineering/ │                  │    │
-│  │  │ ├── state/        │        │ ├── patterns.json  │                  │    │
-│  │  │ ├── reports/      │        │ ├── tool-usage.json│                  │    │
-│  │  │ ├── generated-    │        │ ├── evolution.json │                  │    │
-│  │  │ │   skills/       │        │ └── feedback.json  │                  │    │
-│  │  │ └── history/      │        │                    │                  │    │
-│  │  └───────────────────┘        └───────────────────┘                  │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------------------+
+|                         SELF-EVOLVING LOOP v2.0                              |
++-----------------------------------------------------------------------------+
+|                                                                              |
+|  +-------------------+                                                       |
+|  |   User Request    |                                                       |
+|  |  "/evolving-loop" |                                                       |
+|  +---------+---------+                                                       |
+|            |                                                                 |
+|            v                                                                 |
+|  +-----------------------------------------------------------------------+   |
+|  |                    ORCHESTRATOR (Fork Context)                         |   |
+|  |  +---------------------------------------------------------------+    |   |
+|  |  | Pre-Phases                                                     |    |   |
+|  |  | +--------------+  +--------------+  +--------------+          |    |   |
+|  |  | |Phase -2      |  |Phase -1A     |  |Phase -1C     |          |    |   |
+|  |  | |CONTEXT CHECK |->|PATTERN LOOKUP|  |EVOLUTION     |          |    |   |
+|  |  | |(pressure)    |  |(memory read) |  |(on SHIP)     |          |    |   |
+|  |  | +--------------+  +--------------+  +--------------+          |    |   |
+|  |  +---------------------------------------------------------------+    |   |
+|  |                                                                        |   |
+|  |  +---------------------------------------------------------------+    |   |
+|  |  | Main Loop (each phase in fork context)                         |    |   |
+|  |  |                                                                 |    |   |
+|  |  |  +--------+   +--------+   +--------+   +--------+             |    |   |
+|  |  |  |ANALYZE |-->|GENERATE|-->|EXECUTE |-->|VALIDATE|             |    |   |
+|  |  |  |Phase 1 |   |Phase 2 |   |Phase 3 |   |Phase 4 |             |    |   |
+|  |  |  +--------+   +--------+   +--------+   +---+----+             |    |   |
+|  |  |       ^                                     |                  |    |   |
+|  |  |       |       +--------+   +--------+   +--v-----+             |    |   |
+|  |  |       |       |EVOLVE  |<--|LEARN   |<--|DECIDE  |             |    |   |
+|  |  |       +-------|Phase 7 |   |Phase 6 |   |Phase 5 |             |    |   |
+|  |  |               +--------+   +--------+   +--------+             |    |   |
+|  |  |                                              |                 |    |   |
+|  |  |                                    SHIP -----+--> Phase 8      |    |   |
+|  |  +---------------------------------------------------------------+    |   |
+|  +-----------------------------------------------------------------------+   |
+|                                                                              |
+|  +-----------------------------------------------------------------------+   |
+|  |                       PERSISTENCE LAYER                                |   |
+|  |  +-------------------+        +-------------------+                    |   |
+|  |  | Session State      |        | Persistent Memory  |                    |   |
+|  |  | .self-evolving-   |        | .claude/memory/    |                    |   |
+|  |  |  loop/            |        |  meta-engineering/ |                    |   |
+|  |  | +-- state/        |        | +-- patterns.json  |                    |   |
+|  |  | +-- reports/      |        | +-- tool-usage.json|                    |   |
+|  |  | +-- generated-    |        | +-- evolution.json |                    |   |
+|  |  | |   skills/       |        | +-- feedback.json  |                    |   |
+|  |  | +-- history/      |        |                    |                    |   |
+|  |  +-------------------+        +-------------------+                    |   |
+|  +-----------------------------------------------------------------------+   |
++-----------------------------------------------------------------------------+
 ```
 
 ### Context Flow
 
 ```
 Main Context (User Conversation)
-     │
-     │ delegates (returns only summaries)
-     ▼
+     |
+     | delegates (returns only summaries)
+     v
 Orchestrator Context (Fork)
-     │
-     │ spawns (each disposable)
-     ├─────────────────────────────────────┐
-     ▼                                     ▼
+     |
+     | spawns (each disposable)
+     +-------------------------------------+
+     v                                     v
 Phase Contexts (Fork)              Memory System (Persistent)
-├── ANALYZE → analysis.json        ├── patterns.json
-├── GENERATE → skills/*.md         ├── tool-usage.json
-├── EXECUTE → codebase             ├── evolution.json
-├── VALIDATE → validation.json     └── feedback.json
-├── DECIDE → decision.json
-├── LEARN → learning.json
-└── EVOLVE → evolved skills
++-- ANALYZE -> analysis.json       +-- patterns.json
++-- GENERATE -> skills/*.md        +-- tool-usage.json
++-- EXECUTE -> codebase            +-- evolution.json
++-- VALIDATE -> validation.json    +-- feedback.json
++-- DECIDE -> decision.json
++-- LEARN -> learning.json
++-- EVOLVE -> evolved skills
 ```
 
 ### Data Flow
 
 ```
-Request → ANALYZE → Analysis Report
-                          ↓
-              GENERATE → Executor, Validator, Fixer Skills
-                          ↓
-              EXECUTE → Code Changes + Test Results
-                          ↓
-              VALIDATE → Validation Score (0-100)
-                          ↓
-                DECIDE → Decision: SHIP | FIX | EVOLVE | ABORT
-                          ↓
-         ┌────────────────┼────────────────┐
-         ↓                ↓                ↓
+Request -> ANALYZE -> Analysis Report
+                          |
+              GENERATE -> Executor, Validator, Fixer Skills
+                          |
+              EXECUTE -> Code Changes + Test Results
+                          |
+              VALIDATE -> Validation Score (0-100)
+                          |
+                DECIDE -> Decision: SHIP | FIX | EVOLVE | ABORT
+                          |
+         +----------------+----------------+
+         v                v                v
        SHIP           FIX/EVOLVE       ABORT
-    (complete)          ↓              (stop)
+    (complete)          |              (stop)
                       LEARN
-                        ↓
+                        |
                       EVOLVE
-                        ↓
+                        |
                    (loop back)
 ```
 
@@ -337,18 +337,18 @@ allowed-tools: [Read, Write, Edit, Bash, Grep, Glob]
 
 **TDD Cycle**:
 ```
-┌─────────────────────────────────────────────┐
-│                TDD Iteration                 │
-├─────────────────────────────────────────────┤
-│  RED    │ Write failing test                │
-│         │ → assert login() returns token    │
-├─────────┼───────────────────────────────────┤
-│  GREEN  │ Write minimal passing code        │
-│         │ → implement basic login()         │
-├─────────┼───────────────────────────────────┤
-│ REFACTOR│ Improve without behavior change   │
-│         │ → extract JWT service             │
-└─────────┴───────────────────────────────────┘
++---------------------------------------------+
+|                TDD Iteration                 |
++---------------------------------------------+
+|  RED    | Write failing test                |
+|         | -> assert login() returns token   |
++---------+-----------------------------------+
+|  GREEN  | Write minimal passing code        |
+|         | -> implement basic login()        |
++---------+-----------------------------------+
+| REFACTOR| Improve without behavior change   |
+|         | -> extract JWT service            |
++---------+-----------------------------------+
 ```
 
 **Tool Usage Tracking**:
@@ -384,13 +384,13 @@ Score Ranges:
 **Decision Tree**:
 ```
 IF all AC complete AND score >= 90:
-    → SHIP
+    -> SHIP
 ELIF score >= 70:
-    → FIX (apply fixer, retry)
+    -> FIX (apply fixer, retry)
 ELIF score >= 50 AND iterations < max:
-    → EVOLVE (learn, improve skills)
+    -> EVOLVE (learn, improve skills)
 ELSE:
-    → ABORT
+    -> ABORT
 ```
 
 ### Phase 6: LEARN
@@ -435,7 +435,7 @@ ELSE:
 **Evolution Process**:
 1. Read learning.json for improvement suggestions
 2. Apply modifications to skill templates
-3. Generate new skill versions (v1 → v2)
+3. Generate new skill versions (v1 -> v2)
 4. Check lifecycle upgrade conditions
 
 **Lifecycle Upgrade**:
@@ -463,10 +463,10 @@ if usage_count >= 5 and success_rate >= 0.80:
 
 ```
 .claude/memory/meta-engineering/
-├── patterns.json       # Task patterns and recommendations
-├── tool-usage.json     # Tool usage statistics
-├── evolution.json      # Evolution history and predictions
-└── feedback.json       # User feedback collection
++-- patterns.json       # Task patterns and recommendations
++-- tool-usage.json     # Tool usage statistics
++-- evolution.json      # Evolution history and predictions
++-- feedback.json       # User feedback collection
 ```
 
 ### patterns.json Structure
@@ -625,21 +625,21 @@ Protections:
 Traditional approach leads to context bloat:
 
 ```
-User → "analyze" → 2000 tokens returned
-User → "generate" → 3000 tokens returned
-User → "execute" → 5000 tokens returned
+User -> "analyze" -> 2000 tokens returned
+User -> "generate" -> 3000 tokens returned
+User -> "execute" -> 5000 tokens returned
 ...
-Total: 15000+ tokens → COMPACT triggered → Information lost
+Total: 15000+ tokens -> COMPACT triggered -> Information lost
 ```
 
 ### The Solution: Context Isolation
 
 ```
-User → /evolving-loop "task"
-     → Orchestrator (fork) handles everything
-     → Returns: "Complete! 3 iterations, 8 files"
+User -> /evolving-loop "task"
+     -> Orchestrator (fork) handles everything
+     -> Returns: "Complete! 3 iterations, 8 files"
 
-Total: ~200 tokens → No compact needed
+Total: ~200 tokens -> No compact needed
 ```
 
 ### Context Budget Allocation
@@ -677,32 +677,32 @@ MAX_CONTEXT_ITEMS = 10
 
 ```
 .self-evolving-loop/
-├── state/
-│   ├── checkpoint.json      # Main state (essential only)
-│   ├── stop                  # Stop signal file
-│   └── last_cycle.txt        # Rate limiting
-├── reports/
-│   ├── context.json          # Context check result
-│   ├── patterns.json         # Pattern lookup result
-│   ├── analysis.json         # Full analysis
-│   ├── validation.json       # Full validation
-│   ├── decision.json         # Decision details
-│   ├── learning.json         # Learning insights
-│   ├── pre-execute-review.json
-│   └── post-execute-verify.json
-├── generated-skills/
-│   ├── executor-v1.md
-│   ├── validator-v1.md
-│   └── fixer-v1.md
-├── history/
-│   ├── events.jsonl
-│   └── skill-evolution.jsonl
-├── backups/
-│   └── backup-iter-N-TIMESTAMP/
-└── templates/
-    ├── executor-template.md
-    ├── validator-template.md
-    └── fixer-template.md
++-- state/
+|   +-- checkpoint.json      # Main state (essential only)
+|   +-- stop                  # Stop signal file
+|   +-- last_cycle.txt        # Rate limiting
++-- reports/
+|   +-- context.json          # Context check result
+|   +-- patterns.json         # Pattern lookup result
+|   +-- analysis.json         # Full analysis
+|   +-- validation.json       # Full validation
+|   +-- decision.json         # Decision details
+|   +-- learning.json         # Learning insights
+|   +-- pre-execute-review.json
+|   +-- post-execute-verify.json
++-- generated-skills/
+|   +-- executor-v1.md
+|   +-- validator-v1.md
+|   +-- fixer-v1.md
++-- history/
+|   +-- events.jsonl
+|   +-- skill-evolution.jsonl
++-- backups/
+|   +-- backup-iter-N-TIMESTAMP/
++-- templates/
+    +-- executor-template.md
+    +-- validator-template.md
+    +-- fixer-template.md
 ```
 
 ### Checkpoint Schema
