@@ -12,3 +12,6 @@ test-*.txt
 
 # OS files
 .DS_Store
+
+# Self-Evolving Loop working files
+.self-evolving-loop/
