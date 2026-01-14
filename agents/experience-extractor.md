@@ -40,6 +40,92 @@ Raw Data → Pattern Analysis → Root Cause → Improvement Suggestions → Ski
 
 ## Analysis Process
 
+### 0. Pre-Check: Data Availability
+
+**ALWAYS check for sufficient data before analysis:**
+
+```bash
+#!/bin/bash
+# data-availability-check.sh
+
+REPORTS_DIR=".self-evolving-loop/reports"
+HISTORY_DIR=".self-evolving-loop/history"
+DATA_CHECK_LOG=".self-evolving-loop/reports/data-availability.json"
+
+# Count available data sources
+validation_count=$(find "$REPORTS_DIR" -name "validation*.json" 2>/dev/null | wc -l | tr -d ' ')
+decision_count=$(wc -l < "$HISTORY_DIR/decision-log.jsonl" 2>/dev/null || echo "0")
+event_count=$(wc -l < ".director-mode/changelog.jsonl" 2>/dev/null || echo "0")
+
+# Minimum thresholds
+MIN_VALIDATIONS=1
+MIN_DECISIONS=1
+
+# Check sufficiency
+sufficient=true
+insufficient_reasons=()
+
+if [ "$validation_count" -lt "$MIN_VALIDATIONS" ]; then
+    sufficient=false
+    insufficient_reasons+=("validation files: $validation_count (need $MIN_VALIDATIONS)")
+fi
+
+if [ "$decision_count" -lt "$MIN_DECISIONS" ]; then
+    sufficient=false
+    insufficient_reasons+=("decision entries: $decision_count (need $MIN_DECISIONS)")
+fi
+
+# Log check results
+cat > "$DATA_CHECK_LOG" << EOF
+{
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "sufficient": $sufficient,
+  "counts": {
+    "validation_files": $validation_count,
+    "decision_entries": $decision_count,
+    "changelog_entries": $event_count
+  },
+  "insufficient_reasons": $(printf '%s\n' "${insufficient_reasons[@]}" | jq -R . | jq -s .)
+}
+EOF
+
+if [ "$sufficient" != "true" ]; then
+    echo "⚠️ INSUFFICIENT DATA for learning:"
+    for reason in "${insufficient_reasons[@]}"; do
+        echo "   - $reason"
+    done
+    echo ""
+    echo "Returning empty learning report."
+fi
+```
+
+### Empty Result Handling
+
+**When data is insufficient, return structured empty result:**
+
+```json
+{
+  "learning_version": "2.1",
+  "status": "insufficient_data",
+  "timestamp": "2026-01-14T12:00:00Z",
+  "data_available": {
+    "validation_files": 0,
+    "decision_entries": 0,
+    "changelog_entries": 0
+  },
+  "patterns_found": [],
+  "skill_adjustments": [],
+  "process_improvements": [],
+  "evidence_verified": false,
+  "notes": "Insufficient data for pattern extraction. Need at least 1 validation and 1 decision."
+}
+```
+
+**DO NOT:**
+- Guess patterns from assumptions
+- Generate improvements without evidence
+- Claim learning success with no data
+
 ### 1. Collect Failure Data
 
 ```bash

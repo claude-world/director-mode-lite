@@ -178,35 +178,90 @@ echo '{"timestamp":"...","decision":"...","score":85}' >> .self-evolving-loop/hi
 echo "EXECUTE" > .self-evolving-loop/state/phase.txt
 ```
 
-## ⚠️ MANDATORY: Evidence-Based Decisions
+## ⚠️ MANDATORY: Evidence-Based Decisions (Strict Mode)
 
 **CRITICAL**: Decisions MUST be based on verifiable evidence, NOT model judgment.
 
-### Pre-Decision Evidence Verification
+### Pre-Decision Evidence Gate (5-Point Verification)
 
 ```bash
-# BEFORE making any decision, verify evidence exists:
+#!/bin/bash
+# evidence-gate.sh - MUST PASS before any decision
+
 VALIDATION=".self-evolving-loop/reports/validation.json"
+TEST_OUTPUT=".self-evolving-loop/reports/test-output.txt"
+DIFF_FILE=".self-evolving-loop/reports/changes.diff"
+EVIDENCE_LOG=".self-evolving-loop/reports/evidence-log.json"
 
-# 1. Check validation has evidence source
-evidence_source=$(jq -r '.evidence_source // "none"' "$VALIDATION")
+GATE_PASSED=true
+GATE_FAILURES=()
+
+# 1. Check validation has evidence_source = "actual_execution"
+evidence_source=$(jq -r '.evidence_source // "none"' "$VALIDATION" 2>/dev/null)
 if [ "$evidence_source" != "actual_execution" ]; then
-    echo "❌ DECISION BLOCKED: Validation not from actual execution"
+    GATE_PASSED=false
+    GATE_FAILURES+=("evidence_source is '$evidence_source', not 'actual_execution'")
+fi
+
+# 2. Check test_exit_code is numeric (0 or 1), not "unknown"
+test_exit_code=$(jq -r '.test_exit_code // "unknown"' "$VALIDATION" 2>/dev/null)
+if ! [[ "$test_exit_code" =~ ^[0-9]+$ ]]; then
+    GATE_PASSED=false
+    GATE_FAILURES+=("test_exit_code is '$test_exit_code', must be numeric")
+fi
+
+# 3. Check test output file exists and has content
+if [ ! -f "$TEST_OUTPUT" ] || [ ! -s "$TEST_OUTPUT" ]; then
+    GATE_PASSED=false
+    GATE_FAILURES+=("test-output.txt missing or empty")
+fi
+
+# 4. Check test output has recognizable pass/fail pattern
+if [ -f "$TEST_OUTPUT" ]; then
+    # Look for common test framework patterns
+    if ! grep -qE "(PASS|FAIL|passed|failed|✓|✗|OK|ERROR)" "$TEST_OUTPUT"; then
+        GATE_PASSED=false
+        GATE_FAILURES+=("test output has no recognizable pass/fail patterns")
+    fi
+fi
+
+# 5. Check validation timestamp is recent (within 10 minutes)
+validation_ts=$(jq -r '.timestamp // "1970-01-01T00:00:00Z"' "$VALIDATION" 2>/dev/null)
+current_ts=$(date -u +%s)
+validation_epoch=$(date -d "$validation_ts" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$validation_ts" +%s 2>/dev/null || echo "0")
+age_seconds=$((current_ts - validation_epoch))
+if [ "$age_seconds" -gt 600 ]; then
+    GATE_PASSED=false
+    GATE_FAILURES+=("validation is stale (${age_seconds}s old, max 600s)")
+fi
+
+# Log evidence verification
+cat > "$EVIDENCE_LOG" << EOF
+{
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "gate_passed": $GATE_PASSED,
+  "checks": {
+    "evidence_source": "$evidence_source",
+    "test_exit_code": "$test_exit_code",
+    "test_output_exists": $([ -f "$TEST_OUTPUT" ] && echo "true" || echo "false"),
+    "validation_age_seconds": $age_seconds
+  },
+  "failures": $(printf '%s\n' "${GATE_FAILURES[@]}" | jq -R . | jq -s .)
+}
+EOF
+
+# BLOCK if gate failed
+if [ "$GATE_PASSED" != "true" ]; then
+    echo "❌ EVIDENCE GATE FAILED:"
+    for failure in "${GATE_FAILURES[@]}"; do
+        echo "   - $failure"
+    done
+    echo ""
+    echo "Decision BLOCKED. Fix evidence issues before proceeding."
     exit 1
 fi
 
-# 2. Check test output exists
-test_output=$(jq -r '.test_output_file // ""' "$VALIDATION")
-if [ -z "$test_output" ] || [ ! -f "$test_output" ]; then
-    echo "⚠️ WARNING: No test output file referenced"
-fi
-
-# 3. Verify score is from real tests
-test_exit_code=$(jq -r '.test_exit_code // "unknown"' "$VALIDATION")
-if [ "$test_exit_code" == "unknown" ]; then
-    echo "❌ DECISION BLOCKED: No actual test exit code"
-    exit 1
-fi
+echo "✅ Evidence gate passed (5/5 checks)"
 ```
 
 ### Decision Report Evidence Section
@@ -216,14 +271,24 @@ fi
 ```json
 {
   "decision": "SHIP|FIX|EVOLVE|ABORT",
-  "evidence_verified": true,
+  "evidence_gate": {
+    "passed": true,
+    "checks_passed": 5,
+    "checks_total": 5
+  },
   "evidence_summary": {
     "test_exit_code": 0,
-    "test_output_captured": true,
+    "test_pass_count": 15,
+    "test_fail_count": 0,
+    "test_output_lines": 127,
+    "test_output_hash": "a1b2c3d4",
     "validation_source": "actual_execution",
-    "files_actually_changed": 5
+    "validation_age_seconds": 45,
+    "diff_files_changed": 5,
+    "diff_lines_added": 120,
+    "diff_lines_removed": 30
   },
-  "reasoning": "Based on actual test results showing..."
+  "reasoning": "Based on test exit code 0 with 15/15 tests passing..."
 }
 ```
 
@@ -232,12 +297,15 @@ fi
 - "Looks like tests might be passing"
 - "Implementation seems correct"
 - "Validation appears to be successful"
+- Validation older than 10 minutes
+- test_exit_code = "unknown" or missing
+- No test-output.txt file
 
 ### ✅ REQUIRED Decision Basis
 
-- "Test exit code 0, all 15 tests pass"
-- "git diff shows 45 lines changed in 3 files"
-- "npm test output shows 0 failures"
+- "Test exit code 0, 15/15 tests pass (test-output.txt:127 lines)"
+- "git diff shows +120/-30 lines in 5 files (hash: a1b2c3d4)"
+- "Validation from actual_execution, 45 seconds ago"
 
 ## Guidelines
 

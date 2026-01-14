@@ -77,6 +77,154 @@ def apply_adjustment(skill_content, adjustment):
     return skill_content
 ```
 
+---
+
+## 📋 Merge Strategy (Conflict Resolution)
+
+**CRITICAL**: Define explicit rules for merging skill content to avoid duplicates and conflicts.
+
+### Merge Rules
+
+| Conflict Type | Resolution Strategy |
+|---------------|---------------------|
+| Duplicate section | Keep newer, archive older in `## Archived` |
+| Conflicting patterns | Keep higher success_rate pattern |
+| Duplicate examples | Keep unique examples, max 5 per section |
+| Conflicting instructions | Newer wins, log conflict |
+
+### Section Merge Algorithm
+
+```python
+MAX_EXAMPLES_PER_SECTION = 5
+MAX_PATTERNS_PER_SECTION = 10
+
+def merge_sections(existing: dict, new: dict) -> dict:
+    """
+    Merge new section content into existing skill.
+
+    Rules:
+    1. New content appends, doesn't blindly overwrite
+    2. Duplicates are detected and removed
+    3. Size limits are enforced
+    4. Conflicts are logged
+    """
+    merged = existing.copy()
+    conflicts = []
+
+    for section_name, new_content in new.items():
+        if section_name not in merged:
+            # New section - add directly
+            merged[section_name] = new_content
+        else:
+            # Existing section - merge carefully
+            existing_content = merged[section_name]
+
+            # Check for exact duplicate
+            if new_content == existing_content:
+                continue  # Skip duplicate
+
+            # Check for conflicting content
+            if is_conflicting(existing_content, new_content):
+                conflicts.append({
+                    "section": section_name,
+                    "existing": existing_content[:100],
+                    "new": new_content[:100],
+                    "resolution": "kept_new"
+                })
+                merged[section_name] = new_content  # New wins
+            else:
+                # Merge by appending
+                merged[section_name] = merge_content(existing_content, new_content)
+
+    # Enforce size limits
+    merged = enforce_limits(merged)
+
+    return merged, conflicts
+
+def merge_content(existing: str, new: str) -> str:
+    """
+    Merge content strings, avoiding duplicates.
+    """
+    existing_lines = set(existing.strip().split('\n'))
+    new_lines = new.strip().split('\n')
+
+    # Add only truly new lines
+    for line in new_lines:
+        if line not in existing_lines:
+            existing_lines.add(line)
+
+    return '\n'.join(sorted(existing_lines))
+
+def enforce_limits(sections: dict) -> dict:
+    """
+    Enforce size limits on merged sections.
+    """
+    for name, content in sections.items():
+        # Count examples (lines starting with - or *)
+        examples = [l for l in content.split('\n') if l.strip().startswith(('-', '*', '•'))]
+        if len(examples) > MAX_EXAMPLES_PER_SECTION:
+            # Keep only most recent examples
+            sections[name] = trim_examples(content, MAX_EXAMPLES_PER_SECTION)
+
+    return sections
+
+def is_conflicting(a: str, b: str) -> bool:
+    """
+    Check if two content strings are conflicting (contradictory).
+    """
+    # Simple heuristic: if they start differently, they conflict
+    a_first = a.strip().split('\n')[0] if a.strip() else ""
+    b_first = b.strip().split('\n')[0] if b.strip() else ""
+    return a_first != b_first and len(a_first) > 10 and len(b_first) > 10
+```
+
+### Merge Conflict Log
+
+All conflicts are logged for review:
+
+```json
+{
+  "merge_timestamp": "2026-01-14T12:00:00Z",
+  "skill": "executor-v2",
+  "conflicts": [
+    {
+      "section": "Implementation Strategy",
+      "existing_preview": "Use incremental approach...",
+      "new_preview": "Use parallel approach...",
+      "resolution": "kept_new",
+      "reason": "New has higher success_rate (0.85 vs 0.72)"
+    }
+  ],
+  "sections_merged": 3,
+  "duplicates_removed": 2,
+  "size_limits_applied": 1
+}
+```
+
+### Version History Tracking
+
+Each evolved skill tracks its merge history:
+
+```markdown
+## Version History
+
+### v3 (2026-01-14)
+- Merged from v2
+- Conflicts: 1 (Implementation Strategy - kept new)
+- Added: Edge Case Handling section
+- Removed: Deprecated patterns
+
+### v2 (2026-01-13)
+- Merged from v1
+- Conflicts: 0
+- Added: Error recovery patterns
+
+### v1 (2026-01-12)
+- Initial generation
+```
+
+---
+
 ### 3. Generate New Version
 
 Template for evolved skill:
