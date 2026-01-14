@@ -7,61 +7,19 @@ user-invocable: true
 
 Execute an autonomous development cycle that dynamically generates, validates, and evolves its own execution strategy.
 
----
-
 ## Usage
 
 ```bash
-# Start new task
-/evolving-loop "Implement user authentication"
-
-# With acceptance criteria
-/evolving-loop "Build REST API
+/evolving-loop "Your task description
 
 Acceptance Criteria:
-- [ ] GET /users endpoint
-- [ ] POST /users endpoint
-- [ ] Input validation
-- [ ] Error handling
+- [ ] Criterion 1
+- [ ] Criterion 2
 "
 
-# Resume interrupted session
-/evolving-loop --resume
-
-# Force restart (clear old state)
-/evolving-loop --force "New task"
-
-# Check status
-/evolving-loop --status
-
-# With iteration limit
-/evolving-loop "Task" --max-iterations 30
-```
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    SELF-EVOLVING DEVELOPMENT LOOP                            │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐   │
-│  │   PHASE 1   │───▶│   PHASE 2   │───▶│   PHASE 3   │───▶│   PHASE 4   │   │
-│  │   ANALYZE   │    │   GENERATE  │    │   EXECUTE   │    │  VALIDATE   │   │
-│  │  (需求分析)  │    │ (生成Skills) │    │  (執行開發)  │    │  (驗證結果)  │   │
-│  └─────────────┘    └─────────────┘    └─────────────┘    └──────┬──────┘   │
-│         ▲                                                        │          │
-│         │                                                        ▼          │
-│         │           ┌─────────────┐    ┌─────────────┐    ┌─────────────┐   │
-│         │           │   PHASE 7   │◀───│   PHASE 6   │◀───│   PHASE 5   │   │
-│         └───────────│   EVOLVE    │    │    LEARN    │    │   DECIDE    │   │
-│                     │ (進化Skills) │    │  (學習經驗)  │    │  (決策判斷)  │   │
-│                     └─────────────┘    └─────────────┘    └─────────────┘   │
-│                                                                              │
-│  Pass ✓ ────────────────────────────────────────────────────▶ PHASE 8: SHIP │
-└─────────────────────────────────────────────────────────────────────────────┘
+/evolving-loop --resume    # Resume interrupted session
+/evolving-loop --status    # Check status
+/evolving-loop --force     # Clear and restart
 ```
 
 ---
@@ -70,70 +28,39 @@ Acceptance Criteria:
 
 When user runs `/evolving-loop "$ARGUMENTS"`:
 
-### 1. State Detection
+### 1. Handle Flags
 
 ```bash
 STATE_DIR=".self-evolving-loop"
 CHECKPOINT="$STATE_DIR/state/checkpoint.json"
 
-# Check for --status flag
+# --status: Show current state
 if [[ "$ARGUMENTS" == *"--status"* ]]; then
-    if [ -f "$CHECKPOINT" ]; then
-        echo "=== Self-Evolving Loop Status ==="
-        jq -r '"Status: \(.status)\nPhase: \(.current_phase // "N/A")\nIteration: \(.current_iteration)/\(.max_iterations)\nRequest: \(.request | .[0:50])..."' "$CHECKPOINT"
-        echo ""
-        echo "Skill Versions:"
-        jq -r '.skill_versions | to_entries | .[] | "  \(.key): v\(.value)"' "$CHECKPOINT"
-        exit 0
-    else
-        echo "No active session found."
-        exit 0
-    fi
+    /evolving-status
+    exit 0
 fi
 
-# Check for --resume flag
+# --resume: Continue from checkpoint
 if [[ "$ARGUMENTS" == *"--resume"* ]]; then
-    if [ -f "$CHECKPOINT" ]; then
-        CURRENT_PHASE=$(jq -r '.current_phase // "ANALYZE"' "$CHECKPOINT")
-        echo "Resuming from phase: $CURRENT_PHASE"
-        # Continue from current phase
-    else
-        echo "No session to resume. Start a new one with /evolving-loop \"task\""
+    if [ ! -f "$CHECKPOINT" ] || [ "$(jq -r '.status' "$CHECKPOINT")" == "idle" ]; then
+        echo "No active session to resume."
         exit 1
     fi
 fi
 
-# Check for existing in-progress session
-if [ -f "$CHECKPOINT" ]; then
-    status=$(jq -r '.status // "unknown"' "$CHECKPOINT")
-    if [ "$status" == "in_progress" ] && [[ "$ARGUMENTS" != *"--force"* ]]; then
-        iteration=$(jq -r '.current_iteration // 0' "$CHECKPOINT")
-        phase=$(jq -r '.current_phase // "unknown"' "$CHECKPOINT")
-        echo "⚠️  Found active session at iteration #$iteration (phase: $phase)"
-        echo ""
-        echo "Options:"
-        echo "  /evolving-loop --resume        → Continue from current phase"
-        echo "  /evolving-loop --force \"...\"  → Clear old state, start fresh"
-        echo "  /evolving-loop --status        → View detailed status"
-        exit 1
-    fi
+# --force: Clear old state
+if [[ "$ARGUMENTS" == *"--force"* ]]; then
+    rm -rf "$STATE_DIR/state/*" "$STATE_DIR/reports/*" "$STATE_DIR/generated-skills/*"
 fi
 ```
 
-### 2. Initialize New Session
+### 2. Initialize Session
 
 ```bash
-# Create directories
-mkdir -p "$STATE_DIR"/{state,generated-skills,reports,history,hooks}
+mkdir -p "$STATE_DIR"/{state,reports,generated-skills,history}
 
-# Parse max-iterations flag
-MAX_ITER=50
-if [[ "$ARGUMENTS" =~ --max-iterations[[:space:]]+([0-9]+) ]]; then
-    MAX_ITER="${BASH_REMATCH[1]}"
-fi
-
-# Clean the request (remove flags)
-REQUEST=$(echo "$ARGUMENTS" | sed 's/--max-iterations[[:space:]]*[0-9]*//g' | sed 's/--force//g' | xargs)
+# Parse request (remove flags)
+REQUEST=$(echo "$ARGUMENTS" | sed 's/--[a-z-]*//g' | xargs)
 
 # Initialize checkpoint
 cat > "$CHECKPOINT" << EOF
@@ -142,317 +69,189 @@ cat > "$CHECKPOINT" << EOF
   "request": "$REQUEST",
   "current_phase": "ANALYZE",
   "current_iteration": 0,
-  "max_iterations": $MAX_ITER,
+  "max_iterations": 50,
   "status": "in_progress",
   "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "acceptance_criteria": [],
-  "generated_skills": {
-    "executor": null,
-    "validator": null,
-    "fixer": null
-  },
-  "skill_versions": {
-    "executor": 0,
-    "validator": 0,
-    "fixer": 0
-  },
-  "validation_history": [],
-  "evolution_history": [],
-  "files_changed": [],
-  "last_validation_result": null
+  "ac_total": 0,
+  "ac_completed": 0,
+  "skill_versions": {"executor": 0, "validator": 0, "fixer": 0},
+  "last_score": null
 }
 EOF
-
-echo "0" > "$STATE_DIR/state/iteration.txt"
-echo "ANALYZE" > "$STATE_DIR/state/phase.txt"
-
-# Log session start
-echo "{\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"event\":\"session_start\",\"request\":\"$REQUEST\"}" >> "$STATE_DIR/history/events.jsonl"
 ```
 
-### 3. Execute Phases
+### 3. Delegate to Orchestrator (Context Isolation)
 
-#### PHASE 1: ANALYZE
+**CRITICAL**: Use the orchestrator to manage phases in isolated contexts.
 
-Use the `requirement-analyzer` agent:
+```markdown
+Task(subagent_type="evolving-orchestrator", prompt="""
+Manage the Self-Evolving Loop for this request:
 
-```
-Task(subagent_type="requirement-analyzer", prompt="""
-Analyze the following requirement and generate a structured analysis report.
+Request: $ARGUMENTS
 
-Requirement:
-$REQUEST
+Read checkpoint from: .self-evolving-loop/state/checkpoint.json
 
-Save output to: .self-evolving-loop/reports/analysis.json
+Execute phases in sequence, each in fork context:
+1. ANALYZE → Save to reports/analysis.json
+2. GENERATE → Save to generated-skills/
+3. EXECUTE → Modify codebase (TDD)
+4. VALIDATE → Save to reports/validation.json
+5. DECIDE → Route: SHIP/FIX/EVOLVE
+6. Loop until SHIP or max iterations
 
-Include:
-1. Parsed acceptance criteria
-2. Complexity assessment
-3. Implementation strategy suggestion
-4. Codebase context analysis
+IMPORTANT - Context Management:
+- Run each phase agent with fork context
+- Store ALL detailed output in files
+- Only return brief status updates (1 line per phase)
+- Never return full analysis/validation/learning content
+
+Return format:
+✅ ANALYZE: [N] AC identified
+✅ GENERATE: Created v[N] skills
+🔄 EXECUTE: Iter [N] - [status]
+...
+✅ SHIP: Complete!
 """)
 ```
 
-After completion:
-- Update phase: `echo "GENERATE" > .self-evolving-loop/state/phase.txt`
-- Update checkpoint with analysis results
+### 4. Output to User
 
-#### PHASE 2: GENERATE
-
-Use the `skill-synthesizer` agent:
+The orchestrator returns only brief summaries:
 
 ```
-Task(subagent_type="skill-synthesizer", prompt="""
-Generate tailored skills based on the analysis report.
+🚀 Starting Self-Evolving Loop...
 
-Input: .self-evolving-loop/reports/analysis.json
+✅ ANALYZE: 5 acceptance criteria identified
+✅ GENERATE: Created executor-v1, validator-v1, fixer-v1
+🔄 EXECUTE: Iteration 1 - 4 files modified, 3/5 tests passing
+✅ VALIDATE: Score 72/100
+➡️ DECIDE: FIX (minor test failures)
+🔄 EXECUTE: Iteration 2 - 2 files modified, 5/5 tests passing
+✅ VALIDATE: Score 94/100
+➡️ DECIDE: SHIP
+✅ SHIP: All criteria met! Committed.
 
-Generate:
-1. Executor skill → .self-evolving-loop/generated-skills/executor-v1.md
-2. Validator skill → .self-evolving-loop/generated-skills/validator-v1.md
-3. Fixer skill → .self-evolving-loop/generated-skills/fixer-v1.md
-
-Use templates from: .self-evolving-loop/templates/
-""")
-```
-
-After completion:
-- Create symlinks to .claude/commands/
-- Update checkpoint with skill info
-- Update phase: `echo "EXECUTE" > .self-evolving-loop/state/phase.txt`
-
-#### PHASE 3: EXECUTE
-
-Execute the generated executor skill:
-
-```
-# Read the generated executor skill and execute its instructions
-# This follows TDD: Red → Green → Refactor cycle
-
-For each acceptance criterion:
-1. Write failing test (RED)
-2. Implement minimal code (GREEN)
-3. Refactor if needed
-4. Commit progress
-```
-
-After completion:
-- Update files_changed in checkpoint
-- Update phase: `echo "VALIDATE" > .self-evolving-loop/state/phase.txt`
-
-#### PHASE 4: VALIDATE
-
-Execute the generated validator skill:
-
-```
-# Run validation against all criteria
-# Generate validation report
-
-Output: .self-evolving-loop/reports/validation.json
-```
-
-After completion:
-- Store validation result in checkpoint
-- Update phase: `echo "DECIDE" > .self-evolving-loop/state/phase.txt`
-
-#### PHASE 5: DECIDE
-
-Use the `completion-judge` agent:
-
-```
-Task(subagent_type="completion-judge", prompt="""
-Evaluate validation results and decide next action.
-
-Input:
-- .self-evolving-loop/reports/validation.json
-- .self-evolving-loop/state/checkpoint.json
-
-Decide: SHIP | FIX | EVOLVE | ABORT
-
-Output decision to: .self-evolving-loop/reports/decision.json
-""")
-```
-
-**Decision routing:**
-- `SHIP` → Phase 8
-- `FIX` → Phase 3 (re-execute with fixer)
-- `EVOLVE` → Phase 6 (learn and evolve)
-- `ABORT` → End session
-
-#### PHASE 6: LEARN (if needed)
-
-Use the `experience-extractor` agent:
-
-```
-Task(subagent_type="experience-extractor", prompt="""
-Analyze failures and extract learning.
-
-Input:
-- Validation reports
-- Decision history
-- Changelog
-
-Output: .self-evolving-loop/reports/learning.json
-""")
-```
-
-After completion:
-- Update phase: `echo "EVOLVE" > .self-evolving-loop/state/phase.txt`
-
-#### PHASE 7: EVOLVE (if needed)
-
-Use the `skill-evolver` agent:
-
-```
-Task(subagent_type="skill-evolver", prompt="""
-Apply learning to generate improved skill versions.
-
-Input: .self-evolving-loop/reports/learning.json
-Current skills: .self-evolving-loop/generated-skills/
-
-Generate new versions with improvements.
-Update checkpoint with new versions.
-""")
-```
-
-After completion:
-- Increment iteration counter
-- Update phase: `echo "EXECUTE" > .self-evolving-loop/state/phase.txt`
-- Loop back to Phase 3
-
-#### PHASE 8: SHIP
-
-```bash
-# Final cleanup and commit
-echo "=== SHIP Phase ==="
-
-# Run final tests
-npm test || pytest || go test ./...
-
-# Clean up temp files
-rm -f .self-evolving-loop/reports/fix-result.json
-
-# Generate final report
-cat > .self-evolving-loop/reports/final.json << EOF
-{
-  "status": "completed",
-  "iterations": $(cat .self-evolving-loop/state/iteration.txt),
-  "evolution_count": $(jq '.skill_versions.executor' .self-evolving-loop/state/checkpoint.json),
-  "completed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-}
-EOF
-
-# Update checkpoint
-jq '.status = "completed" | .current_phase = "SHIP"' "$CHECKPOINT" > tmp.json && mv tmp.json "$CHECKPOINT"
-
-# Use smart-commit
-/smart-commit
-
-echo "✅ Self-Evolving Loop completed successfully!"
+📊 Summary: 2 iterations, 6 files changed, 5/5 AC complete
 ```
 
 ---
 
-## Flags
+## Architecture (Context Isolation)
 
-| Flag | Description |
-|------|-------------|
-| `--resume` | Continue interrupted session |
-| `--force` | Clear old state, start fresh |
-| `--status` | Show current session status |
-| `--max-iterations N` | Set iteration limit (default: 50) |
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Main Context (User Conversation)                           │
+│  - Receives only: brief status lines                        │
+│  - Never sees: full reports, skill content, details         │
+└───────────────────────┬─────────────────────────────────────┘
+                        │ delegates to
+                        ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Orchestrator (fork context)                                │
+│  - Coordinates phases                                       │
+│  - Reads/writes checkpoint.json                             │
+│  - Returns summaries only                                   │
+└───────────────────────┬─────────────────────────────────────┘
+                        │ spawns (each in fork)
+          ┌─────────────┼─────────────┬─────────────┐
+          ▼             ▼             ▼             ▼
+    ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
+    │ ANALYZE  │  │ GENERATE │  │ EXECUTE  │  │ VALIDATE │
+    │  (fork)  │  │  (fork)  │  │  (fork)  │  │  (fork)  │
+    └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘
+         │             │             │             │
+         ▼             ▼             ▼             ▼
+    analysis.json  skills/*.md   codebase    validation.json
+```
+
+**Context Budget**:
+- Main: ~500 tokens (status lines only)
+- Orchestrator: ~2000 tokens (coordination)
+- Each Phase: Full budget (isolated, disposable)
 
 ---
 
-## Agents Used
+## Phase Agents
 
-| Phase | Agent | Purpose |
-|-------|-------|---------|
-| ANALYZE | `requirement-analyzer` | Deep requirement analysis |
-| GENERATE | `skill-synthesizer` | Dynamic skill generation |
-| EXECUTE | (generated executor) | Task implementation |
-| VALIDATE | (generated validator) | Quality verification |
-| DECIDE | `completion-judge` | Decision making |
-| LEARN | `experience-extractor` | Failure analysis |
-| EVOLVE | `skill-evolver` | Skill improvement |
+| Phase | Agent | Output File |
+|-------|-------|-------------|
+| ANALYZE | `requirement-analyzer` | `reports/analysis.json` |
+| GENERATE | `skill-synthesizer` | `generated-skills/*.md` |
+| EXECUTE | (generated executor) | codebase changes |
+| VALIDATE | (generated validator) | `reports/validation.json` |
+| DECIDE | `completion-judge` | `reports/decision.json` |
+| LEARN | `experience-extractor` | `reports/learning.json` |
+| EVOLVE | `skill-evolver` | `generated-skills/*-v[N+1].md` |
 
 ---
 
-## Files Structure
+## State Files
 
 ```
 .self-evolving-loop/
 ├── state/
-│   ├── checkpoint.json      # Main state
-│   ├── iteration.txt        # Current iteration
-│   └── phase.txt            # Current phase
-├── generated-skills/
-│   ├── executor-v1.md       # Generated executor
-│   ├── validator-v1.md      # Generated validator
-│   └── fixer-v1.md          # Generated fixer
+│   └── checkpoint.json    ← Lightweight state (essential only)
 ├── reports/
-│   ├── analysis.json        # Phase 1 output
-│   ├── validation.json      # Phase 4 output
-│   ├── decision.json        # Phase 5 output
-│   ├── learning.json        # Phase 6 output
-│   └── evolution.json       # Phase 7 output
-├── history/
-│   ├── events.jsonl         # All events
-│   ├── decision-log.jsonl   # Decision history
-│   ├── learning-log.jsonl   # Learning history
-│   └── skill-evolution.jsonl # Evolution history
-├── templates/
-│   ├── executor-template.md
-│   ├── validator-template.md
-│   └── fixer-template.md
-└── hooks/
-    ├── continue-loop.sh     # Stop hook
-    └── log-event.sh         # Event logger
+│   ├── analysis.json      ← Full analysis (not in context)
+│   ├── validation.json    ← Full validation (not in context)
+│   ├── decision.json      ← Decision details
+│   └── learning.json      ← Learning insights
+├── generated-skills/      ← Dynamic skills (not in context)
+└── history/
+    └── events.jsonl       ← Event log
+```
+
+---
+
+## Key Design: Context Efficiency
+
+### ❌ Old Pattern (Context Bloat)
+```
+User → "analyze this" → ANALYZE returns 2000 tokens
+User → "generate skills" → GENERATE returns 3000 tokens
+User → "execute" → EXECUTE returns 5000 tokens
+...
+Total: 15000+ tokens in main context → COMPACT triggered
+```
+
+### ✅ New Pattern (Context Isolation)
+```
+User → /evolving-loop "task"
+     → Orchestrator (fork) handles everything
+     → Returns: "✅ Complete! 3 iterations, 8 files"
+
+Total: ~200 tokens in main context → No compact needed
 ```
 
 ---
 
 ## Observability
 
+All details are persisted to files, viewable via:
+
 ```bash
-# View current status
-/evolving-loop --status
+# Quick status
+/evolving-status
 
-# View event history
-cat .self-evolving-loop/history/events.jsonl | jq '.'
+# Full analysis
+cat .self-evolving-loop/reports/analysis.json | jq
 
-# View skill evolution
-cat .self-evolving-loop/history/skill-evolution.jsonl | jq '.'
+# Validation details
+cat .self-evolving-loop/reports/validation.json | jq
 
-# View validation history
-ls -la .self-evolving-loop/reports/validation*.json
+# Event history
+tail -20 .self-evolving-loop/history/events.jsonl | jq
 ```
 
 ---
 
-## Interrupt
+## Stop / Resume
 
 ```bash
-# Create stop signal
+# Stop after current phase
 touch .self-evolving-loop/state/stop
 
-# Loop stops after current phase completes
+# Resume later
+/evolving-loop --resume
 ```
-
----
-
-## Key Differences from auto-loop
-
-| Feature | auto-loop | evolving-loop |
-|---------|-----------|---------------|
-| Strategy | Fixed TDD steps | Dynamic generation |
-| Skills | Uses existing | Generates custom |
-| Failure handling | Retry same | Learn & evolve |
-| Learning | None | Extracts patterns |
-| Adaptation | Low | High |
-
----
-
-## Community
-
-Questions? Join [Claude World](https://claude-world.com).
