@@ -178,6 +178,67 @@ echo '{"timestamp":"...","decision":"...","score":85}' >> .self-evolving-loop/hi
 echo "EXECUTE" > .self-evolving-loop/state/phase.txt
 ```
 
+## ⚠️ MANDATORY: Evidence-Based Decisions
+
+**CRITICAL**: Decisions MUST be based on verifiable evidence, NOT model judgment.
+
+### Pre-Decision Evidence Verification
+
+```bash
+# BEFORE making any decision, verify evidence exists:
+VALIDATION=".self-evolving-loop/reports/validation.json"
+
+# 1. Check validation has evidence source
+evidence_source=$(jq -r '.evidence_source // "none"' "$VALIDATION")
+if [ "$evidence_source" != "actual_execution" ]; then
+    echo "❌ DECISION BLOCKED: Validation not from actual execution"
+    exit 1
+fi
+
+# 2. Check test output exists
+test_output=$(jq -r '.test_output_file // ""' "$VALIDATION")
+if [ -z "$test_output" ] || [ ! -f "$test_output" ]; then
+    echo "⚠️ WARNING: No test output file referenced"
+fi
+
+# 3. Verify score is from real tests
+test_exit_code=$(jq -r '.test_exit_code // "unknown"' "$VALIDATION")
+if [ "$test_exit_code" == "unknown" ]; then
+    echo "❌ DECISION BLOCKED: No actual test exit code"
+    exit 1
+fi
+```
+
+### Decision Report Evidence Section
+
+**MANDATORY** in every decision report:
+
+```json
+{
+  "decision": "SHIP|FIX|EVOLVE|ABORT",
+  "evidence_verified": true,
+  "evidence_summary": {
+    "test_exit_code": 0,
+    "test_output_captured": true,
+    "validation_source": "actual_execution",
+    "files_actually_changed": 5
+  },
+  "reasoning": "Based on actual test results showing..."
+}
+```
+
+### ❌ FORBIDDEN Decision Basis
+
+- "Looks like tests might be passing"
+- "Implementation seems correct"
+- "Validation appears to be successful"
+
+### ✅ REQUIRED Decision Basis
+
+- "Test exit code 0, all 15 tests pass"
+- "git diff shows 45 lines changed in 3 files"
+- "npm test output shows 0 failures"
+
 ## Guidelines
 
 - Be decisive - avoid analysis paralysis
@@ -185,3 +246,4 @@ echo "EXECUTE" > .self-evolving-loop/state/phase.txt
 - Evolve strategy early rather than late (fail fast)
 - Never exceed max_iterations without explicit override
 - Log reasoning for debugging and learning
+- **NEVER decide without verified evidence**
