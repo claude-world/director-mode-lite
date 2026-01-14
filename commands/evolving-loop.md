@@ -85,8 +85,8 @@ EOF
 **CRITICAL**: Use the orchestrator to manage phases in isolated contexts.
 
 ```markdown
-Task(subagent_type="evolving-orchestrator", prompt="""
-Manage the Self-Evolving Loop for this request:
+Task(subagent_type="general-purpose", prompt="""
+You are the Self-Evolving Loop Orchestrator. Manage this request:
 
 Request: $ARGUMENTS
 
