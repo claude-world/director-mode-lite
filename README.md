@@ -99,6 +99,66 @@ Acceptance Criteria:
 
 ---
 
+## NEW: Self-Evolving Loop
+
+<table>
+<tr>
+<td width="50%">
+
+### Beyond Auto-Loop: Strategy Evolution
+
+**Self-Evolving Loop** takes automation further by:
+
+- **Dynamic Skill Generation** - Creates custom skills for each task
+- **Learning from Failures** - Extracts patterns and root causes
+- **Strategy Evolution** - Improves its own execution approach
+- **8-Phase Workflow** - ANALYZE → GENERATE → EXECUTE → VALIDATE → DECIDE → LEARN → EVOLVE → SHIP
+
+**Key difference from auto-loop:**
+| Feature | auto-loop | evolving-loop |
+|---------|-----------|---------------|
+| Strategy | Fixed TDD | Dynamic |
+| Learning | None | Extracts patterns |
+| Adaptation | Low | High |
+
+</td>
+<td width="50%">
+
+```bash
+/evolving-loop "Build REST API
+
+Acceptance Criteria:
+- [ ] GET /users endpoint
+- [ ] POST /users endpoint
+- [ ] Input validation
+- [ ] Error handling
+"
+
+# The loop:
+# 1. Analyzes requirements deeply
+# 2. Generates custom executor skill
+# 3. Executes with TDD
+# 4. Validates results
+# 5. If fails: learns & evolves skills
+# 6. Repeats until all criteria pass
+# 7. Ships the final result
+```
+
+**Check status:**
+```bash
+/evolving-status
+/evolving-status --history
+/evolving-status --evolution
+```
+
+</td>
+</tr>
+</table>
+
+See [`docs/SELF-EVOLVING-LOOP.md`](docs/SELF-EVOLVING-LOOP.md) for complete documentation.
+
+---
+
 ## Quick Start
 
 ### Option A: Plugin Install (Recommended)
@@ -140,7 +200,7 @@ cd director-mode-lite
 <tr>
 <td valign="top" width="33%">
 
-### Commands (22)
+### Commands (24)
 
 **Workflow:**
 | Command | Purpose |
@@ -151,6 +211,8 @@ cd director-mode-lite
 | `/smart-commit` | Auto commits |
 | `/plan` | Task breakdown |
 | `/auto-loop` | **TDD loop** |
+| `/evolving-loop` | **Self-evolving** |
+| `/evolving-status` | Loop status |
 
 **Setup & Health:**
 | Command | Purpose |
@@ -187,7 +249,7 @@ cd director-mode-lite
 </td>
 <td valign="top" width="33%">
 
-### Agents (8)
+### Agents (13)
 
 **Core Agents:**
 | Agent | Purpose |
@@ -204,6 +266,15 @@ cd director-mode-lite
 | `agents-expert` | Custom agents |
 | `skills-expert` | Custom skills |
 | `hooks-expert` | Automation hooks |
+
+**Self-Evolving Agents (NEW):**
+| Agent | Purpose |
+|-------|---------|
+| `requirement-analyzer` | Deep analysis |
+| `skill-synthesizer` | Generate skills |
+| `completion-judge` | Decision making |
+| `experience-extractor` | Learn from failures |
+| `skill-evolver` | Evolve strategy |
 
 </td>
 <td valign="top" width="34%">
@@ -617,6 +688,7 @@ Report bugs, request features
 | [FAQ](docs/FAQ.md) | Common questions answered |
 | [Concepts](docs/DIRECTOR-MODE-CONCEPTS.md) | Deep dive into methodology |
 | [CLAUDE.md Template](docs/CLAUDE-TEMPLATE.md) | Project configuration guide |
+| [Self-Evolving Loop](docs/SELF-EVOLVING-LOOP.md) | Dynamic skill evolution system |
 
 ---
 
