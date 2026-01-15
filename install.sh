@@ -128,12 +128,14 @@ done
 echo "Configuring hooks in settings.local.json..."
 
 # Use Python to safely merge hooks into existing settings
+# Converts relative paths to absolute paths
 if TARGET_DIR="$TARGET_DIR" SCRIPT_DIR="$SCRIPT_DIR" python3 -c "
 import json
 import os
 
 settings_file = os.path.join(os.environ['TARGET_DIR'], '.claude', 'settings.local.json')
 source_file = os.path.join(os.environ['SCRIPT_DIR'], 'hooks', 'settings-hooks.json')
+target_dir = os.environ['TARGET_DIR']
 
 # Read existing settings (or create empty)
 existing = {}
@@ -148,6 +150,23 @@ if os.path.exists(settings_file):
 # Read source hooks
 with open(source_file, 'r') as f:
     source = json.load(f)
+
+# Convert relative paths to absolute paths
+def convert_relative_to_absolute(obj, target_dir):
+    """Convert .claude/hooks/* paths to absolute paths"""
+    if isinstance(obj, dict):
+        if 'command' in obj and isinstance(obj['command'], str):
+            command = obj['command']
+            if command.startswith('.claude/hooks/'):
+                hook_name = command.replace('.claude/hooks/', '')
+                obj['command'] = os.path.join(target_dir, '.claude', 'hooks', hook_name)
+        for key, value in obj.items():
+            obj[key] = convert_relative_to_absolute(value, target_dir)
+    elif isinstance(obj, list):
+        obj = [convert_relative_to_absolute(item, target_dir) for item in obj]
+    return obj
+
+source = convert_relative_to_absolute(source, target_dir)
 
 if 'hooks' not in existing:
     existing['hooks'] = {}
