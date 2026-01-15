@@ -164,9 +164,37 @@ See [`docs/SELF-EVOLVING-LOOP.md`](docs/SELF-EVOLVING-LOOP.md) for complete docu
 ### Option A: Plugin Install (Recommended)
 
 ```bash
-# In Claude Code, run:
-/plugin install https://github.com/claude-world/director-mode-lite
+# 1. Install plugin via Claude Code marketplace
+claude plugin install director-mode-lite
+
+# 2. Navigate to your project directory
+cd your-project
+
+# 3. Run installation script from cached plugin
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.1.0/install.sh .
+
+# 4. Verify installation
+cat .claude/settings.local.json | jq '.hooks.Stop[0].hooks[0].command'
+# Should show: /full/path/to/your-project/.claude/hooks/auto-loop-stop.sh
 ```
+
+<details>
+<summary><strong>🔧 Plugin Management Commands</strong></summary>
+
+```bash
+# Update plugin to latest version
+claude plugin marketplace update director-mode-lite
+claude plugin uninstall director-mode-lite
+claude plugin install director-mode-lite
+
+# Check installed plugins
+cat ~/.claude/plugins/installed_plugins.json | jq '.'
+
+# View plugin cache
+ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.1.0/
+```
+
+</details>
 
 ### Option B: One-Line Install
 
@@ -174,7 +202,15 @@ See [`docs/SELF-EVOLVING-LOOP.md`](docs/SELF-EVOLVING-LOOP.md) for complete docu
 curl -fsSL https://raw.githubusercontent.com/claude-world/director-mode-lite/main/install.sh | bash -s .
 ```
 
-### Option C: Try Demo First
+### Option C: Clone and Install
+
+```bash
+git clone https://github.com/claude-world/director-mode-lite.git
+cd director-mode-lite
+./install.sh /path/to/your/project
+```
+
+### Option D: Try Demo First
 
 ```bash
 git clone https://github.com/claude-world/director-mode-lite.git
@@ -183,12 +219,13 @@ cd director-mode-lite
 ```
 
 <details>
-<summary><strong>Install Features</strong></summary>
+<summary><strong>✨ Installation Features</strong></summary>
 
-- Automatic backup of existing `.claude/` directory
-- Merge hooks.json (won't overwrite existing hooks)
-- Skip already-installed files
-- Uninstall script included
+- **Automatic Backup** - Backups existing `.claude/` to `.claude-backup-TIMESTAMP/`
+- **Absolute Path Hooks** - All hooks configured with absolute paths (no more "file not found" errors)
+- **Smart Merge** - Preserves existing settings, only adds new hooks
+- **Skip Existing** - Won't overwrite already-installed commands/agents/skills
+- **Clean Uninstall** - `./uninstall.sh` removes all installed files
 
 </details>
 
