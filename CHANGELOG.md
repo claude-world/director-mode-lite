@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Hook path resolution** - install.sh now converts relative hook paths to absolute paths
   - Fixes "No such file or directory" errors when hooks execute
   - Prevents session start/stop failures from unresolved .claude/hooks/* paths
+  - Simplified Python configuration script for reliability
 
 ## [1.2.0] - 2025-01-13
 
