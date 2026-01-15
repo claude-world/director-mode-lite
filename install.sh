@@ -133,86 +133,58 @@ if TARGET_DIR="$TARGET_DIR" SCRIPT_DIR="$SCRIPT_DIR" python3 -c "
 import json
 import os
 
-settings_file = os.path.join(os.environ['TARGET_DIR'], '.claude', 'settings.local.json')
-source_file = os.path.join(os.environ['SCRIPT_DIR'], 'hooks', 'settings-hooks.json')
-target_dir = os.environ['TARGET_DIR']
+target_dir = os.path.abspath(os.environ['TARGET_DIR'])
+settings_file = os.path.join(target_dir, '.claude', 'settings.local.json')
 
 # Read existing settings (or create empty)
 existing = {}
 if os.path.exists(settings_file):
-    try:
-        with open(settings_file, 'r') as f:
-            existing = json.load(f)
-        print('  Found existing settings.local.json')
-    except:
-        existing = {}
+    with open(settings_file, 'r') as f:
+        existing = json.load(f)
 
 # Read source hooks
+source_file = os.path.join(os.environ['SCRIPT_DIR'], 'hooks', 'settings-hooks.json')
 with open(source_file, 'r') as f:
     source = json.load(f)
 
 # Convert relative paths to absolute paths
-def convert_relative_to_absolute(obj, target_dir):
-    """Convert .claude/hooks/* paths to absolute paths"""
+def convert_paths(obj, target_dir):
     if isinstance(obj, dict):
-        if 'command' in obj and isinstance(obj['command'], str):
-            command = obj['command']
-            if command.startswith('.claude/hooks/'):
-                hook_name = command.replace('.claude/hooks/', '')
-                obj['command'] = os.path.join(target_dir, '.claude', 'hooks', hook_name)
-        for key, value in obj.items():
-            obj[key] = convert_relative_to_absolute(value, target_dir)
+        if 'command' in obj and isinstance(obj['command'], str) and obj['command'].startswith('.claude/hooks/'):
+            hook_name = obj['command'].replace('.claude/hooks/', '')
+            obj['command'] = os.path.join(target_dir, '.claude', 'hooks', hook_name)
+        for k, v in obj.items():
+            obj[k] = convert_paths(v, target_dir)
     elif isinstance(obj, list):
-        obj = [convert_relative_to_absolute(item, target_dir) for item in obj]
+        obj = [convert_paths(item, target_dir) for item in obj]
     return obj
 
-source = convert_relative_to_absolute(source, target_dir)
+source = convert_paths(source, target_dir)
 
+# Merge hooks
 if 'hooks' not in existing:
     existing['hooks'] = {}
 
-# Merge Stop hooks
 if 'Stop' in source.get('hooks', {}):
     if 'Stop' not in existing['hooks']:
         existing['hooks']['Stop'] = source['hooks']['Stop']
         print('  Merged: Stop hooks')
-    else:
-        print('  Skipped: Stop hooks (already exists)')
 
-# Merge PostToolUse hooks
 if 'PostToolUse' in source.get('hooks', {}):
     if 'PostToolUse' not in existing['hooks']:
         existing['hooks']['PostToolUse'] = source['hooks']['PostToolUse']
         print('  Merged: PostToolUse hooks (changelog)')
-    else:
-        # Append new PostToolUse hooks if not already present
-        existing_commands = set()
-        for hook_group in existing['hooks']['PostToolUse']:
-            for hook in hook_group.get('hooks', []):
-                existing_commands.add(hook.get('command', ''))
 
-        added = 0
-        for hook_group in source['hooks']['PostToolUse']:
-            for hook in hook_group.get('hooks', []):
-                if hook.get('command', '') not in existing_commands:
-                    existing['hooks']['PostToolUse'].append(hook_group)
-                    added += 1
-                    break
-
-        if added > 0:
-            print(f'  Merged: {added} PostToolUse hook(s)')
-        else:
-            print('  Skipped: PostToolUse hooks (already exists)')
-
-# Write merged settings (preserves all other user settings)
+# Write settings
+os.makedirs(os.path.dirname(settings_file), exist_ok=True)
 with open(settings_file, 'w') as f:
     json.dump(existing, f, indent=2)
 
 print('  settings.local.json configured')
-" 2>/dev/null; then
+"; then
     :  # Success, Python already printed status
 else
-    echo "  Warning: Could not auto-configure hooks"
+    echo "  Warning: Could not auto-configure hooks (exit code: $?)"
     echo "  Please manually add hooks from: $SCRIPT_DIR/hooks/settings-hooks.json"
 fi
 
