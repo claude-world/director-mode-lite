@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Renamed `changelog-logger.sh` → `_lib-changelog.sh` (underscore prefix indicates shared library)
   - Updated all hook scripts to reference new library name
   - `install.sh` now properly handles library rename and removes deprecated files
+- **Portable Hook Paths** - Per official Claude Code documentation
+  - Changed from absolute paths to `$CLAUDE_PROJECT_DIR` environment variable
+  - Hooks now use `"$CLAUDE_PROJECT_DIR"/.claude/hooks/...` format
+  - Simplified `install.sh` - no longer needs path conversion logic
+  - Better portability: projects can be moved without breaking hooks
 
 ### Fixed
 - **Hooks Guide Compliance** - All hooks now comply with Claude Code Hooks Guide
@@ -186,7 +191,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 1.4.1 | 2026-01-17 | Hooks Cleanup, Guide Compliance, Library Rename |
+| 1.4.1 | 2026-01-17 | Hooks Cleanup, Portable Paths ($CLAUDE_PROJECT_DIR), Guide Compliance |
 | 1.4.0 | 2026-01-16 | Claude Code 2.1.9+ Support, Session Tracking, PreToolUse Validator |
 | 1.3.0 | 2026-01-16 | Skills Directory Migration, Context Isolation, Phase Dependency Validation |
 | 1.2.0 | 2025-01-13 | Observability Changelog System, Session Conflict Prevention |
