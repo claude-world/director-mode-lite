@@ -33,15 +33,15 @@ This skill provides an **automated** changelog system that:
 │                    Observability System                         │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐       │
-│  │ Write/Edit  │     │    Bash     │     │    Bash     │       │
-│  │    Tool     │     │   (test)    │     │  (commit)   │       │
-│  └──────┬──────┘     └──────┬──────┘     └──────┬──────┘       │
-│         │                   │                   │               │
-│         ▼                   ▼                   ▼               │
+│  ┌─────────────┐     ┌─────────────────────────────┐           │
+│  │ Write/Edit  │     │           Bash              │           │
+│  │    Tool     │     │   (test/commit/general)     │           │
+│  └──────┬──────┘     └──────────────┬──────────────┘           │
+│         │                           │                           │
+│         ▼                           ▼                           │
 │  ┌─────────────────────────────────────────────────────┐       │
 │  │              PostToolUse Hooks                       │       │
-│  │  log-file-change.sh  log-test-result.sh  log-commit │       │
+│  │     log-file-change.sh       log-bash-event.sh      │       │
 │  └─────────────────────────┬───────────────────────────┘       │
 │                            │                                    │
 │                            ▼                                    │
@@ -92,39 +92,37 @@ This skill provides an **automated** changelog system that:
 
 ## Automatic Logging via Hooks
 
-### Hook Configuration (`hooks/hooks.json`)
+### Hook Configuration (`.claude/settings.local.json`)
 
 ```json
 {
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": { "tool_name": "Write" },
-        "hooks": [{ "type": "command", "command": ".claude/hooks/log-file-change.sh" }]
+        "matcher": "Write",
+        "hooks": [{ "type": "command", "command": "/path/to/project/.claude/hooks/log-file-change.sh" }]
       },
       {
-        "matcher": { "tool_name": "Edit" },
-        "hooks": [{ "type": "command", "command": ".claude/hooks/log-file-change.sh" }]
+        "matcher": "Edit",
+        "hooks": [{ "type": "command", "command": "/path/to/project/.claude/hooks/log-file-change.sh" }]
       },
       {
-        "matcher": { "tool_name": "Bash" },
-        "hooks": [
-          { "type": "command", "command": ".claude/hooks/log-test-result.sh" },
-          { "type": "command", "command": ".claude/hooks/log-commit.sh" }
-        ]
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "/path/to/project/.claude/hooks/log-bash-event.sh" }]
       }
     ]
   }
 }
 ```
 
+> **Note**: Paths are converted to absolute paths during `install.sh` execution.
+
 ### Hook Scripts
 
 | Script | Trigger | Events Logged |
 |--------|---------|---------------|
 | `log-file-change.sh` | Write, Edit | `file_created`, `file_modified` |
-| `log-test-result.sh` | Bash (test commands) | `test_pass`, `test_fail` |
-| `log-commit.sh` | Bash (git commit) | `commit` |
+| `log-bash-event.sh` | Bash | `test_pass`, `test_fail`, `commit` |
 
 ---
 
@@ -307,10 +305,11 @@ Hooks are installed with Director Mode Lite:
 ```bash
 # After install, verify:
 ls .claude/hooks/
+# → auto-loop-stop.sh
 # → changelog-logger.sh
+# → log-bash-event.sh
 # → log-file-change.sh
-# → log-test-result.sh
-# → log-commit.sh
+# → pre-tool-validator.sh
 
 cat .claude/settings.local.json | jq '.hooks'
 ```

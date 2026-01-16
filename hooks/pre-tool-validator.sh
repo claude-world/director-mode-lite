@@ -6,7 +6,7 @@
 # Returns additionalContext to guide Claude about sensitive files
 #
 # Input: JSON via stdin (Claude Code PreToolUse format)
-# Output: JSON with additionalContext (Claude Code 2.1.9+ feature)
+# Output: JSON with decision field (required) + optional additionalContext
 #
 # Note: This hook provides guidance, not blocks. It adds context to help
 # Claude make better decisions about sensitive file modifications.
@@ -20,7 +20,7 @@ command -v jq &>/dev/null && HAS_JQ=true
 
 # Read JSON from stdin
 INPUT=$(cat 2>/dev/null) || INPUT=""
-[[ -z "$INPUT" ]] && echo '{}' && exit 0
+[[ -z "$INPUT" ]] && echo '{"decision": "allow"}' && exit 0
 
 # Parse tool name and file path
 if $HAS_JQ; then
@@ -34,11 +34,11 @@ fi
 # Only process Write and Edit tools
 case "$TOOL_NAME" in
     Write|Edit) ;;
-    *) echo '{}' && exit 0 ;;
+    *) echo '{"decision": "allow"}' && exit 0 ;;
 esac
 
 # Exit if no file path
-[[ -z "$FILE_PATH" ]] && echo '{}' && exit 0
+[[ -z "$FILE_PATH" ]] && echo '{"decision": "allow"}' && exit 0
 
 # Get filename for pattern matching
 FILENAME=$(basename "$FILE_PATH" 2>/dev/null) || FILENAME="$FILE_PATH"
@@ -103,15 +103,16 @@ get_additional_context() {
 # Get context for this file
 CONTEXT=$(get_additional_context "$FILE_PATH" "$FILENAME")
 
-# Return JSON with additionalContext if applicable
+# Return JSON with decision field (required for PreToolUse per Claude Code Hooks guide)
+# Always include "decision": "allow" since this hook provides guidance, not blocks
 if [[ -n "$CONTEXT" ]]; then
     # Escape for JSON
     CONTEXT="${CONTEXT//\\/\\\\}"
     CONTEXT="${CONTEXT//\"/\\\"}"
     CONTEXT="${CONTEXT//$'\n'/\\n}"
-    echo "{\"additionalContext\": \"$CONTEXT\"}"
+    echo "{\"decision\": \"allow\", \"additionalContext\": \"$CONTEXT\"}"
 else
-    echo '{}'
+    echo '{"decision": "allow"}'
 fi
 
 exit 0
