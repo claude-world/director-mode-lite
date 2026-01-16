@@ -29,36 +29,6 @@ fi
 # Ensure .claude directory exists
 mkdir -p "$TARGET_DIR/.claude"
 
-# Copy commands (skip existing files)
-echo "Installing commands..."
-mkdir -p "$TARGET_DIR/.claude/commands"
-
-# Copy top-level command files
-for file in "$SCRIPT_DIR/commands/"*.md; do
-    if [[ -f "$file" ]]; then
-        filename=$(basename "$file")
-        if [[ -f "$TARGET_DIR/.claude/commands/$filename" ]]; then
-            echo "  Skipped (exists): commands/$filename"
-        else
-            cp "$file" "$TARGET_DIR/.claude/commands/"
-            echo "  Installed: commands/$filename"
-        fi
-    fi
-done
-
-# Copy command subdirectories
-for dir in "$SCRIPT_DIR/commands/"*/; do
-    if [[ -d "$dir" ]]; then
-        dirname=$(basename "$dir")
-        if [[ -d "$TARGET_DIR/.claude/commands/$dirname" ]]; then
-            echo "  Skipped (exists): commands/$dirname/"
-        else
-            cp -r "${dir%/}" "$TARGET_DIR/.claude/commands/"
-            echo "  Installed: commands/$dirname/"
-        fi
-    fi
-done
-
 # Copy agents (skip existing files)
 echo "Installing agents..."
 mkdir -p "$TARGET_DIR/.claude/agents"
@@ -210,10 +180,9 @@ echo ""
 echo "Installation complete!"
 echo ""
 echo "Installed:"
-echo "  - .claude/commands/     (slash commands)"
-echo "  - .claude/agents/       (specialized agents)"
-echo "  - .claude/skills/       (reusable skills)"
-echo "  - .claude/hooks/        (Auto-Loop + Changelog hooks)"
+echo "  - .claude/skills/       (25 slash commands + 4 internal skills)"
+echo "  - .claude/agents/       (14 specialized agents)"
+echo "  - .claude/hooks/        (5 hooks: Auto-Loop, Changelog, Validator)"
 echo ""
 echo "Features:"
 echo "  - /auto-loop     TDD-based autonomous development"
