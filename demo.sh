@@ -90,38 +90,25 @@ echo ""
 echo "  Checking installed components:"
 echo ""
 
-# Check commands
-CMD_COUNT=$(find .claude/commands -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
-echo -e "  ${GREEN}✓${NC} Commands: ${CYAN}$CMD_COUNT${NC} installed"
-
-# List command categories
-echo "    ├── workflow/     (5 commands)"
-echo "    ├── automation/   (1 command - Auto-Loop)"
-echo "    ├── diagnostics/  (1 command)"
-echo "    ├── setup/        (2 commands)"
-echo "    ├── interop/      (2 commands)"
-echo "    └── agents.md, skills.md"
+# Check skills (includes slash commands)
+SKILL_COUNT=$(ls -d .claude/skills/*/ 2>/dev/null | wc -l | tr -d ' ')
+echo -e "  ${GREEN}✓${NC} Skills:   ${CYAN}$SKILL_COUNT${NC} installed"
+echo "    ├── 25 slash commands (user-invocable)"
+echo "    └── 4 internal skills (code-reviewer, debugger, doc-writer, test-runner)"
 
 # Check agents
 AGENT_COUNT=$(find .claude/agents -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
 echo -e "  ${GREEN}✓${NC} Agents:   ${CYAN}$AGENT_COUNT${NC} installed"
-echo "    ├── code-reviewer"
-echo "    ├── debugger"
-echo "    └── doc-writer"
-
-# Check skills
-SKILL_COUNT=$(ls -d .claude/skills/*/ 2>/dev/null | wc -l | tr -d ' ')
-echo -e "  ${GREEN}✓${NC} Skills:   ${CYAN}$SKILL_COUNT${NC} installed"
-echo "    ├── workflow commands (9)"
-echo "    ├── utility commands (10)"
-echo "    ├── template generators (4)"
-echo "    ├── list commands (2)"
-echo "    └── core skills (4)"
+echo "    ├── 3 core (code-reviewer, debugger, doc-writer)"
+echo "    ├── 5 experts (claude, mcp, agents, skills, hooks)"
+echo "    └── 6 self-evolving (orchestrator, analyzer, synthesizer, etc.)"
 
 # Check hooks
-if [[ -f .claude/hooks.json ]]; then
-    echo -e "  ${GREEN}✓${NC} Hooks:    Auto-Loop Stop Hook"
-fi
+HOOK_COUNT=$(ls .claude/hooks/*.sh 2>/dev/null | wc -l | tr -d ' ')
+echo -e "  ${GREEN}✓${NC} Hooks:    ${CYAN}$HOOK_COUNT${NC} installed"
+echo "    ├── auto-loop-stop.sh (Stop)"
+echo "    ├── changelog-logger.sh (Core)"
+echo "    └── pre-tool-validator.sh (PreToolUse)"
 
 echo ""
 
