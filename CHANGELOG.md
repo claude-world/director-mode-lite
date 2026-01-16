@@ -19,10 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Better portability: projects can be moved without breaking hooks
 
 ### Fixed
-- **Hooks Guide Compliance** - All hooks now comply with Claude Code Hooks Guide
-  - PreToolUse hooks return `{"decision": "allow"}` instead of `{}`
-  - PostToolUse hooks explicitly output `{}` per specification
-  - Consistent JSON output format across all hooks
+- **Hooks Guide Compliance** - All hooks now comply with official Claude Code Hooks Guide
+  - PreToolUse: `exit 0` (no output) to allow, `exit 2` + stderr to block
+  - PreToolUse with context: `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": "..."}}`
+  - PostToolUse: `exit 0` (no output) - no JSON required
+  - Stop hook: `{"decision": "block", "reason": "..."}` to prevent stopping
+  - Fixed `tool_output` field name (was incorrectly `tool_response`)
 - **Documentation Updates**
   - `changelog/SKILL.md` updated to reflect current hook structure
   - Removed references to deprecated `log-test-result.sh` and `log-commit.sh`

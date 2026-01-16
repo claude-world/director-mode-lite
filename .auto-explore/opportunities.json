@@ -1,0 +1,104 @@
+{
+  "exploration_session": {
+    "timestamp": "2026-01-16T10:00:00Z",
+    "goal": "探索專案是否完整",
+    "iteration": 1
+  },
+  "project_status": {
+    "version": "1.4.0",
+    "commands": 25,
+    "agents": 14,
+    "skills": 29,
+    "hooks": 6,
+    "docs": 11,
+    "examples": 2,
+    "total_markdown_lines": 20607,
+    "github_workflows": 2
+  },
+  "opportunities": [
+    {
+      "id": "OPP-001",
+      "type": "enhancement",
+      "title": "完善 CLAUDE.md 配置為專案專屬內容",
+      "description": "當前 CLAUDE.md 仍是模板內容，未針對 Director Mode Lite 專案進行配置。應填寫實際的專案名稱、技術棧、規則等。",
+      "proposed_by": ["PM", "DevRel"],
+      "value": 7,
+      "complexity": "S",
+      "fit": 9,
+      "urgency": 8
+    },
+    {
+      "id": "OPP-002",
+      "type": "documentation",
+      "title": "新增更多使用範例",
+      "description": "目前只有 2 個範例（calculator、rest-api），可新增更多場景如 CLI tool、Library、Web scraper 等。",
+      "proposed_by": ["DevRel", "PM"],
+      "value": 6,
+      "complexity": "M",
+      "fit": 7,
+      "urgency": 5
+    },
+    {
+      "id": "OPP-003",
+      "type": "feature",
+      "title": "新增自動化測試",
+      "description": "專案缺少自動化測試來驗證 install.sh、hooks、commands 的正確性。GitHub Actions 可加入測試步驟。",
+      "proposed_by": ["CTO", "DevOps"],
+      "value": 8,
+      "complexity": "M",
+      "fit": 8,
+      "urgency": 7
+    },
+    {
+      "id": "OPP-004",
+      "type": "cleanup",
+      "title": "清理 ROADMAP.md 過時的版本資訊",
+      "description": "ROADMAP.md 中的版本時間線顯示 v1.3.0/v1.4.0 為 Planned，但實際已發布。需要更新。",
+      "proposed_by": ["PM", "doc-writer"],
+      "value": 5,
+      "complexity": "S",
+      "fit": 6,
+      "urgency": 6
+    },
+    {
+      "id": "OPP-005",
+      "type": "quality",
+      "title": "README 版本徽章更新",
+      "description": "README 中顯示 Claude Code v2.1.6+，但 CHANGELOG 提到支援 2.1.9+。需要確認並統一。",
+      "proposed_by": ["doc-writer"],
+      "value": 4,
+      "complexity": "S",
+      "fit": 5,
+      "urgency": 4
+    }
+  ],
+  "completeness_assessment": {
+    "core_features": {
+      "commands": true,
+      "agents": true,
+      "skills": true,
+      "hooks": true,
+      "install_uninstall": true,
+      "demo": true
+    },
+    "documentation": {
+      "readme": true,
+      "changelog": true,
+      "contributing": true,
+      "code_of_conduct": true,
+      "license": true,
+      "faq": true,
+      "roadmap": true,
+      "examples": true
+    },
+    "github_integration": {
+      "issue_templates": true,
+      "pr_template": true,
+      "security_policy": true,
+      "funding": true,
+      "workflows": true
+    },
+    "overall_score": 92,
+    "verdict": "專案高度完整，僅有少量配置和文檔更新機會"
+  }
+}

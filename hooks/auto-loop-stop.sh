@@ -16,20 +16,17 @@ STOP_FILE="$STATE_DIR/stop"
 # Check if auto-loop is active
 if [[ ! -f "$CHECKPOINT_FILE" ]]; then
     # No active loop, allow normal exit
-    echo '{}'
     exit 0
 fi
 
 # Check for stop signal
 if [[ -f "$STOP_FILE" ]]; then
     rm -f "$STOP_FILE"
-    echo '{}'
     exit 0
 fi
 
 # Read checkpoint
 if ! checkpoint=$(cat "$CHECKPOINT_FILE" 2>/dev/null); then
-    echo '{}'
     exit 0
 fi
 
@@ -41,14 +38,12 @@ request=$(echo "$checkpoint" | grep -o '"request"[[:space:]]*:[[:space:]]*"[^"]*
 
 # Check if completed or max iterations reached
 if [[ "$status" == "completed" ]]; then
-    echo '{}'
     exit 0
 fi
 
 if [[ "$current_iteration" -ge "$max_iterations" ]]; then
     # Update status to completed
     echo "$checkpoint" | sed 's/"status"[[:space:]]*:[[:space:]]*"[^"]*"/"status": "max_iterations_reached"/' > "$CHECKPOINT_FILE"
-    echo '{}'
     exit 0
 fi
 
@@ -93,16 +88,16 @@ Follow the TDD cycle:
 
 If all ACs are complete, update status to \"completed\"."
 
-# Return continue=true with systemMessage for next iteration
+# Block stop with reason for next iteration (per Hooks guide)
 # Use Python to properly JSON-encode the prompt, with safe fallback
-json_prompt=$(echo "$tdd_prompt" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))' 2>/dev/null) || {
+json_reason=$(echo "$tdd_prompt" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))' 2>/dev/null) || {
     # Fallback: simple JSON string (iteration number is always safe integer)
-    json_prompt="\"Continue Auto-Loop iteration #$new_iteration\""
+    json_reason="\"Continue Auto-Loop iteration #$new_iteration\""
 }
 
 cat <<EOF
 {
-  "continue": true,
-  "systemMessage": $json_prompt
+  "decision": "block",
+  "reason": $json_reason
 }
 EOF

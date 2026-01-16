@@ -20,7 +20,7 @@ command -v jq &>/dev/null && HAS_JQ=true
 
 # Read JSON from stdin
 INPUT=$(cat 2>/dev/null) || INPUT=""
-[[ -z "$INPUT" ]] && echo '{"decision": "allow"}' && exit 0
+[[ -z "$INPUT" ]] && exit 0
 
 # Parse tool name and file path
 if $HAS_JQ; then
@@ -34,11 +34,11 @@ fi
 # Only process Write and Edit tools
 case "$TOOL_NAME" in
     Write|Edit) ;;
-    *) echo '{"decision": "allow"}' && exit 0 ;;
+    *) exit 0 ;;
 esac
 
 # Exit if no file path
-[[ -z "$FILE_PATH" ]] && echo '{"decision": "allow"}' && exit 0
+[[ -z "$FILE_PATH" ]] && exit 0
 
 # Get filename for pattern matching
 FILENAME=$(basename "$FILE_PATH" 2>/dev/null) || FILENAME="$FILE_PATH"
@@ -103,16 +103,15 @@ get_additional_context() {
 # Get context for this file
 CONTEXT=$(get_additional_context "$FILE_PATH" "$FILENAME")
 
-# Return JSON with decision field (required for PreToolUse per Claude Code Hooks guide)
-# Always include "decision": "allow" since this hook provides guidance, not blocks
+# Output format per Claude Code Hooks guide:
+# - Allow without context: exit 0 (no output)
+# - Add context: {"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": "..."}}
 if [[ -n "$CONTEXT" ]]; then
     # Escape for JSON
     CONTEXT="${CONTEXT//\\/\\\\}"
     CONTEXT="${CONTEXT//\"/\\\"}"
     CONTEXT="${CONTEXT//$'\n'/\\n}"
-    echo "{\"decision\": \"allow\", \"additionalContext\": \"$CONTEXT\"}"
-else
-    echo '{"decision": "allow"}'
+    echo "{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"additionalContext\": \"$CONTEXT\"}}"
 fi
 
 exit 0

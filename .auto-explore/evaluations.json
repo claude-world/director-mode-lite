@@ -1,0 +1,78 @@
+{
+  "evaluation_timestamp": "2026-01-16T10:05:00Z",
+  "min_value_threshold": 5,
+  "evaluations": [
+    {
+      "id": "OPP-001",
+      "title": "完善 CLAUDE.md 配置為專案專屬內容",
+      "scores": {
+        "value": 7,
+        "feasibility": 9,
+        "fit": 9,
+        "urgency": 8
+      },
+      "complexity": "S",
+      "roi": 8.2,
+      "recommendation": "HIGH_PRIORITY",
+      "reason": "低複雜度、高契合度，可立即改善專案專業形象"
+    },
+    {
+      "id": "OPP-003",
+      "title": "新增自動化測試",
+      "scores": {
+        "value": 8,
+        "feasibility": 6,
+        "fit": 8,
+        "urgency": 7
+      },
+      "complexity": "M",
+      "roi": 7.1,
+      "recommendation": "MEDIUM_PRIORITY",
+      "reason": "有價值但需要較多工作量"
+    },
+    {
+      "id": "OPP-002",
+      "title": "新增更多使用範例",
+      "scores": {
+        "value": 6,
+        "feasibility": 7,
+        "fit": 7,
+        "urgency": 5
+      },
+      "complexity": "M",
+      "roi": 6.0,
+      "recommendation": "MEDIUM_PRIORITY",
+      "reason": "有助於用戶上手，但非緊急"
+    },
+    {
+      "id": "OPP-004",
+      "title": "清理 ROADMAP.md 過時的版本資訊",
+      "scores": {
+        "value": 5,
+        "feasibility": 10,
+        "fit": 6,
+        "urgency": 6
+      },
+      "complexity": "S",
+      "roi": 5.8,
+      "recommendation": "LOW_PRIORITY",
+      "reason": "簡單但價值較低"
+    },
+    {
+      "id": "OPP-005",
+      "title": "README 版本徽章更新",
+      "scores": {
+        "value": 4,
+        "feasibility": 10,
+        "fit": 5,
+        "urgency": 4
+      },
+      "complexity": "S",
+      "roi": 4.6,
+      "recommendation": "SKIP",
+      "reason": "低於最小價值門檻"
+    }
+  ],
+  "ranked": ["OPP-001", "OPP-003", "OPP-002", "OPP-004"],
+  "skipped": ["OPP-005"]
+}

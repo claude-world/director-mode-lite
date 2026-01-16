@@ -6,7 +6,7 @@
 # Automatically logs file changes to the changelog
 #
 # Input: JSON via stdin (Claude Code PostToolUse format)
-# Output: JSON {} (PostToolUse hooks should return empty object per guide)
+# Output: None (exit 0 per Hooks guide)
 
 # Never exit on errors - don't break the main flow
 set +e
@@ -35,8 +35,8 @@ fi
 # Read JSON from stdin (Claude Code PostToolUse format)
 INPUT=$(cat 2>/dev/null) || INPUT=""
 
-# Exit with empty JSON if no input (per PostToolUse output format)
-[[ -z "$INPUT" ]] && echo '{}' && exit 0
+# Exit if no input
+[[ -z "$INPUT" ]] && exit 0
 
 # Parse tool name and file path
 if $HAS_JQ; then
@@ -49,7 +49,7 @@ else
 fi
 
 # Exit if we couldn't parse tool name
-[[ -z "$TOOL_NAME" ]] && echo '{}' && exit 0
+[[ -z "$TOOL_NAME" ]] && exit 0
 
 # Determine event type
 # Note: Write tool overwrites files, so we use "file_write" (not "file_created")
@@ -62,8 +62,7 @@ case "$TOOL_NAME" in
         EVENT_TYPE="file_edit"
         ;;
     *)
-        # Not a file change tool, return empty JSON
-        echo '{}'
+        # Not a file change tool
         exit 0
         ;;
 esac
@@ -84,6 +83,4 @@ fi
 # Log the event
 log_event "$EVENT_TYPE" "$SUMMARY" "hook" "$FILES_JSON"
 
-# Return empty JSON and exit successfully (per PostToolUse output format)
-echo '{}'
 exit 0

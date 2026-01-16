@@ -6,7 +6,7 @@
 # Detects test runs and git commits, logs to changelog
 #
 # Input: JSON via stdin (Claude Code PostToolUse format)
-# Output: JSON {} (PostToolUse hooks should return empty object per guide)
+# Output: None (exit 0 per Hooks guide)
 #
 # Note: This single hook handles both tests and commits to avoid stdin conflicts
 
@@ -38,7 +38,7 @@ fi
 
 # Read JSON from stdin ONCE
 INPUT=$(cat 2>/dev/null) || INPUT=""
-[[ -z "$INPUT" ]] && echo '{}' && exit 0
+[[ -z "$INPUT" ]] && exit 0
 
 # Parse fields
 if $HAS_JQ; then
@@ -52,8 +52,8 @@ else
 fi
 
 # Only process Bash tool
-[[ "$TOOL_NAME" != "Bash" ]] && echo '{}' && exit 0
-[[ -z "$COMMAND" ]] && echo '{}' && exit 0
+[[ "$TOOL_NAME" != "Bash" ]] && exit 0
+[[ -z "$COMMAND" ]] && exit 0
 
 # ============================================================
 # Check if this is a TEST command
@@ -193,6 +193,4 @@ elif is_commit_command "$COMMAND"; then
     handle_commit "$COMMAND" "$OUTPUT"
 fi
 
-# Return empty JSON and exit successfully (per PostToolUse output format)
-echo '{}'
 exit 0

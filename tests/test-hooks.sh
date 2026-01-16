@@ -172,7 +172,8 @@ test_pre_tool_validator_env() {
 
     local output=$(echo "$input" | "$TEST_DIR/.claude/hooks/pre-tool-validator.sh")
 
-    assert "Returns JSON" "[[ '$output' == *'{'* ]]"
+    assert "Returns JSON with hookSpecificOutput" "[[ '$output' == *'hookSpecificOutput'* ]]"
+    assert "Has hookEventName PreToolUse" "[[ '$output' == *'PreToolUse'* ]]"
     assert "Has additionalContext" "[[ '$output' == *'additionalContext'* ]]"
     assert "Mentions secrets" "[[ '$output' == *'secret'* ]]"
 
@@ -189,7 +190,8 @@ test_pre_tool_validator_regular() {
 
     local output=$(echo "$input" | "$TEST_DIR/.claude/hooks/pre-tool-validator.sh")
 
-    assert "Returns allow decision for regular files" "[[ '$output' == *'\"decision\"'*'allow'* ]]"
+    # Per Hooks guide: allow without context = exit 0, no output
+    assert "Returns empty for regular files (allow)" "[[ -z '$output' ]]"
 
     teardown
 }
