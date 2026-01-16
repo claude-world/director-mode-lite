@@ -91,17 +91,17 @@ test_creates_settings() {
     teardown
 }
 
-# Test: Uses absolute paths in settings
-test_absolute_paths() {
-    echo "Test: Uses absolute paths in settings"
+# Test: Uses $CLAUDE_PROJECT_DIR in settings
+test_portable_paths() {
+    echo "Test: Uses \$CLAUDE_PROJECT_DIR in settings"
     setup
 
     "$PROJECT_ROOT/install.sh" "$TEST_DIR" > /dev/null 2>&1
 
     if command -v jq &>/dev/null; then
         local hook_path=$(jq -r '.hooks.Stop[0].hooks[0].command // empty' "$TEST_DIR/.claude/settings.local.json")
-        assert "Hook path is absolute" "[[ '$hook_path' == /* ]]"
-        assert "Hook path contains target dir" "[[ '$hook_path' == *'$TEST_DIR'* ]]"
+        assert "Hook path uses CLAUDE_PROJECT_DIR" "[[ '$hook_path' == *'CLAUDE_PROJECT_DIR'* ]]"
+        assert "Hook path has .claude/hooks" "[[ '$hook_path' == *'.claude/hooks/'* ]]"
     fi
 
     teardown
@@ -161,7 +161,7 @@ test_installs_hooks
 echo ""
 test_creates_settings
 echo ""
-test_absolute_paths
+test_portable_paths
 echo ""
 test_backup_existing
 echo ""

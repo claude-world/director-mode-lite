@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/pre-tool-validator.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre-tool-validator.sh"
           }
         ]
       },
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/pre-tool-validator.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre-tool-validator.sh"
           }
         ]
       }
@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/log-file-change.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-file-change.sh"
           }
         ]
       },
@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/log-file-change.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-file-change.sh"
           }
         ]
       },
@@ -44,7 +44,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/log-bash-event.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-bash-event.sh"
           }
         ]
       }
@@ -54,7 +54,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/auto-loop-stop.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/auto-loop-stop.sh"
           }
         ]
       }

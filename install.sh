@@ -97,10 +97,10 @@ done
 
 # Handle settings.local.json merging (Claude Code reads hooks from here)
 # IMPORTANT: This preserves all existing user settings and only adds/merges hooks
+# Uses $CLAUDE_PROJECT_DIR for portable paths (resolved at runtime by Claude Code)
 echo "Configuring hooks in settings.local.json..."
 
 # Use Python to safely merge hooks into existing settings
-# Converts relative paths to absolute paths
 if TARGET_DIR="$TARGET_DIR" SCRIPT_DIR="$SCRIPT_DIR" python3 -c "
 import json
 import os
@@ -114,26 +114,12 @@ if os.path.exists(settings_file):
     with open(settings_file, 'r') as f:
         existing = json.load(f)
 
-# Read source hooks
+# Read source hooks (uses \$CLAUDE_PROJECT_DIR for portable paths)
 source_file = os.path.join(os.environ['SCRIPT_DIR'], 'hooks', 'settings-hooks.json')
 with open(source_file, 'r') as f:
     source = json.load(f)
 
-# Convert relative paths to absolute paths
-def convert_paths(obj, target_dir):
-    if isinstance(obj, dict):
-        if 'command' in obj and isinstance(obj['command'], str) and obj['command'].startswith('.claude/hooks/'):
-            hook_name = obj['command'].replace('.claude/hooks/', '')
-            obj['command'] = os.path.join(target_dir, '.claude', 'hooks', hook_name)
-        for k, v in obj.items():
-            obj[k] = convert_paths(v, target_dir)
-    elif isinstance(obj, list):
-        obj = [convert_paths(item, target_dir) for item in obj]
-    return obj
-
-source = convert_paths(source, target_dir)
-
-# Merge hooks
+# Merge hooks (no path conversion needed - uses \$CLAUDE_PROJECT_DIR)
 if 'hooks' not in existing:
     existing['hooks'] = {}
 
@@ -150,13 +136,12 @@ if 'PostToolUse' in source.get('hooks', {}):
 if 'PreToolUse' in source.get('hooks', {}):
     if 'PreToolUse' not in existing['hooks']:
         existing['hooks']['PreToolUse'] = source['hooks']['PreToolUse']
-        print('  Merged: PreToolUse hooks (file validation - Claude Code 2.1.9+)')
+        print('  Merged: PreToolUse hooks (file validation)')
 
-# Add plansDirectory setting for Claude Code 2.1.9+
-# Centralizes plan files in a dedicated directory
+# Add plansDirectory setting
 if 'plansDirectory' not in existing:
     existing['plansDirectory'] = '.claude/plans'
-    print('  Added: plansDirectory setting (Claude Code 2.1.9+)')
+    print('  Added: plansDirectory setting')
 
 # Write settings
 os.makedirs(os.path.dirname(settings_file), exist_ok=True)

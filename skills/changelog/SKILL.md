@@ -100,22 +100,22 @@ This skill provides an **automated** changelog system that:
     "PostToolUse": [
       {
         "matcher": "Write",
-        "hooks": [{ "type": "command", "command": "/path/to/project/.claude/hooks/log-file-change.sh" }]
+        "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-file-change.sh" }]
       },
       {
         "matcher": "Edit",
-        "hooks": [{ "type": "command", "command": "/path/to/project/.claude/hooks/log-file-change.sh" }]
+        "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-file-change.sh" }]
       },
       {
         "matcher": "Bash",
-        "hooks": [{ "type": "command", "command": "/path/to/project/.claude/hooks/log-bash-event.sh" }]
+        "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-bash-event.sh" }]
       }
     ]
   }
 }
 ```
 
-> **Note**: Paths are converted to absolute paths during `install.sh` execution.
+> **Note**: Uses `$CLAUDE_PROJECT_DIR` for portable paths (resolved at runtime by Claude Code).
 
 ### Hook Scripts
 
