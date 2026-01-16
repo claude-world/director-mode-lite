@@ -1,7 +1,6 @@
 ---
 name: doc-writer
 description: Documentation specialist for README, API docs, and code comments
-user-invocable: true
 allowed-tools: Read, Write, Edit, Grep, Glob
 ---
 
