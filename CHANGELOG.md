@@ -5,6 +5,34 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-01-17
+
+### Changed
+- **Hooks Structure Cleanup**
+  - Renamed `changelog-logger.sh` → `_lib-changelog.sh` (underscore prefix indicates shared library)
+  - Updated all hook scripts to reference new library name
+  - `install.sh` now properly handles library rename and removes deprecated files
+
+### Fixed
+- **Hooks Guide Compliance** - All hooks now comply with Claude Code Hooks Guide
+  - PreToolUse hooks return `{"decision": "allow"}` instead of `{}`
+  - PostToolUse hooks explicitly output `{}` per specification
+  - Consistent JSON output format across all hooks
+- **Documentation Updates**
+  - `changelog/SKILL.md` updated to reflect current hook structure
+  - Removed references to deprecated `log-test-result.sh` and `log-commit.sh`
+  - Updated architecture diagram with correct hook names
+- **Test Updates**
+  - Tests updated for new `_lib-changelog.sh` naming
+  - Removed outdated `commands/` directory checks
+  - Fixed PreToolUse output assertion
+
+### Removed
+- **Deprecated Hooks** - `install.sh` now removes during upgrade:
+  - `log-commit.sh` (merged into `log-bash-event.sh` in v1.1.0)
+  - `log-test-result.sh` (merged into `log-bash-event.sh` in v1.1.0)
+  - `changelog-logger.sh` (renamed to `_lib-changelog.sh`)
+
 ## [1.4.0] - 2026-01-16
 
 ### Added
@@ -158,6 +186,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.4.1 | 2026-01-17 | Hooks Cleanup, Guide Compliance, Library Rename |
 | 1.4.0 | 2026-01-16 | Claude Code 2.1.9+ Support, Session Tracking, PreToolUse Validator |
 | 1.3.0 | 2026-01-16 | Skills Directory Migration, Context Isolation, Phase Dependency Validation |
 | 1.2.0 | 2025-01-13 | Observability Changelog System, Session Conflict Prevention |
