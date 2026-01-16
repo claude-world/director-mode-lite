@@ -34,16 +34,19 @@ Our ultimate goal is to **democratize access to advanced AI development patterns
 
 ## Current State (v1.x)
 
-### What We Have
+### What We Have (v1.4.0)
 
 | Category | Components | Status |
 |----------|------------|--------|
-| **Commands** | 24 commands (workflow, TDD, validation, generation) | Stable |
-| **Agents** | 13 agents (3 core + 5 experts + 5 evolving) | Stable |
-| **Skills** | 5 skills (code-reviewer, test-runner, debugger, doc-writer, changelog) | Stable |
-| **Automation** | Auto-Loop (TDD), Evolving-Loop (Self-Evolution) | Beta |
-| **Observability** | Changelog system with JSONL logging | Stable |
+| **Commands** | 25 commands (workflow, TDD, validation, generation) | Stable |
+| **Agents** | 14 agents (3 core + 5 experts + 6 evolving) | Stable |
+| **Skills** | 29 skills (nested .claude/skills/ structure) | Stable |
+| **Automation** | Auto-Loop (TDD), Evolving-Loop (Self-Evolution) | Stable |
+| **Observability** | Changelog system with session tracking | Stable |
 | **Memory** | Meta-Engineering memory system | Beta |
+| **Hooks** | 5 hooks (PostToolUse, PreToolUse, Stop) | Stable |
+| **Tests** | Automated test suite for install.sh and hooks | Stable |
+| **Examples** | 4 tutorials (Calculator, REST API, CLI, Library) | Stable |
 
 ### Current Architecture
 
@@ -69,34 +72,56 @@ Director Mode Lite v1.x
 
 ## Short-Term Goals (Q1-Q2 2026)
 
-### v1.3.0 - Enhanced Learning (Q1 2026)
+### v1.3.0 - Skills Directory Migration (Released 2026-01-16)
 
-**Focus**: Improve learning and pattern recognition capabilities.
+**Focus**: Modernize configuration structure and improve context isolation.
 
-#### Features
+#### Features (Delivered)
 
-- [ ] **Pattern Library Expansion**
-  - Pre-built patterns for common tasks (CRUD, Auth, Testing)
-  - Community-contributed patterns
-  - Pattern import/export functionality
+- [x] **Skills Directory Migration**
+  - All 25 commands migrated to `.claude/skills/` structure
+  - Added `user-invocable: true` flag for user-callable skills
+  - Nested skills auto-discovery support (Claude Code 2.1.6+)
 
-- [ ] **Learning Dashboard**
-  - Visual representation of learned patterns
-  - Success rate trends over time
-  - Tool usage analytics
+- [x] **Context Isolation Pattern**
+  - All 5 Self-Evolving agents have explicit return format constraints
+  - Agents return <100 char summaries, details go to output files
+  - Reduces context bloat and prevents compaction
 
-- [ ] **Feedback Integration**
-  - User feedback collection mechanism
-  - Feedback-driven pattern refinement
-  - Explicit "thumbs up/down" for decisions
+- [x] **Phase Dependency Validation**
+  - `validate_phase_prerequisites()` function
+  - Automatic fallback to missing prerequisite phases
+  - `validate_checkpoint()` for resume safety
 
-#### Technical Improvements
+### v1.4.0 - Claude Code 2.1.9+ Support (Released 2026-01-16)
 
-- [ ] Memory system persistence improvements
-- [ ] Cross-project pattern sharing
-- [ ] Pattern confidence scoring
+**Focus**: Leverage latest Claude Code features for better observability.
 
-### v1.4.0 - Multi-Model Support (Q2 2026)
+#### Features (Delivered)
+
+- [x] **Session Tracking**
+  - `${CLAUDE_SESSION_ID}` support in all hooks
+  - Session-scoped changelog events
+  - Multi-session observability
+
+- [x] **PreToolUse Validation**
+  - `pre-tool-validator.sh` hook for protected files
+  - Returns `additionalContext` for sensitive operations
+  - Guidance for .env, credentials, migrations, CI/CD configs
+
+- [x] **Centralized Plans**
+  - `plansDirectory` setting auto-configured
+  - Plans stored in `.claude/plans/`
+
+- [x] **Automated Testing**
+  - Test suite for install.sh and hooks
+  - `tests/run-tests.sh` test runner
+
+- [x] **More Examples**
+  - CLI Tool example (file organizer)
+  - TypeScript Library example (validator)
+
+### v1.5.0 - Enhanced Learning (Q2 2026)
 
 **Focus**: Support for multiple AI models and providers.
 
@@ -402,35 +427,40 @@ Q4 2026: Certification program
 ## Version Timeline
 
 ```
-2024 Q4 ────────────────────────────────────────────────────────────────────►
+2025 Q1 ────────────────────────────────────────────────────────────────────►
          │
-         └── v1.0.0 Initial Release
+         └── v1.0.0 Initial Release (2025-01-11)
               ├── 13 Commands
               ├── 3 Agents
               ├── 4 Skills
               └── Auto-Loop
 
-2025 Q1 ────────────────────────────────────────────────────────────────────►
-         │
-         └── v1.1.0 Expert Agents
-              ├── 5 Expert Agents
-              ├── 5 Validator Commands
-              └── 4 Generator Commands
-
-         └── v1.2.0 Observability
-              ├── Changelog System
-              └── Session Conflict Prevention
+         └── v1.2.0 Observability (2025-01-13)
+              ├── Changelog System (JSONL logging)
+              ├── Session Conflict Prevention
+              └── PostToolUse Hooks
 
 2026 Q1 ────────────────────────────────────────────────────────────────────►
          │
-         └── v1.3.0 Enhanced Learning (Planned)
+         └── v1.3.0 Skills Migration (2026-01-16) ✅
+              ├── 29 Skills in nested structure
+              ├── Context Isolation Pattern
+              └── Phase Dependency Validation
+
+         └── v1.4.0 Claude Code 2.1.9+ (2026-01-16) ✅
+              ├── Session ID tracking
+              ├── PreToolUse hooks
+              ├── Automated tests
+              └── 4 Examples
+
+2026 Q2 ────────────────────────────────────────────────────────────────────►
+         │
+         └── v1.5.0 Enhanced Learning (Planned)
               ├── Pattern Library
               ├── Learning Dashboard
               └── Feedback Integration
 
-2026 Q2 ────────────────────────────────────────────────────────────────────►
-         │
-         └── v1.4.0 Multi-Model (Planned)
+         └── v1.6.0 Multi-Model (Planned)
               ├── Model Router
               ├── External CLI Integration
               └── Performance Optimization
@@ -494,6 +524,6 @@ We commit to transparent communication about any changes to this roadmap.
 
 ---
 
-*Roadmap version: 1.0.0*
-*Last updated: 2026-01-14*
+*Roadmap version: 1.4.0*
+*Last updated: 2026-01-16*
 *Part of [Director Mode Lite](https://github.com/claude-world/director-mode-lite)*

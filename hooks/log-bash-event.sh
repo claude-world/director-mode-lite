@@ -25,13 +25,14 @@ if [[ -f "$SCRIPT_DIR/changelog-logger.sh" ]]; then
 elif [[ -f ".claude/hooks/changelog-logger.sh" ]]; then
     source ".claude/hooks/changelog-logger.sh"
 else
-    # Minimal inline fallback if changelog-logger.sh not found
+    # Minimal inline fallback if changelog-logger.sh not found (includes session_id for Claude Code 2.1.9+)
     log_event() {
         mkdir -p ".director-mode" 2>/dev/null
         local ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")
         local iter="null"
+        local sid="${CLAUDE_SESSION_ID:-default}"
         [[ -f ".auto-loop/iteration.txt" ]] && iter=$(cat ".auto-loop/iteration.txt" 2>/dev/null || echo "null")
-        echo "{\"id\":\"evt_$(date +%s)_$RANDOM\",\"timestamp\":\"$ts\",\"event_type\":\"$1\",\"agent\":\"$3\",\"iteration\":$iter,\"summary\":\"$2\",\"files\":$4}" >> ".director-mode/changelog.jsonl" 2>/dev/null
+        echo "{\"id\":\"evt_$(date +%s)_$RANDOM\",\"timestamp\":\"$ts\",\"session_id\":\"$sid\",\"event_type\":\"$1\",\"agent\":\"$3\",\"iteration\":$iter,\"summary\":\"$2\",\"files\":$4}" >> ".director-mode/changelog.jsonl" 2>/dev/null
     }
 fi
 

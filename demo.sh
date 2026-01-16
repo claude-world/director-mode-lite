@@ -112,10 +112,11 @@ echo "    └── doc-writer"
 # Check skills
 SKILL_COUNT=$(ls -d .claude/skills/*/ 2>/dev/null | wc -l | tr -d ' ')
 echo -e "  ${GREEN}✓${NC} Skills:   ${CYAN}$SKILL_COUNT${NC} installed"
-echo "    ├── code-reviewer"
-echo "    ├── debugger"
-echo "    ├── doc-writer"
-echo "    └── test-runner"
+echo "    ├── workflow commands (9)"
+echo "    ├── utility commands (10)"
+echo "    ├── template generators (4)"
+echo "    ├── list commands (2)"
+echo "    └── core skills (4)"
 
 # Check hooks
 if [[ -f .claude/hooks.json ]]; then

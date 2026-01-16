@@ -5,6 +5,10 @@
 # This script provides the core logging functionality.
 # Called by other hooks to record events.
 #
+# Claude Code 2.1.9+ Features:
+#   - ${CLAUDE_SESSION_ID} for session tracking
+#   - Session-scoped event logging
+#
 # Note: This is experimental. Hook interface may change in future Claude Code versions.
 
 # Don't exit on errors - logging should never break the main flow
@@ -14,6 +18,9 @@ CHANGELOG_DIR=".director-mode"
 CHANGELOG_FILE="$CHANGELOG_DIR/changelog.jsonl"
 # Configurable via environment variable
 MAX_LINES="${DIRECTOR_MODE_MAX_CHANGELOG_LINES:-500}"
+
+# Session ID from Claude Code 2.1.9+ (fallback to "default" for older versions)
+SESSION_ID="${CLAUDE_SESSION_ID:-default}"
 
 # Check if jq is available
 HAS_JQ=false
@@ -101,19 +108,20 @@ log_event() {
     local summary="${2:-}"
     local agent="${3:-system}"
     local files="${4:-[]}"
-    
+
     ensure_dir
     rotate_if_needed
-    
+
     local id=$(generate_id)
     local timestamp=$(get_timestamp)
     local iteration=$(get_iteration)
-    
+    local session_id="${SESSION_ID:-default}"
+
     # Escape summary for JSON
     summary=$(escape_json "$summary")
-    
-    # Build and append event
-    echo "{\"id\":\"$id\",\"timestamp\":\"$timestamp\",\"event_type\":\"$event_type\",\"agent\":\"$agent\",\"iteration\":$iteration,\"summary\":\"$summary\",\"files\":$files}" >> "$CHANGELOG_FILE" 2>/dev/null || true
+
+    # Build and append event (includes session_id for Claude Code 2.1.9+)
+    echo "{\"id\":\"$id\",\"timestamp\":\"$timestamp\",\"session_id\":\"$session_id\",\"event_type\":\"$event_type\",\"agent\":\"$agent\",\"iteration\":$iteration,\"summary\":\"$summary\",\"files\":$files}" >> "$CHANGELOG_FILE" 2>/dev/null || true
 }
 
 # Archive current changelog

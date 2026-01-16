@@ -8,6 +8,8 @@ Real-world examples demonstrating Director Mode workflows.
 |---------|-------------|------------|
 | [Calculator](./01-calculator/) | Basic Auto-Loop demo | Beginner |
 | [REST API](./02-rest-api/) | Building an API with TDD | Intermediate |
+| [CLI Tool](./03-cli-tool/) | Command-line tool with TDD | Intermediate |
+| [TypeScript Library](./04-library/) | Publishable npm library | Advanced |
 
 ---
 
@@ -59,6 +61,53 @@ Acceptance Criteria:
 - `/smart-commit` - Commit changes
 
 **Time:** ~15 minutes
+
+---
+
+## Example 3: CLI Tool (Command-Line Development)
+
+**Goal:** Create a file organizer CLI tool
+
+**Commands used:**
+- `/auto-loop` - TDD automation
+- `/test-first` - Manual TDD cycle
+
+**Time:** ~10 minutes
+
+```bash
+/auto-loop "Create a file organizer CLI
+
+Acceptance Criteria:
+- [ ] CLI entry point with commander.js
+- [ ] scan(dir) function
+- [ ] organize(dir, options) function
+- [ ] --dry-run flag
+- [ ] Unit tests"
+```
+
+---
+
+## Example 4: TypeScript Library (Self-Evolving Development)
+
+**Goal:** Build a publishable validation library
+
+**Commands used:**
+- `/evolving-loop` - Self-evolving development
+- Type-first design approach
+
+**Time:** ~20 minutes
+
+```bash
+/evolving-loop "Create a TypeScript validation library
+
+Acceptance Criteria:
+- [ ] isEmail(value) validator
+- [ ] isURL(value) validator
+- [ ] createValidator(rules) factory
+- [ ] TypeScript generics
+- [ ] Zero dependencies
+- [ ] ESM and CJS builds"
+```
 
 ---
 

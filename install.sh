@@ -101,6 +101,7 @@ HOOK_SCRIPTS=(
     "changelog-logger.sh"
     "log-file-change.sh"
     "log-bash-event.sh"
+    "pre-tool-validator.sh"
 )
 
 for hook in "${HOOK_SCRIPTS[@]}"; do
@@ -174,6 +175,17 @@ if 'PostToolUse' in source.get('hooks', {}):
     if 'PostToolUse' not in existing['hooks']:
         existing['hooks']['PostToolUse'] = source['hooks']['PostToolUse']
         print('  Merged: PostToolUse hooks (changelog)')
+
+if 'PreToolUse' in source.get('hooks', {}):
+    if 'PreToolUse' not in existing['hooks']:
+        existing['hooks']['PreToolUse'] = source['hooks']['PreToolUse']
+        print('  Merged: PreToolUse hooks (file validation - Claude Code 2.1.9+)')
+
+# Add plansDirectory setting for Claude Code 2.1.9+
+# Centralizes plan files in a dedicated directory
+if 'plansDirectory' not in existing:
+    existing['plansDirectory'] = '.claude/plans'
+    print('  Added: plansDirectory setting (Claude Code 2.1.9+)')
 
 # Write settings
 os.makedirs(os.path.dirname(settings_file), exist_ok=True)

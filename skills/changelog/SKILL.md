@@ -1,6 +1,7 @@
 ---
 name: changelog
 description: View and manage the runtime changelog for observability
+user-invocable: true
 ---
 
 # Changelog Skill

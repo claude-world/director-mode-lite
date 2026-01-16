@@ -1,6 +1,7 @@
 ---
 name: test-runner
 description: Test automation specialist for running tests and ensuring coverage
+user-invocable: true
 allowed-tools: Read, Bash, Grep, Glob
 ---
 

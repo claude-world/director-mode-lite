@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
-  <a href="https://claude.ai/code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.4+-blueviolet?logo=anthropic" alt="Claude Code"></a>
+  <a href="https://claude.ai/code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.6+-blueviolet?logo=anthropic" alt="Claude Code"></a>
   <a href="https://discord.com/invite/rBtHzSD288"><img src="https://img.shields.io/discord/1459859959398531294?color=7289da&label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://github.com/claude-world/director-mode-lite/stargazers"><img src="https://img.shields.io/github/stars/claude-world/director-mode-lite?style=social" alt="GitHub Stars"></a>
   <a href="https://claude-world.com/stats"><img src="https://img.shields.io/badge/📊_Live_Stats-claude--world.com-orange" alt="Live Stats"></a>
@@ -171,7 +171,7 @@ claude plugin install director-mode-lite
 cd your-project
 
 # 3. Run installation script from cached plugin
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.1.0/install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.4.0/install.sh .
 
 # 4. Verify installation
 cat .claude/settings.local.json | jq '.hooks.Stop[0].hooks[0].command'
@@ -191,7 +191,7 @@ claude plugin install director-mode-lite
 cat ~/.claude/plugins/installed_plugins.json | jq '.'
 
 # View plugin cache
-ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.1.0/
+ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.4.0/
 ```
 
 </details>
@@ -226,6 +226,7 @@ cd director-mode-lite
 - **Smart Merge** - Preserves existing settings, only adds new hooks
 - **Skip Existing** - Won't overwrite already-installed commands/agents/skills
 - **Clean Uninstall** - `./uninstall.sh` removes all installed files
+- **Automated Tests** - `./tests/run-tests.sh` validates installation
 
 </details>
 
@@ -237,7 +238,7 @@ cd director-mode-lite
 <tr>
 <td valign="top" width="33%">
 
-### Commands (24)
+### Commands (25)
 
 **Workflow:**
 | Command | Purpose |
@@ -286,7 +287,7 @@ cd director-mode-lite
 </td>
 <td valign="top" width="33%">
 
-### Agents (13)
+### Agents (14)
 
 **Core Agents:**
 | Agent | Purpose |
@@ -316,7 +317,7 @@ cd director-mode-lite
 </td>
 <td valign="top" width="34%">
 
-### Skills (4)
+### Skills (29)
 
 | Skill | Purpose |
 |-------|---------|
@@ -680,6 +681,8 @@ Learn by doing with hands-on tutorials:
 |---------|-------------|------|
 | [Calculator](examples/01-calculator/) | Auto-Loop TDD demo | 5 min |
 | [REST API](examples/02-rest-api/) | Building an API with TDD | 15 min |
+| [CLI Tool](examples/03-cli-tool/) | Command-line tool | 10 min |
+| [TypeScript Library](examples/04-library/) | Publishable npm library | 20 min |
 
 See [examples/](examples/) for full tutorials.
 
@@ -755,9 +758,9 @@ This is a **free, open-source toolkit** from the [Claude World](https://claude-w
 <td width="50%">
 
 **What's included (FREE):**
-- 22 Commands (incl. validators & generators)
-- 8 Agents (3 Core + 5 Experts)
-- 4 Skills
+- 25 Commands (incl. validators & generators)
+- 14 Agents (3 Core + 5 Experts + 6 Self-Evolving)
+- 29 Skills
 - Auto-Loop with TDD
 - Expert-guided project setup
 - Validation & template generation

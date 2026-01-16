@@ -1,6 +1,7 @@
 ---
 name: debugger
 description: Debugging specialist for root cause analysis and problem resolution
+user-invocable: true
 allowed-tools: Read, Grep, Glob, Bash, Edit
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: code-reviewer
 description: Code review specialist for quality, security, and best practices
+user-invocable: true
 allowed-tools: Read, Grep, Glob, Bash
 ---
 

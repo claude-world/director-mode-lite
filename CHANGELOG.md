@@ -5,7 +5,55 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.4.0] - 2026-01-16
+
+### Added
+- **Claude Code 2.1.9+ Support** - Leveraging latest features
+  - `${CLAUDE_SESSION_ID}` for session-scoped tracking in all hooks
+  - `plansDirectory` setting for centralized plan storage
+  - PreToolUse hooks with `additionalContext` for protected file guidance
+- **PreToolUse File Validator Hook** (`pre-tool-validator.sh`)
+  - Returns guidance context for sensitive files (.env, settings, lockfiles)
+  - No blocking, just adds context to help Claude make better decisions
+  - Patterns: environment files, credentials, migrations, CI/CD configs
+- **Session-Scoped Changelog** - All events now include `session_id`
+  - Enables filtering events by session
+  - Better multi-session observability
+
+### Changed
+- Minimum Claude Code version updated to **2.1.6+** (was 2.1.4+)
+- `install.sh` now configures `plansDirectory` setting automatically
+- All inline hook fallbacks include session_id for consistency
+
+## [1.3.0] - 2026-01-16
+
+### Added
+- **Skills Directory Migration** - Commands migrated to `.claude/skills/` structure
+  - All 25 commands now have corresponding `SKILL.md` files
+  - Added `user-invocable: true` flag for user-callable skills
+  - Simplified SKILL.md files with detailed docs in separate files
+  - Skills directory structure: `.claude/skills/[name]/SKILL.md`
+  - Backward compatible: `.claude/commands/` still works
+- **Context Isolation Pattern** for Self-Evolving agents
+  - All 5 Self-Evolving agents now have explicit return format constraints
+  - Agents return <100 char summaries, details go to output files
+  - Reduces context bloat and prevents compaction
+- **First-Run Error Handling** for `/evolving-loop`
+  - Safe directory creation with `mkdir -p`
+  - Fallback defaults for missing memory files
+  - First-run detection with helpful messages
+- **Phase Dependency Validation**
+  - `validate_phase_prerequisites()` function added
+  - Automatic fallback to missing prerequisite phases
+  - `validate_checkpoint()` for resume safety
+- **VERSION file** for centralized version management
+- **DEVELOPMENT-PATTERNS.md** documenting learned best practices
+  - Context Isolation Pattern
+  - First-Run Error Handling
+  - Phase Dependency Validation
+  - Memory Persistence Pattern
+  - Version Update Checklist
+  - Agent Return Format standards
 
 ### Fixed
 - **Hook path resolution** - install.sh now converts relative hook paths to absolute paths
@@ -110,6 +158,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.4.0 | 2026-01-16 | Claude Code 2.1.9+ Support, Session Tracking, PreToolUse Validator |
+| 1.3.0 | 2026-01-16 | Skills Directory Migration, Context Isolation, Phase Dependency Validation |
 | 1.2.0 | 2025-01-13 | Observability Changelog System, Session Conflict Prevention |
 | 1.0.0 | 2025-01-11 | Initial release with 13 commands, 3 agents, 4 skills |
 
