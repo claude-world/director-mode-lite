@@ -44,7 +44,7 @@ INPUT=$(cat 2>/dev/null) || INPUT=""
 if $HAS_JQ; then
     TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null) || TOOL_NAME=""
     COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null) || COMMAND=""
-    OUTPUT=$(echo "$INPUT" | jq -r '.tool_response // empty' 2>/dev/null) || OUTPUT=""
+    OUTPUT=$(echo "$INPUT" | jq -r '.tool_output // empty' 2>/dev/null) || OUTPUT=""
 else
     TOOL_NAME=$(echo "$INPUT" | grep -o '"tool_name"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*:.*"\([^"]*\)".*/\1/' 2>/dev/null) || TOOL_NAME=""
     COMMAND=$(echo "$INPUT" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*:.*"\([^"]*\)".*/\1/' 2>/dev/null) || COMMAND=""

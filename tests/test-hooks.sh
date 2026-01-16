@@ -128,7 +128,7 @@ test_log_bash_test() {
     setup
 
     # Simulate test command with pass output
-    local input='{"tool_name":"Bash","tool_input":{"command":"npm test"},"tool_response":"5 passing"}'
+    local input='{"tool_name":"Bash","tool_input":{"command":"npm test"},"tool_output":"5 passing"}'
 
     echo "$input" | "$TEST_DIR/.claude/hooks/log-bash-event.sh"
 
@@ -148,7 +148,7 @@ test_log_bash_commit() {
     setup
 
     # Simulate git commit
-    local input='{"tool_name":"Bash","tool_input":{"command":"git commit -m \"feat: add feature\""},"tool_response":"[main abc1234] feat: add feature"}'
+    local input='{"tool_name":"Bash","tool_input":{"command":"git commit -m \"feat: add feature\""},"tool_output":"[main abc1234] feat: add feature"}'
 
     echo "$input" | "$TEST_DIR/.claude/hooks/log-bash-event.sh"
 
