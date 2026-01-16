@@ -107,8 +107,10 @@ echo "    └── 6 self-evolving (orchestrator, analyzer, synthesizer, etc.)"
 HOOK_COUNT=$(ls .claude/hooks/*.sh 2>/dev/null | wc -l | tr -d ' ')
 echo -e "  ${GREEN}✓${NC} Hooks:    ${CYAN}$HOOK_COUNT${NC} installed"
 echo "    ├── auto-loop-stop.sh (Stop)"
-echo "    ├── changelog-logger.sh (Core)"
-echo "    └── pre-tool-validator.sh (PreToolUse)"
+echo "    ├── log-bash-event.sh (PostToolUse:Bash)"
+echo "    ├── log-file-change.sh (PostToolUse:Write/Edit)"
+echo "    ├── pre-tool-validator.sh (PreToolUse:Write/Edit)"
+echo "    └── _lib-changelog.sh (shared library)"
 
 echo ""
 

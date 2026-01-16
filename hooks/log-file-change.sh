@@ -13,11 +13,11 @@ set +e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || SCRIPT_DIR="$(pwd)/.claude/hooks"
 
-# Source the logger (with fallback)
-if [[ -f "$SCRIPT_DIR/changelog-logger.sh" ]]; then
-    source "$SCRIPT_DIR/changelog-logger.sh"
-elif [[ -f ".claude/hooks/changelog-logger.sh" ]]; then
-    source ".claude/hooks/changelog-logger.sh"
+# Source the logger library
+if [[ -f "$SCRIPT_DIR/_lib-changelog.sh" ]]; then
+    source "$SCRIPT_DIR/_lib-changelog.sh"
+elif [[ -f ".claude/hooks/_lib-changelog.sh" ]]; then
+    source ".claude/hooks/_lib-changelog.sh"
 else
     # Minimal inline fallback (includes session_id for Claude Code 2.1.9+)
     log_event() {

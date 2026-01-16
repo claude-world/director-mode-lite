@@ -48,7 +48,6 @@ test_creates_claude_dir() {
     "$PROJECT_ROOT/install.sh" "$TEST_DIR" > /dev/null 2>&1
 
     assert ".claude directory exists" "[[ -d '$TEST_DIR/.claude' ]]"
-    assert ".claude/commands exists" "[[ -d '$TEST_DIR/.claude/commands' ]]"
     assert ".claude/agents exists" "[[ -d '$TEST_DIR/.claude/agents' ]]"
     assert ".claude/skills exists" "[[ -d '$TEST_DIR/.claude/skills' ]]"
     assert ".claude/hooks exists" "[[ -d '$TEST_DIR/.claude/hooks' ]]"
@@ -63,8 +62,8 @@ test_installs_hooks() {
 
     "$PROJECT_ROOT/install.sh" "$TEST_DIR" > /dev/null 2>&1
 
+    assert "_lib-changelog.sh exists" "[[ -f '$TEST_DIR/.claude/hooks/_lib-changelog.sh' ]]"
     assert "auto-loop-stop.sh exists" "[[ -f '$TEST_DIR/.claude/hooks/auto-loop-stop.sh' ]]"
-    assert "changelog-logger.sh exists" "[[ -f '$TEST_DIR/.claude/hooks/changelog-logger.sh' ]]"
     assert "log-file-change.sh exists" "[[ -f '$TEST_DIR/.claude/hooks/log-file-change.sh' ]]"
     assert "log-bash-event.sh exists" "[[ -f '$TEST_DIR/.claude/hooks/log-bash-event.sh' ]]"
     assert "pre-tool-validator.sh exists" "[[ -f '$TEST_DIR/.claude/hooks/pre-tool-validator.sh' ]]"
@@ -140,15 +139,15 @@ test_skip_existing() {
     # First install
     "$PROJECT_ROOT/install.sh" "$TEST_DIR" > /dev/null 2>&1
 
-    # Modify a command file
-    echo "# Modified" >> "$TEST_DIR/.claude/commands/agents.md"
-    local original_content=$(cat "$TEST_DIR/.claude/commands/agents.md")
+    # Modify an agent file
+    echo "# Modified" >> "$TEST_DIR/.claude/agents/code-reviewer.md"
+    local original_content=$(cat "$TEST_DIR/.claude/agents/code-reviewer.md")
 
     # Second install
     "$PROJECT_ROOT/install.sh" "$TEST_DIR" > /dev/null 2>&1
 
     # Check file was not overwritten
-    local new_content=$(cat "$TEST_DIR/.claude/commands/agents.md")
+    local new_content=$(cat "$TEST_DIR/.claude/agents/code-reviewer.md")
     assert "Existing files not overwritten" "[[ '$original_content' == '$new_content' ]]"
 
     teardown

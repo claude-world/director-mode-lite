@@ -46,13 +46,13 @@ assert() {
     fi
 }
 
-# Test: changelog-logger.sh functions
+# Test: _lib-changelog.sh functions
 test_changelog_logger() {
-    echo "Test: changelog-logger.sh functions"
+    echo "Test: _lib-changelog.sh functions"
     setup
 
-    # Source the logger
-    source "$TEST_DIR/.claude/hooks/changelog-logger.sh"
+    # Source the logger library
+    source "$TEST_DIR/.claude/hooks/_lib-changelog.sh"
 
     # Test ensure_dir
     ensure_dir
@@ -189,7 +189,7 @@ test_pre_tool_validator_regular() {
 
     local output=$(echo "$input" | "$TEST_DIR/.claude/hooks/pre-tool-validator.sh")
 
-    assert "Returns empty JSON for regular files" "[[ '$output' == '{}' ]]"
+    assert "Returns allow decision for regular files" "[[ '$output' == *'\"decision\"'*'allow'* ]]"
 
     teardown
 }

@@ -46,7 +46,7 @@ This skill provides an **automated** changelog system that:
 │                            │                                    │
 │                            ▼                                    │
 │  ┌─────────────────────────────────────────────────────┐       │
-│  │           changelog-logger.sh                        │       │
+│  │           _lib-changelog.sh                        │       │
 │  │  • log_event()      • rotate_if_needed()            │       │
 │  │  • archive_changelog()  • clear_changelog()         │       │
 │  └─────────────────────────┬───────────────────────────┘       │
@@ -216,7 +216,7 @@ Before debugging, checks changelog for:
 
 ---
 
-## Core Functions (`changelog-logger.sh`)
+## Core Functions (`_lib-changelog.sh`)
 
 ```bash
 # Log an event
@@ -306,7 +306,7 @@ Hooks are installed with Director Mode Lite:
 # After install, verify:
 ls .claude/hooks/
 # → auto-loop-stop.sh
-# → changelog-logger.sh
+# → _lib-changelog.sh
 # → log-bash-event.sh
 # → log-file-change.sh
 # → pre-tool-validator.sh

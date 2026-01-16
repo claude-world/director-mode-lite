@@ -67,10 +67,10 @@ mkdir -p "$TARGET_DIR/.claude/hooks"
 # Note: log-bash-event.sh replaces separate log-test-result.sh and log-commit.sh
 # to avoid stdin conflicts (only one hook can read stdin)
 HOOK_SCRIPTS=(
+    "_lib-changelog.sh"
     "auto-loop-stop.sh"
-    "changelog-logger.sh"
-    "log-file-change.sh"
     "log-bash-event.sh"
+    "log-file-change.sh"
     "pre-tool-validator.sh"
 )
 
@@ -82,10 +82,11 @@ for hook in "${HOOK_SCRIPTS[@]}"; do
     fi
 done
 
-# Remove deprecated hooks (replaced by log-bash-event.sh in v1.1.0)
+# Remove deprecated/renamed hooks
 DEPRECATED_HOOKS=(
     "log-commit.sh"
     "log-test-result.sh"
+    "changelog-logger.sh"
 )
 for deprecated in "${DEPRECATED_HOOKS[@]}"; do
     if [[ -f "$TARGET_DIR/.claude/hooks/$deprecated" ]]; then
