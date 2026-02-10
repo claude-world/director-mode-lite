@@ -28,13 +28,24 @@ tools:                    # Required: YAML list format
   - Read
   - Write
   - Grep
-model: sonnet             # Required: inherit, haiku, sonnet, opus
+model: sonnet             # Required: inherit, haiku, sonnet, opus, best, sonnet[1m], opus[1m], opusplan
+# forkContext: "true"     # Optional: run in forked context (string "true"/"false")
+# maxTurns: 20            # Optional: max conversation turns (positive integer)
 skills:                    # Optional: auto-load skills (array)
   - linked-skill
+memory:                    # Optional: memory scopes to load (array)
+  - user
+  - project
+  - local
+mcpServers:                # Optional: MCP server refs or objects (array)
+  - server-name
 hooks:                     # Optional: agent-scoped lifecycle hooks
   PreToolUse:
     - matcher: Write
       command: ./validate.sh
+  PostToolUse:
+    - matcher: Bash
+      command: ./log.sh
 permissionMode: default    # Optional: permission handling
 disallowedTools:           # Optional: explicit tool blocking
   - NotebookEdit
@@ -54,7 +65,7 @@ yellow, red, green, blue, magenta, cyan
 
 ### Valid Models
 ```
-inherit, haiku, sonnet, opus
+inherit, haiku, sonnet, opus, best, sonnet[1m], opus[1m], opusplan
 ```
 
 ---
@@ -66,10 +77,14 @@ inherit, haiku, sonnet, opus
 - [ ] `description` exists (under 100 chars)
 - [ ] `tools` exists (YAML list format, not bracket array)
 - [ ] `color` is set (valid color name)
-- [ ] `model` is set (inherit/haiku/sonnet/opus)
+- [ ] `model` is set (inherit/haiku/sonnet/opus/best/sonnet[1m]/opus[1m]/opusplan)
 
 ### Optional Fields
 - [ ] `skills` references existing skills (array, if set)
+- [ ] `forkContext` is string "true" or "false" (if set)
+- [ ] `maxTurns` is positive integer (if set)
+- [ ] `memory` is valid array of: user, project, local (if set)
+- [ ] `mcpServers` is valid array of string refs or objects (if set)
 - [ ] `hooks` has valid structure (if set)
 - [ ] `permissionMode` is valid value (if set)
 - [ ] `disallowedTools` are valid tool names (if set)
@@ -112,5 +127,7 @@ inherit, haiku, sonnet, opus
 - Convert string skills to YAML array
 - Add missing `color` field (default: cyan)
 - Add missing `model` field (default: inherit)
+- Convert boolean forkContext to string
+- Convert scalar memory to array format
 - Remove invalid tools
 - Add recommended sections

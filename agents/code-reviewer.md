@@ -10,6 +10,8 @@ tools:
 model: sonnet
 skills:
   - code-reviewer
+memory:
+  - user
 ---
 
 # Code Reviewer Agent

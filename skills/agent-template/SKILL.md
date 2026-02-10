@@ -46,10 +46,10 @@ Generate a custom agent file based on requirements.
 
 ```yaml
 ---
-name: agent-name            # Required: lowercase, hyphenated
-description: Brief desc     # Required: under 100 chars
+name: agent-name            # Required: lowercase, hyphenated, 3-50 chars
+description: Brief desc     # Required: triggering conditions + <example> blocks
 color: cyan                 # Required: yellow, red, green, blue, magenta, cyan
-tools:                      # Required: YAML list format
+tools:                      # Optional: YAML list (omit = all tools)
   - Read
   - Write
   - Edit
@@ -61,14 +61,38 @@ tools:                      # Required: YAML list format
   - WebSearch
   - TodoWrite
   - NotebookEdit
-model: sonnet               # Required: inherit, haiku, sonnet, opus
-skills:                     # Optional: auto-load skills (array)
+model: sonnet               # Required: inherit, haiku, sonnet, opus, best, sonnet[1m], opus[1m], opusplan
+# forkContext: "true"        # Optional: context isolation (string, not boolean)
+# maxTurns: 20              # Optional: max agentic turns before stopping
+skills:                     # Optional: skills to auto-load (array)
   - linked-skill
+# memory:                   # Optional: CLAUDE.md access (array)
+#   - user
+#   - project
+#   - local
+# mcpServers:               # Optional: MCP servers (string ref or inline config)
+#   - memory
+#   - name: custom-server
+#     type: stdio
+#     command: npx
+#     args: ["-y", "@example/server"]
 hooks:                      # Optional: agent-scoped lifecycle hooks
   PreToolUse:
     - matcher: Write
-      command: ./validate.sh
-permissionMode: default     # Optional: permission handling
+      hooks:
+        - type: command
+          command: ./scripts/validate.sh
+  PostToolUse:
+    - matcher: Bash
+      hooks:
+        - type: command
+          command: ./scripts/log.sh
+  Stop:
+    - hooks:
+        - type: command
+          command: ./scripts/check.sh
+          once: true
+permissionMode: default     # Optional: default, acceptEdits, bypassPermissions, plan, delegate, dontAsk
 disallowedTools:            # Optional: explicit tool blocking
   - NotebookEdit
 ---

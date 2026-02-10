@@ -11,6 +11,9 @@ tools:
 model: sonnet
 skills:
   - debugger
+memory:
+  - user
+maxTurns: 25
 ---
 
 # Debugger Agent

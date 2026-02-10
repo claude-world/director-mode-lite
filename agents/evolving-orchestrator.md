@@ -10,6 +10,7 @@ tools:
   - Glob
   - Task
 model: haiku
+maxTurns: 50
 ---
 
 # Evolving Loop Orchestrator (Meta-Engineering v2.0)

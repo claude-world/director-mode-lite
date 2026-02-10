@@ -9,6 +9,9 @@ tools:
   - Grep
   - Glob
 model: haiku
+memory:
+  - user
+maxTurns: 15
 ---
 
 # Skill Evolver Agent (Meta-Engineering v2.0)

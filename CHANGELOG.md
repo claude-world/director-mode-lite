@@ -5,6 +5,32 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-02-10
+
+### Changed
+- **Agent Frontmatter: Restored & Expanded Fields** (aligned to official `~/.claude/templates/AGENT-TEMPLATE.md`)
+  - **Restored `memory`** field (YAML array: `user`, `project`, `local`) — was incorrectly removed in v1.5.1
+  - **Restored `maxTurns`** field (positive integer) — was incorrectly removed in v1.5.1
+  - Added `forkContext` field (string `"true"`/`"false"`, not boolean)
+  - Added `mcpServers` field (string ref or inline config with 8 transport types)
+  - Expanded `model` options: `inherit`, `haiku`, `sonnet`, `opus`, `best`, `sonnet[1m]`, `opus[1m]`, `opusplan`
+  - Updated `hooks` to nested format: `matcher` + `hooks` array + `type: command`
+  - Expanded `permissionMode` values: `default`, `acceptEdits`, `bypassPermissions`, `plan`, `delegate`, `dontAsk`
+- **Skill Frontmatter: New Fields** (aligned to official `~/.claude/templates/SKILL-TEMPLATE.md`)
+  - Added `when_to_use` field (underscore, NOT hyphen) for auto-trigger descriptions
+  - Added `arguments` field (structured array: `name`/`description`/`required`)
+  - Expanded `model` options (same as agents)
+  - Updated `hooks` to nested format (same as agents)
+- **Agent Validator (`agent-check`)** — Now validates `forkContext`, `maxTurns`, `memory`, `mcpServers`; expanded model list
+- **Skill Validator (`skill-check`)** — Now validates `when_to_use`, `arguments`; expanded model list
+- **Agent Template (`agent-template`)** — Frontmatter Reference updated with all new fields
+- **Skill Template (`skill-template`)** — Frontmatter Reference updated with all new fields
+- **Agents Expert (`agents-expert`)** — Inline docs updated: expanded model selection, YAML list examples, new field documentation
+- **6 Source Agents Updated** — `code-reviewer`, `debugger`, `completion-judge`, `experience-extractor`, `skill-evolver`, `evolving-orchestrator` restored `memory`/`maxTurns`
+
+### Fixed
+- v1.5.1 incorrectly removed `memory` and `maxTurns` from agents — both ARE official fields
+
 ## [1.6.0] - 2026-02-10
 
 ### Added
@@ -31,8 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `hooks` field for agent-scoped lifecycle hooks (v2.1.0+)
   - Added `permissionMode` field for permission handling (v2.0.43+)
   - Added `disallowedTools` field for explicit tool blocking (v2.0.30+)
-  - Removed `memory` field (not in official spec)
-  - Removed `maxTurns` field (not in official spec)
+  - ~~Removed `memory` field~~ (**reverted in v1.7.0** — field IS official)
+  - ~~Removed `maxTurns` field~~ (**reverted in v1.7.0** — field IS official)
 - **Skill Frontmatter Aligned to Official Spec**
   - Added `version` field for semantic versioning
   - Added `model` field for model override (haiku/sonnet/opus)

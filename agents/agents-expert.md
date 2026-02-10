@@ -63,6 +63,13 @@ hooks:                      # Optional: agent-scoped hooks
 permissionMode: default     # Optional: permission handling
 disallowedTools:            # Optional: explicit tool blocking
   - NotebookEdit
+# forkContext: "true"        # Optional: context isolation (string)
+# maxTurns: 20              # Optional: max agentic turns
+# memory:                   # Optional: CLAUDE.md access
+#   - user
+#   - project
+# mcpServers:               # Optional: MCP server access
+#   - memory
 ---
 
 # Agent Name
@@ -110,9 +117,11 @@ When invoked:
 ### Model Selection
 
 ```markdown
-model: haiku   # Fast, cost-effective (recommended for simple tasks)
-model: sonnet  # Balanced (default, good for most tasks)
-model: opus    # Most capable (complex reasoning, architecture)
+model: haiku       # Fast, cost-effective (simple tasks)
+model: sonnet      # Balanced (default, most tasks)
+model: opus        # Most capable (complex reasoning)
+model: best        # Auto-select best available
+model: inherit     # Inherit from parent context
 ```
 
 ### Best Practices

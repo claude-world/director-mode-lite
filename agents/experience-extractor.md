@@ -9,6 +9,8 @@ tools:
   - Glob
   - Bash
 model: haiku
+memory:
+  - user
 ---
 
 # Experience Extractor Agent (Meta-Engineering v2.0)
