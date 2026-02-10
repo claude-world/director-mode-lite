@@ -11,7 +11,7 @@ Build a complete REST API using the 5-step Director Mode workflow.
 
 ## Prerequisites
 
-- Claude Code v2.1.4+
+- Claude Code v2.1.9+
 - Director Mode Lite installed
 - Node.js 18+ (for Express.js)
 

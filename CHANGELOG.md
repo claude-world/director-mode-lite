@@ -5,6 +5,34 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-02-10
+
+### Changed
+- **Agent Frontmatter Aligned to Official Spec** (Claude Code v2.1.38)
+  - `color` and `model` are now **required** fields (were "recommended")
+  - `model` supports `inherit` option (use parent's model)
+  - `skills` changed from string to **YAML array** format
+  - Added `hooks` field for agent-scoped lifecycle hooks (v2.1.0+)
+  - Added `permissionMode` field for permission handling (v2.0.43+)
+  - Added `disallowedTools` field for explicit tool blocking (v2.0.30+)
+  - Removed `memory` field (not in official spec)
+  - Removed `maxTurns` field (not in official spec)
+- **Skill Frontmatter Aligned to Official Spec**
+  - Added `version` field for semantic versioning
+  - Added `model` field for model override (haiku/sonnet/opus)
+  - Added `disable-model-invocation` field to prevent programmatic invocation
+- **All 14 Agents Updated** - Removed non-standard fields, fixed `skills` to array format
+- **All Templates & Validators Updated** - agent-check, skill-check, agent-template, skill-template
+- **README Accuracy Fixes**
+  - Claude Code badge: v2.1.6+ → v2.1.9+ (minimum required version)
+  - Plugin install path: v1.4.0 → v1.5.0
+  - "Absolute Path Hooks" → "Portable Path Hooks" (`$CLAUDE_PROJECT_DIR`)
+  - Added missing `evolving-orchestrator` to Self-Evolving Agents table (6 agents, not 5)
+  - Added missing `/changelog` to Utilities section
+  - Removed broken one-line curl install option
+  - Removed hardcoded Discord member count
+  - Updated all version references across docs/examples to v2.1.9+
+
 ## [1.5.0] - 2026-02-10
 
 ### Changed
@@ -13,8 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `color` field for UI display (yellow, red, cyan, magenta per role)
   - Added `model` field specifying recommended model (haiku/sonnet/opus)
   - Added `skills` field linking agents to their corresponding skill
-  - Added `memory` field for persistent knowledge scope
-  - Added `maxTurns` field for long-running agent turn limits
 - **Agent Template** - Updated to include all new frontmatter fields
   - Added Orchestrator template type (haiku model, Task tool)
   - Frontmatter Reference section with all available fields
@@ -24,8 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Frontmatter Reference section with all available fields
 - **Agent Validator** (`/agent-check`) - Updated validation rules
   - Validates YAML list tools format (not bracket array)
-  - Checks `color`, `model` as recommended fields
-  - Validates `skills`, `memory`, `maxTurns` optional fields
+  - Checks `color`, `model` fields
+  - Validates `skills` optional fields
   - Auto-fix: Convert bracket array to YAML list, add missing defaults
 - **Skill Validator** (`/skill-check`) - Updated validation rules
   - Validates new optional fields: `allowed-tools`, `context`, `agent`, `argument-hint`, `hooks`
@@ -229,6 +255,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.5.1 | 2026-02-10 | Official Spec Alignment, README Fixes, New Agent/Skill Fields |
+| 1.5.0 | 2026-02-10 | Agent Frontmatter Format Upgrade, YAML List Tools |
 | 1.4.1 | 2026-01-17 | Hooks Cleanup, Portable Paths ($CLAUDE_PROJECT_DIR), Guide Compliance |
 | 1.4.0 | 2026-01-16 | Claude Code 2.1.9+ Support, Session Tracking, PreToolUse Validator |
 | 1.3.0 | 2026-01-16 | Skills Directory Migration, Context Isolation, Phase Dependency Validation |

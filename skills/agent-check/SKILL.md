@@ -23,15 +23,21 @@ Validate agent files in `.claude/agents/` for correct format.
 ---
 name: agent-name          # Required: lowercase, hyphenated
 description: Brief desc   # Required: under 100 chars
-color: cyan               # Recommended: yellow, red, green, blue, magenta, cyan
+color: cyan               # Required: yellow, red, green, blue, magenta, cyan
 tools:                    # Required: YAML list format
   - Read
   - Write
   - Grep
-model: sonnet             # Recommended: haiku, sonnet, opus
-skills: linked-skill      # Optional: name of linked skill
-memory: user              # Optional: memory scope
-maxTurns: 25              # Optional: max agentic turns
+model: sonnet             # Required: inherit, haiku, sonnet, opus
+skills:                    # Optional: auto-load skills (array)
+  - linked-skill
+hooks:                     # Optional: agent-scoped lifecycle hooks
+  PreToolUse:
+    - matcher: Write
+      command: ./validate.sh
+permissionMode: default    # Optional: permission handling
+disallowedTools:           # Optional: explicit tool blocking
+  - NotebookEdit
 ---
 ```
 
@@ -48,7 +54,7 @@ yellow, red, green, blue, magenta, cyan
 
 ### Valid Models
 ```
-haiku, sonnet, opus
+inherit, haiku, sonnet, opus
 ```
 
 ---
@@ -59,15 +65,14 @@ haiku, sonnet, opus
 - [ ] `name` exists (lowercase, hyphenated)
 - [ ] `description` exists (under 100 chars)
 - [ ] `tools` exists (YAML list format, not bracket array)
-
-### Recommended Fields
 - [ ] `color` is set (valid color name)
-- [ ] `model` is set (haiku/sonnet/opus)
+- [ ] `model` is set (inherit/haiku/sonnet/opus)
 
 ### Optional Fields
-- [ ] `skills` references existing skill (if set)
-- [ ] `memory` is valid scope (if set)
-- [ ] `maxTurns` is positive number (if set)
+- [ ] `skills` references existing skills (array, if set)
+- [ ] `hooks` has valid structure (if set)
+- [ ] `permissionMode` is valid value (if set)
+- [ ] `disallowedTools` are valid tool names (if set)
 
 ### Content Structure
 - [ ] `# Agent Name` heading
@@ -104,7 +109,8 @@ haiku, sonnet, opus
 ## Auto-Fix
 
 - Convert bracket array tools to YAML list format
+- Convert string skills to YAML array
 - Add missing `color` field (default: cyan)
-- Add missing `model` field (default: sonnet)
+- Add missing `model` field (default: inherit)
 - Remove invalid tools
 - Add recommended sections

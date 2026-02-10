@@ -124,7 +124,7 @@ Yes! Director Mode Lite includes:
    ls -la .claude/commands/
    ```
 
-2. Verify Claude Code version (requires 2.1.4+):
+2. Verify Claude Code version (requires 2.1.9+):
    ```bash
    claude --version
    ```

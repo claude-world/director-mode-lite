@@ -49,7 +49,9 @@ Generate a custom skill (slash command) based on requirements.
 ---
 name: skill-name              # Required: lowercase, hyphenated
 description: What it does     # Required: shown in / menu
+version: 0.1.0                # Optional: semantic version
 user-invocable: true          # Optional: default true
+model: sonnet                 # Optional: haiku, sonnet, opus
 allowed-tools:                # Optional: restrict available tools (YAML list)
   - Read
   - Write
@@ -57,6 +59,7 @@ allowed-tools:                # Optional: restrict available tools (YAML list)
 context: fork                 # Optional: isolated context
 agent: agent-name             # Optional: run as specific agent
 argument-hint: "<hint>"       # Optional: hint for arguments
+disable-model-invocation: false  # Optional: prevent programmatic invocation
 hooks:                        # Optional: lifecycle hooks
   Stop:
     command: ./scripts/verify.sh

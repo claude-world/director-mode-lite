@@ -7,7 +7,6 @@ tools:
   - Bash
   - Grep
 model: haiku
-memory: user
 ---
 
 # Completion Judge Agent

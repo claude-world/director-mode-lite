@@ -21,7 +21,7 @@ What actually happened.
 
 ## Environment
 - OS: [e.g., macOS 14.0, Ubuntu 22.04]
-- Claude Code Version: [e.g., 2.1.4]
+- Claude Code Version: [e.g., 2.1.38]
 - Shell: [e.g., zsh, bash]
 
 ## Additional Context

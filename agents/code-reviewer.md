@@ -8,8 +8,8 @@ tools:
   - Glob
   - Bash
 model: sonnet
-skills: code-reviewer
-memory: user
+skills:
+  - code-reviewer
 ---
 
 # Code Reviewer Agent

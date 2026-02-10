@@ -54,9 +54,15 @@ tools:
   - Task
   - WebFetch
 model: sonnet
-skills: linked-skill
-memory: user
-maxTurns: 25
+skills:
+  - linked-skill
+hooks:                      # Optional: agent-scoped hooks
+  PreToolUse:
+    - matcher: Write
+      command: ./scripts/validate.sh
+permissionMode: default     # Optional: permission handling
+disallowedTools:            # Optional: explicit tool blocking
+  - NotebookEdit
 ---
 
 # Agent Name
@@ -184,7 +190,6 @@ tools:
   - Grep
   - Glob
 model: sonnet
-memory: user
 ---
 
 # Security Reviewer

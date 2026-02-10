@@ -9,7 +9,8 @@ tools:
   - Grep
   - Glob
 model: sonnet
-skills: doc-writer
+skills:
+  - doc-writer
 ---
 
 # Documentation Writer Agent

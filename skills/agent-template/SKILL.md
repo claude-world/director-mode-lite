@@ -48,7 +48,7 @@ Generate a custom agent file based on requirements.
 ---
 name: agent-name            # Required: lowercase, hyphenated
 description: Brief desc     # Required: under 100 chars
-color: cyan                 # Optional: yellow, red, green, blue, magenta, cyan
+color: cyan                 # Required: yellow, red, green, blue, magenta, cyan
 tools:                      # Required: YAML list format
   - Read
   - Write
@@ -61,10 +61,16 @@ tools:                      # Required: YAML list format
   - WebSearch
   - TodoWrite
   - NotebookEdit
-model: sonnet               # Optional: haiku, sonnet, opus (default: sonnet)
-skills: linked-skill        # Optional: name of linked skill
-memory: user                # Optional: memory scope
-maxTurns: 25                # Optional: max agentic turns
+model: sonnet               # Required: inherit, haiku, sonnet, opus
+skills:                     # Optional: auto-load skills (array)
+  - linked-skill
+hooks:                      # Optional: agent-scoped lifecycle hooks
+  PreToolUse:
+    - matcher: Write
+      command: ./validate.sh
+permissionMode: default     # Optional: permission handling
+disallowedTools:            # Optional: explicit tool blocking
+  - NotebookEdit
 ---
 ```
 
@@ -83,8 +89,8 @@ tools:
   - Glob
   - Bash
 model: sonnet
-skills: [linked-skill]
-memory: user
+skills:
+  - linked-skill
 ---
 
 # [Name] Agent

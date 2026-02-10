@@ -9,9 +9,8 @@ tools:
   - Grep
   - Glob
 model: sonnet
-skills: debugger
-memory: user
-maxTurns: 25
+skills:
+  - debugger
 ---
 
 # Debugger Agent

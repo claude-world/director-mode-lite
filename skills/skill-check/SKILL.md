@@ -23,7 +23,9 @@ Validate skill files for correct format.
 ---
 name: skill-name              # Required: lowercase, hyphenated
 description: What it does     # Required: shown in / menu
+version: 0.1.0              # Optional: semantic version
 user-invocable: true          # Optional: default true
+model: sonnet               # Optional: haiku, sonnet, opus
 allowed-tools:                # Optional: restrict tools (YAML list)
   - Read
   - Write
@@ -31,6 +33,7 @@ allowed-tools:                # Optional: restrict tools (YAML list)
 context: fork                 # Optional: isolated context
 agent: agent-name             # Optional: run as specific agent
 argument-hint: "<hint>"       # Optional: hint for arguments
+disable-model-invocation: false  # Optional: prevent programmatic invocation
 hooks:                        # Optional: lifecycle hooks
   Stop:
     command: ./scripts/verify.sh
@@ -56,8 +59,11 @@ WebFetch, WebSearch, TodoWrite, NotebookEdit
 - [ ] `allowed-tools` are valid tool names (if specified)
 - [ ] `allowed-tools` uses YAML list format (if specified)
 - [ ] `agent` references existing agent file (if specified)
+- [ ] `version` is valid semver format (if specified)
+- [ ] `model` is valid value: haiku, sonnet, opus (if specified)
 - [ ] `context` is valid value: fork (if specified)
 - [ ] `argument-hint` is a string (if specified)
+- [ ] `disable-model-invocation` is boolean (if specified)
 - [ ] `hooks` has valid structure (if specified)
 
 ### Content Structure

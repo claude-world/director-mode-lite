@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
-  <a href="https://claude.ai/code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.6+-blueviolet?logo=anthropic" alt="Claude Code"></a>
+  <a href="https://claude.ai/code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.9+-blueviolet?logo=anthropic" alt="Claude Code"></a>
   <a href="https://discord.com/invite/rBtHzSD288"><img src="https://img.shields.io/discord/1459859959398531294?color=7289da&label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://github.com/claude-world/director-mode-lite/stargazers"><img src="https://img.shields.io/github/stars/claude-world/director-mode-lite?style=social" alt="GitHub Stars"></a>
   <a href="https://claude-world.com/stats"><img src="https://img.shields.io/badge/📊_Live_Stats-claude--world.com-orange" alt="Live Stats"></a>
@@ -171,11 +171,11 @@ claude plugin install director-mode-lite
 cd your-project
 
 # 3. Run installation script from cached plugin
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.4.0/install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.5.0/install.sh .
 
 # 4. Verify installation
 cat .claude/settings.local.json | jq '.hooks.Stop[0].hooks[0].command'
-# Should show: /full/path/to/your-project/.claude/hooks/auto-loop-stop.sh
+# Should show: "$CLAUDE_PROJECT_DIR"/.claude/hooks/auto-loop-stop.sh
 ```
 
 <details>
@@ -191,18 +191,12 @@ claude plugin install director-mode-lite
 cat ~/.claude/plugins/installed_plugins.json | jq '.'
 
 # View plugin cache
-ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.4.0/
+ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.5.0/
 ```
 
 </details>
 
-### Option B: One-Line Install
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/claude-world/director-mode-lite/main/install.sh | bash -s .
-```
-
-### Option C: Clone and Install
+### Option B: Clone and Install
 
 ```bash
 git clone https://github.com/claude-world/director-mode-lite.git
@@ -210,7 +204,7 @@ cd director-mode-lite
 ./install.sh /path/to/your/project
 ```
 
-### Option D: Try Demo First
+### Option C: Try Demo First
 
 ```bash
 git clone https://github.com/claude-world/director-mode-lite.git
@@ -222,7 +216,7 @@ cd director-mode-lite
 <summary><strong>✨ Installation Features</strong></summary>
 
 - **Automatic Backup** - Backups existing `.claude/` to `.claude-backup-TIMESTAMP/`
-- **Absolute Path Hooks** - All hooks configured with absolute paths (no more "file not found" errors)
+- **Portable Path Hooks** - All hooks use `$CLAUDE_PROJECT_DIR` for portability (no more "file not found" errors)
 - **Smart Merge** - Preserves existing settings, only adds new hooks
 - **Skip Existing** - Won't overwrite already-installed commands/agents/skills
 - **Clean Uninstall** - `./uninstall.sh` removes all installed files
@@ -279,6 +273,7 @@ cd director-mode-lite
 **Utilities:**
 | Command | Purpose |
 |---------|---------|
+| `/changelog` | Session events |
 | `/handoff-codex` | Delegate |
 | `/handoff-gemini` | Delegate |
 | `/agents` | List agents |
@@ -308,6 +303,7 @@ cd director-mode-lite
 **Self-Evolving Agents (NEW):**
 | Agent | Purpose |
 |-------|---------|
+| `evolving-orchestrator` | Loop coordination |
 | `requirement-analyzer` | Deep analysis |
 | `skill-synthesizer` | Generate skills |
 | `completion-judge` | Decision making |
@@ -328,6 +324,7 @@ cd director-mode-lite
 
 **Plus:**
 - 5 Expert Agents
+- 6 Self-Evolving Agents
 - 5 Validator Commands
 - 4 Generator Commands
 - CLAUDE.md template
@@ -701,7 +698,7 @@ claude-world.com
 <td align="center" width="25%">
 <a href="https://discord.com/invite/rBtHzSD288">
 <strong>💬 Discord</strong><br>
-Join 96+ members
+Join the community
 </a>
 </td>
 <td align="center" width="25%">

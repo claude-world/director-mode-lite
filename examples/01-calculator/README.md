@@ -10,7 +10,7 @@ A beginner-friendly demonstration of Auto-Loop's TDD workflow.
 
 ## Prerequisites
 
-- Claude Code v2.1.4+
+- Claude Code v2.1.9+
 - Director Mode Lite installed
 - Node.js (for running tests)
 
