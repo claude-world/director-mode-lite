@@ -5,6 +5,22 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-02-10
+
+### Added
+- **Interop Router Skill** (`interop-router`) - Auto-trigger skill for external CLI routing
+  - Automatically evaluates tasks and delegates to Codex or Gemini when more efficient
+  - `user-invocable: false` - no manual invocation needed, Claude decides automatically
+  - Decision scoring system: Benefit (0.0-0.6) + Cost (-0.3-0.0) + Risk (-0.3-0.0)
+  - Score >= 0.15 with auto-interop enabled -> auto-execute delegation
+  - 3 utility scripts included:
+    - `check_cli_available.sh` - Detect installed CLIs and authentication status
+    - `score_decision.py` - Calculate routing decision score
+    - `wrap_context.py` - Wrap files for external CLI with automatic secret filtering
+  - Safety: read-only default, automatic secret redaction, result review before landing
+  - Configuration via `.claude/flags/auto-interop.json`
+  - Works alongside existing `/handoff-codex` and `/handoff-gemini` (manual still available)
+
 ## [1.5.1] - 2026-02-10
 
 ### Changed
@@ -255,6 +271,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.6.0 | 2026-02-10 | Interop Router auto-trigger skill for external CLI routing |
 | 1.5.1 | 2026-02-10 | Official Spec Alignment, README Fixes, New Agent/Skill Fields |
 | 1.5.0 | 2026-02-10 | Agent Frontmatter Format Upgrade, YAML List Tools |
 | 1.4.1 | 2026-01-17 | Hooks Cleanup, Portable Paths ($CLAUDE_PROJECT_DIR), Guide Compliance |
