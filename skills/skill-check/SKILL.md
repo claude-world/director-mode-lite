@@ -21,26 +21,46 @@ Validate skill files for correct format.
 
 ```yaml
 ---
-name: skill-name              # Required
+name: skill-name              # Required: lowercase, hyphenated
 description: What it does     # Required: shown in / menu
 user-invocable: true          # Optional: default true
-allowed-tools: [Read, Write]  # Optional: restrict tools
+allowed-tools:                # Optional: restrict tools (YAML list)
+  - Read
+  - Write
+  - Bash
 context: fork                 # Optional: isolated context
-agent: agent-name             # Optional: run as agent
+agent: agent-name             # Optional: run as specific agent
+argument-hint: "<hint>"       # Optional: hint for arguments
+hooks:                        # Optional: lifecycle hooks
+  Stop:
+    command: ./scripts/verify.sh
+    once: false
 ---
+```
+
+### Valid Tools (for allowed-tools)
+```
+Read, Write, Edit, Bash, Grep, Glob, Task,
+WebFetch, WebSearch, TodoWrite, NotebookEdit
 ```
 
 ---
 
 ## Validation Checklist
 
-### Frontmatter
-- [ ] Exists between `---` markers
-- [ ] `description` is present
-- [ ] `allowed-tools` are valid (if specified)
-- [ ] `agent` file exists (if specified)
+### Required Fields
+- [ ] `name` exists (lowercase, hyphenated)
+- [ ] `description` exists
 
-### Content
+### Optional Field Validation
+- [ ] `allowed-tools` are valid tool names (if specified)
+- [ ] `allowed-tools` uses YAML list format (if specified)
+- [ ] `agent` references existing agent file (if specified)
+- [ ] `context` is valid value: fork (if specified)
+- [ ] `argument-hint` is a string (if specified)
+- [ ] `hooks` has valid structure (if specified)
+
+### Content Structure
 - [ ] Clear instructions
 - [ ] Uses `$ARGUMENTS` if expecting input
 - [ ] Step-by-step process if complex
@@ -55,8 +75,8 @@ agent: agent-name             # Optional: run as agent
 ### Files Checked
 | File | Status | Issues |
 |------|--------|--------|
-| workflow.md | OK | None |
-| my-skill.md | WARN | Missing description |
+| workflow/SKILL.md | OK | None |
+| my-skill/SKILL.md | WARN | Missing description |
 
 ### Summary
 - Total: [N]
@@ -68,6 +88,8 @@ agent: agent-name             # Optional: run as agent
 
 ## Auto-Fix
 
-- Add missing description
-- Remove invalid frontmatter
+- Add missing `name` from directory name
+- Add missing `description`
+- Convert bracket array tools to YAML list format
+- Remove invalid frontmatter fields
 - Add `$ARGUMENTS` handling

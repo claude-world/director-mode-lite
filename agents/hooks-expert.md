@@ -1,7 +1,15 @@
 ---
 name: hooks-expert
 description: Expert on Claude Code hooks - automation triggers for tool calls, prompts, and notifications. Essential for autonomous workflows.
-tools: Read, Write, Edit, Bash, Grep, Glob
+color: magenta
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Grep
+  - Glob
+model: sonnet
 ---
 
 # Hooks Expert

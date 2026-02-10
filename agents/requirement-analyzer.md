@@ -1,7 +1,13 @@
 ---
 name: requirement-analyzer
 description: Deep requirement analysis agent for Self-Evolving Loop. Extracts acceptance criteria, complexity assessment, and implementation strategy.
-tools: Read, Grep, Glob, Bash
+color: cyan
+tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
+model: haiku
 ---
 
 # Requirement Analyzer Agent

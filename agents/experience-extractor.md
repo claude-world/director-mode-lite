@@ -1,7 +1,15 @@
 ---
 name: experience-extractor
 description: Learning agent for Self-Evolving Loop with Meta-Engineering integration. Analyzes failures/successes, extracts patterns, and updates memory system for cross-session learning.
-tools: Read, Write, Grep, Glob, Bash
+color: cyan
+tools:
+  - Read
+  - Write
+  - Grep
+  - Glob
+  - Bash
+model: haiku
+memory: user
 ---
 
 # Experience Extractor Agent (Meta-Engineering v2.0)

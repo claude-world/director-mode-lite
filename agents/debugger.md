@@ -1,7 +1,17 @@
 ---
 name: debugger
 description: Debugging specialist for errors, test failures, and unexpected behavior. Activates when errors or failures occur.
-tools: Read, Edit, Bash, Grep, Glob
+color: red
+tools:
+  - Read
+  - Edit
+  - Bash
+  - Grep
+  - Glob
+model: sonnet
+skills: debugger
+memory: user
+maxTurns: 25
 ---
 
 # Debugger Agent

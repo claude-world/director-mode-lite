@@ -1,7 +1,16 @@
 ---
 name: evolving-orchestrator
 description: Lightweight orchestrator for Self-Evolving Loop with Meta-Engineering integration. Coordinates phases, manages memory, and handles lifecycle. Only returns brief summaries.
-tools: Read, Write, Bash, Grep, Glob, Task
+color: cyan
+tools:
+  - Read
+  - Write
+  - Bash
+  - Grep
+  - Glob
+  - Task
+model: haiku
+maxTurns: 50
 ---
 
 # Evolving Loop Orchestrator (Meta-Engineering v2.0)

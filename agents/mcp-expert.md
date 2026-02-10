@@ -1,7 +1,16 @@
 ---
 name: mcp-expert
 description: Expert on Model Context Protocol (MCP) - configuration, available servers, troubleshooting. Essential for extending Claude's capabilities.
-tools: Read, Write, Edit, Bash, Grep, Glob, WebFetch
+color: magenta
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Grep
+  - Glob
+  - WebFetch
+model: sonnet
 ---
 
 # MCP Expert Agent

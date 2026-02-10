@@ -1,7 +1,14 @@
 ---
 name: agents-expert
 description: Expert on creating and configuring custom Claude Code agents. Helps design specialized agents for project-specific tasks.
-tools: Read, Write, Edit, Grep, Glob
+color: magenta
+tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+model: sonnet
 ---
 
 # Agents Expert
@@ -36,8 +43,20 @@ Agents are specialized Claude instances with focused expertise. They're defined 
 ---
 name: agent-name
 description: Brief description shown in agent list. Keep under 100 chars.
-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch
-model: sonnet  # Optional: sonnet (default), haiku, opus
+color: cyan
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Grep
+  - Glob
+  - Task
+  - WebFetch
+model: sonnet
+skills: linked-skill
+memory: user
+maxTurns: 25
 ---
 
 # Agent Name
@@ -139,10 +158,17 @@ Only grant tools the agent needs.
 
 ```markdown
 # Read-only agent (safe)
-tools: Read, Grep, Glob
+tools:
+  - Read
+  - Grep
+  - Glob
 
 # Read-write agent (careful)
-tools: Read, Write, Edit, Bash
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
 ```
 
 ### Common Agent Patterns
@@ -152,7 +178,13 @@ tools: Read, Write, Edit, Bash
 ---
 name: security-reviewer
 description: Reviews code for security vulnerabilities
-tools: Read, Grep, Glob
+color: yellow
+tools:
+  - Read
+  - Grep
+  - Glob
+model: sonnet
+memory: user
 ---
 
 # Security Reviewer
@@ -172,7 +204,13 @@ You are a security expert. Scan code for OWASP Top 10 vulnerabilities.
 ---
 name: test-generator
 description: Generates unit tests for functions
-tools: Read, Write, Grep, Glob
+color: cyan
+tools:
+  - Read
+  - Write
+  - Grep
+  - Glob
+model: sonnet
 ---
 
 # Test Generator
@@ -191,7 +229,12 @@ You generate comprehensive unit tests following the project's testing patterns.
 ---
 name: lint-fixer
 description: Automatically fixes linting errors
-tools: Read, Edit, Bash
+color: red
+tools:
+  - Read
+  - Edit
+  - Bash
+model: sonnet
 ---
 
 # Lint Fixer

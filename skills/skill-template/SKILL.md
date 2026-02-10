@@ -20,7 +20,7 @@ Generate a custom skill (slash command) based on requirements.
 | Generator | Creator | File creation |
 | Checker | Validator | Validation rules |
 | Automation | Runner | Command execution |
-| Utility | Helper | Single action |
+| Agent-backed | Delegator | Runs as agent |
 
 ---
 
@@ -31,12 +31,38 @@ Generate a custom skill (slash command) based on requirements.
    - Purpose
    - Arguments (if any)
    - Workflow steps
+   - Context isolation (fork)?
+   - Agent backing?
+   - Tool restrictions?
 
 2. **Select Template** based on purpose
 
 3. **Generate File** at `.claude/skills/[name]/SKILL.md`
 
 4. **Validate** with `/skill-check`
+
+---
+
+## Frontmatter Reference
+
+```yaml
+---
+name: skill-name              # Required: lowercase, hyphenated
+description: What it does     # Required: shown in / menu
+user-invocable: true          # Optional: default true
+allowed-tools:                # Optional: restrict available tools (YAML list)
+  - Read
+  - Write
+  - Bash
+context: fork                 # Optional: isolated context
+agent: agent-name             # Optional: run as specific agent
+argument-hint: "<hint>"       # Optional: hint for arguments
+hooks:                        # Optional: lifecycle hooks
+  Stop:
+    command: ./scripts/verify.sh
+    once: false
+---
+```
 
 ---
 
@@ -47,6 +73,14 @@ Generate a custom skill (slash command) based on requirements.
 name: [name]
 description: [What it does]
 user-invocable: true
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+  - Grep
+  - Glob
+context: fork
+argument-hint: "<task-description>"
 ---
 
 # [Skill Name]

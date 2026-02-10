@@ -1,7 +1,13 @@
 ---
 name: completion-judge
 description: Decision-making agent for Self-Evolving Loop. Evaluates validation results and decides next action (continue, evolve, or ship).
-tools: Read, Bash, Grep
+color: cyan
+tools:
+  - Read
+  - Bash
+  - Grep
+model: haiku
+memory: user
 ---
 
 # Completion Judge Agent

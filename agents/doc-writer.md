@@ -1,7 +1,15 @@
 ---
 name: doc-writer
 description: Documentation specialist for README, API docs, code comments, and technical writing. Activates when documentation is needed.
-tools: Read, Write, Edit, Grep, Glob
+color: cyan
+tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+model: sonnet
+skills: doc-writer
 ---
 
 # Documentation Writer Agent

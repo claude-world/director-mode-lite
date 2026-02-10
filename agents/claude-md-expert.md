@@ -1,7 +1,15 @@
 ---
 name: claude-md-expert
 description: Expert on CLAUDE.md design patterns, best practices, and project configuration. Essential for project initialization and customization.
-tools: Read, Write, Edit, Grep, Glob, WebFetch
+color: magenta
+tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - WebFetch
+model: sonnet
 ---
 
 # CLAUDE.md Expert Agent

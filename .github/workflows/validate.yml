@@ -34,8 +34,9 @@ jobs:
               continue
             fi
 
-            # Extract frontmatter
-            frontmatter=$(sed -n '/^---$/,/^---$/p' "$skill_file" | sed '1d;$d')
+            # Extract ONLY the first frontmatter block (not example yaml blocks)
+            # Uses awk to stop after first closing ---
+            frontmatter=$(awk 'NR==1 && /^---$/{p=1;next} p && /^---$/{exit} p' "$skill_file")
 
             # Check required 'name' field
             name_value=$(echo "$frontmatter" | grep -E "^name:" | sed 's/name: *//')
@@ -279,15 +280,6 @@ jobs:
 
           ERRORS=0
 
-          # Check commands
-          if [[ ! -d "/tmp/test-project/.claude/commands" ]]; then
-            echo "❌ Commands not installed"
-            ERRORS=$((ERRORS + 1))
-          else
-            cmd_count=$(ls /tmp/test-project/.claude/commands/*.md 2>/dev/null | wc -l)
-            echo "✅ Commands installed: $cmd_count files"
-          fi
-
           # Check agents
           if [[ ! -d "/tmp/test-project/.claude/agents" ]]; then
             echo "❌ Agents not installed"
@@ -329,10 +321,10 @@ jobs:
           echo "1" | ./uninstall.sh /tmp/test-project
 
           # Verify hooks removed but content kept
-          if [[ -d "/tmp/test-project/.claude/commands" ]]; then
-            echo "✅ Commands preserved"
+          if [[ -d "/tmp/test-project/.claude/skills" ]]; then
+            echo "✅ Skills preserved"
           else
-            echo "❌ Commands should be preserved"
+            echo "❌ Skills should be preserved"
             exit 1
           fi
 

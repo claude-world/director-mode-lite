@@ -1,7 +1,13 @@
 ---
 name: skill-synthesizer
 description: Dynamic skill generator for Self-Evolving Loop with Meta-Engineering integration. Creates tailored executor, validator, and fixer skills based on requirement analysis and pattern recommendations.
-tools: Read, Write, Grep, Glob
+color: cyan
+tools:
+  - Read
+  - Write
+  - Grep
+  - Glob
+model: haiku
 ---
 
 # Skill Synthesizer Agent (Meta-Engineering v2.0)

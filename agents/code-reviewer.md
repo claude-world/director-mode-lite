@@ -1,7 +1,15 @@
 ---
 name: code-reviewer
 description: Expert code reviewer for quality, security, and best practices. Activates after code changes or when reviewing PRs.
-tools: Read, Grep, Glob, Bash
+color: yellow
+tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
+model: sonnet
+skills: code-reviewer
+memory: user
 ---
 
 # Code Reviewer Agent

@@ -1,7 +1,14 @@
 ---
 name: skills-expert
 description: Expert on creating Claude Code skills (slash commands). Helps design reusable command-based workflows.
-tools: Read, Write, Edit, Grep, Glob
+color: magenta
+tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+model: sonnet
 ---
 
 # Skills Expert

@@ -5,6 +5,42 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-02-10
+
+### Changed
+- **Agent Frontmatter Format Upgrade** - All 14 agents updated to new format
+  - `tools` field: Migrated from bracket array (`[Read, Write]`) to YAML list format
+  - Added `color` field for UI display (yellow, red, cyan, magenta per role)
+  - Added `model` field specifying recommended model (haiku/sonnet/opus)
+  - Added `skills` field linking agents to their corresponding skill
+  - Added `memory` field for persistent knowledge scope
+  - Added `maxTurns` field for long-running agent turn limits
+- **Agent Template** - Updated to include all new frontmatter fields
+  - Added Orchestrator template type (haiku model, Task tool)
+  - Frontmatter Reference section with all available fields
+- **Skill Template** - Updated to include new skill frontmatter fields
+  - Added Agent-backed template type
+  - New fields: `allowed-tools`, `context`, `agent`, `argument-hint`, `hooks`
+  - Frontmatter Reference section with all available fields
+- **Agent Validator** (`/agent-check`) - Updated validation rules
+  - Validates YAML list tools format (not bracket array)
+  - Checks `color`, `model` as recommended fields
+  - Validates `skills`, `memory`, `maxTurns` optional fields
+  - Auto-fix: Convert bracket array to YAML list, add missing defaults
+- **Skill Validator** (`/skill-check`) - Updated validation rules
+  - Validates new optional fields: `allowed-tools`, `context`, `agent`, `argument-hint`, `hooks`
+  - Validates YAML list format for `allowed-tools`
+
+### Fixed
+- **CI Validation** (`validate.yml`)
+  - Fixed skill frontmatter extraction to only parse first YAML block (not example blocks)
+  - Removed deprecated commands directory check from install test
+  - Updated uninstall verification to check skills instead of commands
+- **CI Stats Collection** (`collect-stats.yml`)
+  - Added proper permissions block
+  - Traffic API graceful fallback when token lacks repo scope
+  - Support for separate `REPO_STATS_TOKEN` secret
+
 ## [1.4.1] - 2026-01-17
 
 ### Changed

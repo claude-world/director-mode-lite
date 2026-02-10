@@ -6,26 +6,35 @@ on:
     - cron: '0 6 * * *'
   workflow_dispatch: # Allow manual trigger
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   collect-github-stats:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Collect GitHub Traffic Data
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Traffic API requires PAT with 'repo' scope - use REPO_STATS_TOKEN secret
+          # Falls back to GITHUB_TOKEN for non-traffic endpoints
+          GH_TOKEN: ${{ secrets.REPO_STATS_TOKEN || secrets.GITHUB_TOKEN }}
           ANALYTICS_API_KEY: ${{ secrets.ANALYTICS_API_KEY }}
         run: |
           # Get repo stats
           REPO="claude-world/director-mode-lite"
           TODAY=$(date -u +%Y-%m-%d)
 
-          # Get traffic data (requires push access)
-          CLONES=$(gh api repos/$REPO/traffic/clones --jq '.count // 0')
-          UNIQUE_CLONERS=$(gh api repos/$REPO/traffic/clones --jq '.uniques // 0')
-          VIEWS=$(gh api repos/$REPO/traffic/views --jq '.count // 0')
-          UNIQUE_VISITORS=$(gh api repos/$REPO/traffic/views --jq '.uniques // 0')
+          # Get traffic data (requires PAT with 'repo' scope)
+          # Will fail gracefully if token lacks permissions
+          CLONES=$(gh api repos/$REPO/traffic/clones --jq '.count // 0' 2>/dev/null || echo "0")
+          UNIQUE_CLONERS=$(gh api repos/$REPO/traffic/clones --jq '.uniques // 0' 2>/dev/null || echo "0")
+          VIEWS=$(gh api repos/$REPO/traffic/views --jq '.count // 0' 2>/dev/null || echo "0")
+          UNIQUE_VISITORS=$(gh api repos/$REPO/traffic/views --jq '.uniques // 0' 2>/dev/null || echo "0")
 
-          # Get repo info
+          # Get repo info (works with default GITHUB_TOKEN)
           STARS=$(gh api repos/$REPO --jq '.stargazers_count // 0')
           FORKS=$(gh api repos/$REPO --jq '.forks_count // 0')
 

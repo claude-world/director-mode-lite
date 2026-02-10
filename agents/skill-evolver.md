@@ -1,7 +1,16 @@
 ---
 name: skill-evolver
 description: Evolution agent for Self-Evolving Loop with Meta-Engineering integration. Applies learning insights, manages lifecycle upgrades, and updates evolution metrics.
-tools: Read, Write, Edit, Grep, Glob
+color: cyan
+tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+model: haiku
+memory: user
+maxTurns: 15
 ---
 
 # Skill Evolver Agent (Meta-Engineering v2.0)
