@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
-  <a href="https://claude.ai/code"><img src="https://img.shields.io/badge/Claude%20Code-v2.1.9+-blueviolet?logo=anthropic" alt="Claude Code"></a>
+  <a href="https://claude.ai/code"><img src="https://img.shields.io/badge/Claude%20Code-Opus%204.6%20compatible-blueviolet?logo=anthropic" alt="Claude Code"></a>
   <a href="https://discord.com/invite/rBtHzSD288"><img src="https://img.shields.io/discord/1459859959398531294?color=7289da&label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://github.com/claude-world/director-mode-lite/stargazers"><img src="https://img.shields.io/github/stars/claude-world/director-mode-lite?style=social" alt="GitHub Stars"></a>
   <a href="https://claude-world.com/stats"><img src="https://img.shields.io/badge/📊_Live_Stats-claude--world.com-orange" alt="Live Stats"></a>
@@ -25,6 +25,19 @@
 <p align="center">
   <i>"Don't write code. Direct Claude to write code for you."</i>
 </p>
+
+---
+
+## Compatibility
+
+Director Mode Lite is fully compatible with the latest Claude Code release (Opus 4.6 era), including support for:
+
+- **Claude Opus 4.6** model selection in agent/skill frontmatter
+- **Agent Teams** (experimental multi-agent collaboration)
+- **1M context window** models (`opus[1m]`, `sonnet[1m]`)
+- All current hook types: `PreToolUse`, `PostToolUse`, `Stop`, `Notification`
+
+> Tested with Claude Code CLI as of March 2026. Works with Sonnet 4.6, Opus 4.6, and Haiku 4.5.
 
 ---
 
@@ -171,7 +184,7 @@ claude plugin install director-mode-lite
 cd your-project
 
 # 3. Run installation script from cached plugin
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.5.0/install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.0/install.sh .
 
 # 4. Verify installation
 cat .claude/settings.local.json | jq '.hooks.Stop[0].hooks[0].command'
@@ -191,7 +204,7 @@ claude plugin install director-mode-lite
 cat ~/.claude/plugins/installed_plugins.json | jq '.'
 
 # View plugin cache
-ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.5.0/
+ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.0/
 ```
 
 </details>
@@ -729,6 +742,19 @@ Report bugs, request features
 
 ---
 
+## Related Projects
+
+Other open-source tools from the Claude World community:
+
+| Project | Description | Link |
+|---------|-------------|------|
+| **cf-browser** | Cloudflare Browser MCP server for headless browsing, screenshots, and web scraping within Claude Code | [github.com/anthropic-community/cf-browser](https://github.com/anthropic-community/cf-browser) |
+| **trend-pulse** | Real-time trend aggregation MCP server -- monitors 8+ sources (GitHub, Hacker News, Reddit, etc.) for content ideas | [github.com/anthropic-community/trend-pulse](https://github.com/anthropic-community/trend-pulse) |
+
+> These tools work great alongside Director Mode Lite. Use `cf-browser` for web research agents and `trend-pulse` for staying on top of developer trends.
+
+---
+
 ## Author
 
 **Lucas Wang** ([@lukashanren1](https://x.com/lukashanren1))
@@ -748,7 +774,7 @@ See [LICENSE](LICENSE) for details.
 
 ## About Director Mode Lite
 
-This is a **free, open-source toolkit** from the [Claude World](https://claude-world.com) community.
+This is a **free, open-source toolkit** (v1.7.0) from the [Claude World](https://claude-world.com) community, compatible with the latest Claude Code (Opus 4.6).
 
 <table>
 <tr>
