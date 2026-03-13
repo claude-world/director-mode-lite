@@ -15,3 +15,4 @@ test-*.txt
 
 # Self-Evolving Loop working files
 .self-evolving-loop/
+.auto-explore/
