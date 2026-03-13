@@ -5,6 +5,17 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2026-03-14
+
+### Security
+- Removed `.auto-explore/` directory containing leaked absolute filesystem paths, added to `.gitignore`
+
+### Added
+- Install verification script (`scripts/verify-install.sh`) — validates installation and reports component status (closes #6)
+
+### Changed
+- Added release, stars, and license badges to README for better visibility (closes #5)
+
 ## [1.7.0] - 2026-02-10
 
 ### Changed
@@ -297,6 +308,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.7.1 | 2026-03-14 | Security fix (path leak), install verification script, README badges |
 | 1.6.0 | 2026-02-10 | Interop Router auto-trigger skill for external CLI routing |
 | 1.5.1 | 2026-02-10 | Official Spec Alignment, README Fixes, New Agent/Skill Fields |
 | 1.5.0 | 2026-02-10 | Agent Frontmatter Format Upgrade, YAML List Tools |
