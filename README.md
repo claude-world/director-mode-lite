@@ -5,6 +5,12 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/claude-world/director-mode-lite/releases"><img src="https://img.shields.io/github/v/release/claude-world/director-mode-lite" alt="GitHub Release"></a>
+  <a href="https://github.com/claude-world/director-mode-lite/stargazers"><img src="https://img.shields.io/github/stars/claude-world/director-mode-lite" alt="GitHub Stars"></a>
+  <a href="https://github.com/claude-world/director-mode-lite/blob/main/LICENSE"><img src="https://img.shields.io/github/license/claude-world/director-mode-lite" alt="GitHub License"></a>
+</p>
+
+<p align="center">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://claude.ai/code"><img src="https://img.shields.io/badge/Claude%20Code-Opus%204.6%20compatible-blueviolet?logo=anthropic" alt="Claude Code"></a>
   <a href="https://discord.com/invite/rBtHzSD288"><img src="https://img.shields.io/discord/1459859959398531294?color=7289da&label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
