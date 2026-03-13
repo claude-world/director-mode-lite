@@ -193,8 +193,7 @@ cd your-project
 ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.0/install.sh .
 
 # 4. Verify installation
-cat .claude/settings.local.json | jq '.hooks.Stop[0].hooks[0].command'
-# Should show: "$CLAUDE_PROJECT_DIR"/.claude/hooks/auto-loop-stop.sh
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.0/scripts/verify-install.sh .
 ```
 
 <details>
@@ -230,6 +229,26 @@ git clone https://github.com/claude-world/director-mode-lite.git
 cd director-mode-lite
 ./demo.sh ~/director-mode-demo
 ```
+
+## Verify Installation
+
+Run the verifier against the project where you installed Director Mode Lite:
+
+```bash
+# Plugin install
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.0/scripts/verify-install.sh .
+
+# Clone install
+./scripts/verify-install.sh /path/to/your/project
+```
+
+The script checks:
+
+- `CLAUDE.md` plus core `.claude/` files and directories
+- Required `CLAUDE.md` sections from the template
+- `.claude/skills/` and `.claude/agents/` are populated
+
+It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and exits `1` if any check fails.
 
 <details>
 <summary><strong>✨ Installation Features</strong></summary>
