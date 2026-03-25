@@ -11,7 +11,7 @@ jobs:
     name: Validate SKILL.md Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Validate Skills Format
         run: |
@@ -96,7 +96,7 @@ jobs:
     name: Validate Agent Files
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Validate Agent Format
         run: |
@@ -207,7 +207,7 @@ jobs:
     name: Check Links
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check README Links
         run: |
@@ -246,7 +246,7 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Scan for Sensitive Data
         run: |
@@ -287,7 +287,7 @@ jobs:
     name: Test Installation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Test Install Script
         run: |
