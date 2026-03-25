@@ -1,7 +1,7 @@
 {
   "name": "director-mode-lite",
-  "description": "Use Claude Code like a Director, not a Programmer. Complete toolkit with 25 commands, 14 agents, 30 skills, and TDD-based Auto-Loop.",
-  "version": "1.7.1",
+  "description": "Use Claude Code like a Director, not a Programmer. Complete toolkit with 26 commands, 14 agents, 31 skills, and TDD-based Auto-Loop.",
+  "version": "1.7.2",
   "author": {
     "name": "Lucas Wang",
     "url": "https://claude-world.com"

@@ -18,9 +18,9 @@ No. Director Mode Lite is a community project from [Claude World](https://claude
 
 | Feature | Lite (Free) | Full |
 |---------|-------------|------|
-| Commands | 25 | 85+ |
+| Commands | 26 | 85+ |
 | Agents | 14 | 35+ |
-| Skills | 29 | 60+ |
+| Skills | 31 | 60+ |
 | Auto-Loop | Yes | Yes |
 | Self-Evolving Loop | Yes | Yes |
 | Auto-Explore | No | Yes |

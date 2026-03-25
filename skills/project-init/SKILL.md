@@ -27,7 +27,7 @@ Execute a comprehensive project setup using Expert Agents.
 | None of the above | Unknown | Ask user for tech stack |
 
 3. Detect test framework: jest, pytest, cargo test, go test, etc.
-4. Map project structure: `find . -type f -name "*.ts" -o -name "*.py" -o -name "*.rs" -o -name "*.go" | head -20`
+4. Map project structure: `find . -type f \( -name "*.ts" -o -name "*.py" -o -name "*.rs" -o -name "*.go" \) | head -20`
 
 **If no project files detected:**
 ```

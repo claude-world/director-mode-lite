@@ -18,6 +18,8 @@
 | `PreCompact` | Before context compaction | Preserve critical context |
 | `PostCompact` | After compaction completes | Context recovery |
 | `Notification` | User is notified | External alerts (Slack, etc.) |
+| `Elicitation` | MCP server requests input | Override elicitation responses |
+| `ElicitationResult` | Elicitation result available | Post-process elicitation |
 
 ---
 

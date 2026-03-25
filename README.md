@@ -199,10 +199,10 @@ claude plugin install director-mode-lite
 cd your-project
 
 # 3. Run installation script from cached plugin
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.1/install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.2/install.sh .
 
 # 4. Verify installation
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.1/scripts/verify-install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.2/scripts/verify-install.sh .
 ```
 
 <details>
@@ -218,7 +218,7 @@ claude plugin install director-mode-lite
 cat ~/.claude/plugins/installed_plugins.json | jq '.'
 
 # View plugin cache
-ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.1/
+ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.2/
 ```
 
 </details>
@@ -245,7 +245,7 @@ Run the verifier against the project where you installed Director Mode Lite:
 
 ```bash
 # Plugin install
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.1/scripts/verify-install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.2/scripts/verify-install.sh .
 
 # Clone install
 ./scripts/verify-install.sh /path/to/your/project
@@ -361,7 +361,7 @@ It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and e
 </td>
 <td valign="top" width="34%">
 
-### Skills (30)
+### Skills (31)
 
 | Skill | Purpose |
 |-------|---------|
@@ -811,16 +811,16 @@ See [LICENSE](LICENSE) for details.
 
 ## About Director Mode Lite
 
-This is a **free, open-source toolkit** (v1.7.1) from the [Claude World](https://claude-world.com) community, compatible with the latest Claude Code (Opus 4.6).
+This is a **free, open-source toolkit** (v1.7.2) from the [Claude World](https://claude-world.com) community, compatible with the latest Claude Code (Opus 4.6).
 
 <table>
 <tr>
 <td width="50%">
 
 **What's included (FREE):**
-- 25 Commands (incl. validators & generators)
+- 26 Commands (incl. validators & generators)
 - 14 Agents (3 Core + 5 Experts + 6 Self-Evolving)
-- 30 Skills
+- 31 Skills
 - Auto-Loop with TDD
 - Expert-guided project setup
 - Validation & template generation

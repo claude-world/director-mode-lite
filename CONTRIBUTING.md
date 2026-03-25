@@ -58,6 +58,7 @@ cd director-mode-lite
 
 ```markdown
 ---
+name: skill-name
 description: What this skill does
 user-invocable: true
 ---

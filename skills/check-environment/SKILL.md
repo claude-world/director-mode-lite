@@ -42,7 +42,7 @@ Auto-detect project type and check relevant tools:
 ### 4. Director Mode Installation
 
 - [ ] `.claude/` directory exists
-- [ ] `.claude/skills/` populated (30 skills expected)
+- [ ] `.claude/skills/` populated (31 skills expected)
 - [ ] `.claude/agents/` populated (14 agents expected)
 - [ ] `.claude/hooks/` populated (5 hook scripts expected)
 - [ ] `.claude/settings.local.json` has hooks configured
@@ -74,7 +74,7 @@ Auto-detect project type and check relevant tools:
 
 ### Director Mode Installation
 - [x] .claude/ directory exists
-- [x] 30 skills installed
+- [x] 31 skills installed
 - [x] 14 agents installed
 - [x] 5 hooks installed
 - [x] settings.local.json configured

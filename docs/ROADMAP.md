@@ -38,9 +38,9 @@ Our ultimate goal is to **democratize access to advanced AI development patterns
 
 | Category | Components | Status |
 |----------|------------|--------|
-| **Commands** | 25 commands (workflow, TDD, validation, generation) | Stable |
+| **Commands** | 26 commands (workflow, TDD, validation, generation, onboarding) | Stable |
 | **Agents** | 14 agents (3 core + 5 experts + 6 evolving) | Stable |
-| **Skills** | 30 skills (nested .claude/skills/ structure) | Stable |
+| **Skills** | 31 skills (nested .claude/skills/ structure) | Stable |
 | **Automation** | Auto-Loop (TDD), Evolving-Loop (Self-Evolution) | Stable |
 | **Observability** | Changelog system with session tracking | Stable |
 | **Memory** | Meta-Engineering memory system | Beta |
@@ -471,7 +471,7 @@ Q4 2026: Certification program
 2026 Q1 ────────────────────────────────────────────────────────────────────►
          │
          └── v1.3.0 Skills Migration (2026-01-16) ✅
-              ├── 30 Skills in nested structure
+              ├── 29 Skills in nested structure
               ├── Context Isolation Pattern
               └── Phase Dependency Validation
 

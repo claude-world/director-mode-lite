@@ -80,7 +80,7 @@ head -15 .claude/agents/code-reviewer.md
 # If you see "tools:\n  - Read\n  - Write" → you're on v1.5.0+
 
 # Check if newer skills exist
-ls .claude/skills/getting-started/   # Added in v1.8.0
+ls .claude/skills/getting-started/   # Added in v1.7.2
 ls .claude/skills/interop-router/    # Added in v1.6.0
 ```
 

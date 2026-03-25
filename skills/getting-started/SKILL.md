@@ -15,7 +15,7 @@ Welcome! This guide walks you through your first 5 minutes with Director Mode Li
 Run a quick check:
 
 ```bash
-ls .claude/skills/ | wc -l    # Should show 30+
+ls .claude/skills/ | wc -l    # Should show 31+
 ls .claude/agents/ | wc -l    # Should show 14
 ls .claude/hooks/ | wc -l     # Should show 5+
 ```
@@ -95,6 +95,6 @@ Acceptance Criteria:
 
 - `/agents` - List all available agents
 - `/skills` - List all available skills
-- [FAQ](docs/FAQ.md) - Common questions
+- FAQ (`docs/FAQ.md`) - Common questions
 - [Discord](https://discord.com/invite/rBtHzSD288) - Community support
 - [claude-world.com](https://claude-world.com) - Website
