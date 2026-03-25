@@ -5,6 +5,38 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.2] - 2026-03-25
+
+### Added
+- **`/getting-started` skill** — Guided 5-minute onboarding with command priority tiers (Beginner/Intermediate/Advanced/Customization/Validation)
+- **`docs/MIGRATION.md`** — Version upgrade guide with re-install instructions for each major version
+- **Example CLAUDE.md files** for examples 03 (CLI Tool) and 04 (TypeScript Library)
+- **Dependency checks in `install.sh`** — Warns about missing `python3` and `jq` at install time
+- **FAQ additions** — Hooks troubleshooting, evolving-loop vs auto-loop decision guide, evolving-loop recovery, verify-install reference
+- **README "Start Here" section** — 3 essential commands above the fold for new users
+
+### Changed
+- **Official Spec Alignment (v2.1.76)**
+  - Agent validator: description limit removed (was 100 chars, now 10-5000), tools field now optional
+  - Hook template/guide: expanded from 4 to 12 hook types, added `type: "prompt"` support, `once`/`timeout` fields
+  - Skill validator: fixed hooks format to official `PreToolUse`/`PostToolUse` structure
+- **`project-init` skill** — Expanded from thin outline to full 6-phase guide with multi-language detection, error handling, concrete examples
+- **`check-environment` skill** — Added python3/jq checks, multi-language project detection, Director Mode installation verification
+- **CI `validate.yml`** — Removed obsolete `validate-commands` job, replaced with enhanced `validate-agents` (checks name, description, color, model, tools format)
+- **README restructure** — Compatibility moved to collapsible details, consolidated badges, added HOOKS-GUIDE and DEVELOPMENT-PATTERNS to docs table
+- **ROADMAP.md** — Updated current state to v1.7.2, added delivered v1.5-1.7 sections
+
+### Fixed
+- Version consistency: all files now reference v1.7.2
+- Skills count: corrected from 29 to 31 across all files (interop-router + getting-started)
+- Commands count: corrected from 25 to 26 across all files
+- `handoff-gemini`: fixed incorrect prerequisite (`@anthropic/gemini-cli` → `@google/gemini-cli`)
+- 3 broken internal links (DEVELOPMENT-PATTERNS, EVOLVING-LOOP-ARCHITECTURE, examples/02-rest-api)
+- `project-init`: fixed buggy `find` command missing parentheses
+- `CONTRIBUTING.md`: added missing `name` field to skill template
+- CHANGELOG: added missing v1.7.0 to version history table
+- FAQ: updated feature comparison counts
+
 ## [1.7.1] - 2026-03-14
 
 ### Security
@@ -308,6 +340,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.7.2 | 2026-03-25 | Onboarding skill, spec alignment, CI overhaul, migration guide, expanded FAQ |
 | 1.7.1 | 2026-03-14 | Security fix (path leak), install verification script, README badges |
 | 1.7.0 | 2026-02-10 | Agent/Skill frontmatter restored & expanded fields, official spec alignment |
 | 1.6.0 | 2026-02-10 | Interop Router auto-trigger skill for external CLI routing |

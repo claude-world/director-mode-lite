@@ -1,7 +1,7 @@
 # Director Mode Lite - Functional Test Report
 
 > **Note**: This report covers the v1.0.0 component set (13 commands, 3 agents, 4 skills).
-> For current component counts (25 commands, 14 agents, 30 skills), see the [README](../README.md).
+> For current component counts (26 commands, 14 agents, 31 skills), see the [README](../README.md).
 
 **Last Updated**: 2026-01-12
 **Tested Version**: v1.0.0
