@@ -16,8 +16,9 @@ Create a **file organizer CLI** that:
 # 1. Create project directory
 mkdir file-organizer && cd file-organizer
 
-# 2. Install Director Mode Lite
-curl -fsSL https://raw.githubusercontent.com/claude-world/director-mode-lite/main/install.sh | bash -s .
+# 2. Install Director Mode Lite (see main README for options)
+git clone https://github.com/claude-world/director-mode-lite.git /tmp/dml
+/tmp/dml/install.sh .
 
 # 3. Initialize npm project
 npm init -y
