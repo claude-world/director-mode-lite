@@ -164,6 +164,62 @@ Agents trigger on specific keywords:
 
 Or invoke directly by name: "use code-reviewer to review this PR"
 
+### Hooks not firing (Auto-Loop does nothing)
+
+Hooks require `python3` and `jq`:
+
+1. Check dependencies:
+   ```bash
+   python3 --version
+   jq --version
+   ```
+
+2. Check hook configuration:
+   ```bash
+   cat .claude/settings.local.json | grep -A5 "Stop"
+   ```
+
+3. If `settings.local.json` is missing or has no hooks section, re-run the install script.
+
+4. Run `/check-environment` for a full diagnostic.
+
+### When should I use Evolving-Loop vs Auto-Loop?
+
+| Scenario | Use `/auto-loop` | Use `/evolving-loop` |
+|---|---|---|
+| Simple, well-defined tasks | Yes | No |
+| Standard TDD is sufficient | Yes | No |
+| Complex features with many parts | No | Yes |
+| Previous `/auto-loop` attempts failed | No | Yes |
+| Need dynamic strategy adaptation | No | Yes |
+
+**Rule of thumb:** Start with `/auto-loop`. If it fails 2+ times on the same task, switch to `/evolving-loop`.
+
+### Evolving-Loop stuck or not progressing
+
+```bash
+# Check status
+/evolving-status
+
+# View recent events
+cat .self-evolving-loop/history/events.jsonl | tail -5
+
+# Force restart
+/evolving-loop --force "your task"
+
+# Complete reset
+rm -rf .self-evolving-loop/state/* .self-evolving-loop/reports/*
+```
+
+### First troubleshooting step
+
+Run the install verification script:
+```bash
+./scripts/verify-install.sh /path/to/your/project
+```
+
+This checks all components and reports PASS/FAIL for each.
+
 ---
 
 ## Configuration

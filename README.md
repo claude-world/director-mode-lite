@@ -6,16 +6,10 @@
 
 <p align="center">
   <a href="https://github.com/claude-world/director-mode-lite/releases"><img src="https://img.shields.io/github/v/release/claude-world/director-mode-lite" alt="GitHub Release"></a>
-  <a href="https://github.com/claude-world/director-mode-lite/stargazers"><img src="https://img.shields.io/github/stars/claude-world/director-mode-lite" alt="GitHub Stars"></a>
-  <a href="https://github.com/claude-world/director-mode-lite/blob/main/LICENSE"><img src="https://img.shields.io/github/license/claude-world/director-mode-lite" alt="GitHub License"></a>
-</p>
-
-<p align="center">
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://github.com/claude-world/director-mode-lite/stargazers"><img src="https://img.shields.io/github/stars/claude-world/director-mode-lite?style=social" alt="GitHub Stars"></a>
   <a href="https://claude.ai/code"><img src="https://img.shields.io/badge/Claude%20Code-Opus%204.6%20compatible-blueviolet?logo=anthropic" alt="Claude Code"></a>
   <a href="https://discord.com/invite/rBtHzSD288"><img src="https://img.shields.io/discord/1459859959398531294?color=7289da&label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://github.com/claude-world/director-mode-lite/stargazers"><img src="https://img.shields.io/github/stars/claude-world/director-mode-lite?style=social" alt="GitHub Stars"></a>
-  <a href="https://claude-world.com/stats"><img src="https://img.shields.io/badge/📊_Live_Stats-claude--world.com-orange" alt="Live Stats"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 </p>
 
 <p align="center">
@@ -34,16 +28,31 @@
 
 ---
 
-## Compatibility
+## Start Here
+
+After installing, run these 3 commands:
+
+```bash
+/getting-started          # Guided 5-minute onboarding
+/project-init             # Auto-detect project and configure
+/workflow                 # Start your first feature
+```
+
+> **New to Director Mode?** Read [What is Director Mode?](#what-is-director-mode) below, or jump to [Quick Start](#quick-start).
+
+<details>
+<summary><strong>Compatibility</strong></summary>
 
 Director Mode Lite is fully compatible with the latest Claude Code release (Opus 4.6 era), including support for:
 
 - **Claude Opus 4.6** model selection in agent/skill frontmatter
 - **Agent Teams** (experimental multi-agent collaboration)
 - **1M context window** models (`opus[1m]`, `sonnet[1m]`)
-- All current hook types: `PreToolUse`, `PostToolUse`, `Stop`, `Notification`
+- All 12 hook types including `SessionStart`, `PreCompact`, and `PostCompact`
 
 > Tested with Claude Code CLI as of March 2026. Works with Sonnet 4.6, Opus 4.6, and Haiku 4.5.
+
+</details>
 
 ---
 
@@ -270,7 +279,7 @@ It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and e
 <tr>
 <td valign="top" width="33%">
 
-### Commands (25)
+### Commands (26)
 
 **Workflow:**
 | Command | Purpose |
@@ -287,6 +296,7 @@ It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and e
 **Setup & Health:**
 | Command | Purpose |
 |---------|---------|
+| `/getting-started` | **5-min onboarding** |
 | `/project-init` | Quick setup |
 | `/check-environment` | Env check |
 | `/project-health-check` | 7-point audit |
@@ -763,7 +773,9 @@ Report bugs, request features
 | [FAQ](docs/FAQ.md) | Common questions answered |
 | [Concepts](docs/DIRECTOR-MODE-CONCEPTS.md) | Deep dive into methodology |
 | [CLAUDE.md Template](docs/CLAUDE-TEMPLATE.md) | Project configuration guide |
+| [Hooks Guide](docs/HOOKS-GUIDE.md) | Hook implementation reference (12 types) |
 | [Self-Evolving Loop](docs/SELF-EVOLVING-LOOP.md) | Dynamic skill evolution system |
+| [Development Patterns](docs/DEVELOPMENT-PATTERNS.md) | Learned best practices |
 
 ---
 

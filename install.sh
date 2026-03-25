@@ -12,6 +12,22 @@ echo "Director Mode Lite Installer"
 echo "============================"
 echo ""
 
+# Check dependencies
+MISSING_DEPS=0
+if ! command -v python3 &>/dev/null; then
+    echo "Warning: python3 not found. Hook configuration will be skipped."
+    echo "  Install: brew install python3 (macOS) or apt install python3 (Linux)"
+    MISSING_DEPS=1
+fi
+if ! command -v jq &>/dev/null; then
+    echo "Warning: jq not found. Some hooks may not work correctly."
+    echo "  Install: brew install jq (macOS) or apt install jq (Linux)"
+    MISSING_DEPS=1
+fi
+if [[ $MISSING_DEPS -gt 0 ]]; then
+    echo ""
+fi
+
 # Check target directory
 if [[ ! -d "$TARGET_DIR" ]]; then
     echo "Error: Target directory does not exist: $TARGET_DIR"
@@ -182,5 +198,9 @@ fi
 echo "Get started:"
 echo "  cd $TARGET_DIR"
 echo "  claude"
-echo "  /workflow"
+echo "  /getting-started    # Guided 5-minute onboarding"
+echo ""
+echo "Or jump right in:"
+echo "  /project-init       # Auto-detect project and configure"
+echo "  /workflow            # Start developing with 5-step flow"
 echo ""
