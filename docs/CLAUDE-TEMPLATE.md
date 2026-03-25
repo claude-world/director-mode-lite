@@ -21,8 +21,9 @@ project-root/
 ├── tests/         # Test files
 ├── docs/          # Documentation
 ├── .claude/       # Claude Code configuration
-│   ├── commands/  # Custom slash commands
-│   └── agents/    # Custom agents
+│   ├── skills/    # Custom slash commands (SKILL.md per directory)
+│   ├── agents/    # Custom agents
+│   └── hooks/     # Automation hooks
 └── CLAUDE.md      # This file
 ```
 
@@ -164,6 +165,11 @@ Things Claude should never do automatically:
 - `code-reviewer` - Code quality review
 - `debugger` - Error analysis
 - `doc-writer` - Documentation
+- `claude-md-expert` - CLAUDE.md configuration
+- `mcp-expert` - MCP setup
+- `agents-expert` - Custom agent creation
+- `skills-expert` - Custom skill creation
+- `hooks-expert` - Hook automation
 
 ---
 

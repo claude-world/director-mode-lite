@@ -1,8 +1,8 @@
 # Development Patterns - Learned Best Practices
 
 > **Purpose**: Document learned patterns from development experience for consistent implementation.
-> **Version**: 1.3.0
-> **Last Updated**: 2026-01-16
+> **Version**: 1.7.1
+> **Last Updated**: 2026-03-25
 
 ---
 
@@ -386,5 +386,5 @@ All detailed content must be written to the designated output file, NOT returned
 ## References
 
 - [SELF-EVOLVING-LOOP.md](./SELF-EVOLVING-LOOP.md) - Full technical documentation
-- [evolving-orchestrator.md](../.claude/agents/evolving-orchestrator.md) - Orchestrator implementation
-- [evolving-loop.md](../.claude/commands/evolving-loop.md) - Command implementation
+- [evolving-orchestrator.md](../agents/evolving-orchestrator.md) - Orchestrator implementation
+- [evolving-loop SKILL.md](../skills/evolving-loop/SKILL.md) - Skill implementation

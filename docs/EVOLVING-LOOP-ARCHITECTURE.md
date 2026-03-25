@@ -403,4 +403,4 @@ cat .claude/memory/meta-engineering/tool-usage.json | jq '.tools | sort_by(-.usa
 
 - [DEVELOPMENT-PATTERNS.md](./DEVELOPMENT-PATTERNS.md) - Learned best practices
 - [SELF-EVOLVING-LOOP.md](./SELF-EVOLVING-LOOP.md) - Conceptual overview
-- [evolving-orchestrator agent](../.claude/agents/evolving-orchestrator.md) - Orchestrator details
+- [evolving-orchestrator agent](../agents/evolving-orchestrator.md) - Orchestrator details

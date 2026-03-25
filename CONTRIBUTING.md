@@ -54,42 +54,37 @@ cd director-mode-lite
 
 ## Style Guidelines
 
-### Commands (`.md` files)
+### Skills (`SKILL.md` files in `.claude/skills/<name>/`)
 
 ```markdown
 ---
-description: Short description (required)
+description: What this skill does
+user-invocable: true
 ---
 
-# Command Name
+# Skill Name
 
-Clear instructions for Claude...
+Instructions for Claude...
 ```
 
-### Agents (`.md` files)
+### Agents (`.md` files in `.claude/agents/`)
 
 ```markdown
 ---
 name: agent-name
 description: What this agent does
-tools: Read, Grep, Glob, Bash
+model: sonnet
+color: cyan
+tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
 ---
 
 # Agent Name
 
 You are a specialist in...
-```
-
-### Skills (`SKILL.md` files)
-
-```markdown
----
-description: What this skill does
----
-
-# Skill Name
-
-Instructions...
 ```
 
 ### Shell Scripts

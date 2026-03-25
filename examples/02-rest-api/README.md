@@ -180,7 +180,7 @@ Acceptance Criteria:
 
 ## Next Steps
 
-Try [Example 3: Bug Fix](../03-bug-fix/) for systematic debugging.
+Try [Example 3: CLI Tool](../03-cli-tool/) for building a command-line tool with TDD.
 
 ---
 

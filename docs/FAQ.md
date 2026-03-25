@@ -18,10 +18,11 @@ No. Director Mode Lite is a community project from [Claude World](https://claude
 
 | Feature | Lite (Free) | Full |
 |---------|-------------|------|
-| Commands | 13 | 85+ |
-| Agents | 3 | 35+ |
-| Skills | 4 | 29+ |
+| Commands | 25 | 85+ |
+| Agents | 14 | 35+ |
+| Skills | 29 | 60+ |
 | Auto-Loop | Yes | Yes |
+| Self-Evolving Loop | Yes | Yes |
 | Auto-Explore | No | Yes |
 | SpecKit | No | Yes |
 | Multi-CLI Support | Basic | Advanced |
@@ -35,19 +36,21 @@ No. Director Mode Lite is a community project from [Claude World](https://claude
 
 **Option A: Plugin Install (Recommended)**
 ```bash
-/plugin install https://github.com/claude-world/director-mode-lite
+claude plugin install director-mode-lite
 ```
 
-**Option B: Script Install**
+**Option B: Clone and Install**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/claude-world/director-mode-lite/main/install.sh | bash -s .
+git clone https://github.com/claude-world/director-mode-lite.git
+cd director-mode-lite
+./install.sh /path/to/your/project
 ```
 
 ### Can I install it globally?
 
-Yes, install to `~/.claude/`:
+Yes, install to your project root or `~/.claude/`:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/claude-world/director-mode-lite/main/install.sh | bash -s ~/.claude
+./install.sh ~/.claude
 ```
 
 ### How do I uninstall?
@@ -121,15 +124,21 @@ Yes! Director Mode Lite includes:
 
 1. Check installation:
    ```bash
-   ls -la .claude/commands/
+   ls -la .claude/skills/
+   ls -la .claude/agents/
    ```
 
-2. Verify Claude Code version (requires 2.1.9+):
+2. Verify Claude Code version:
    ```bash
    claude --version
    ```
 
-3. Restart Claude Code
+3. Run install verification:
+   ```bash
+   ./scripts/verify-install.sh /path/to/your/project
+   ```
+
+4. Restart Claude Code
 
 ### Auto-Loop runs forever
 
@@ -165,11 +174,12 @@ Edit `CLAUDE.md` in your project root. See [CLAUDE-TEMPLATE.md](CLAUDE-TEMPLATE.
 
 ### Can I add my own commands?
 
-Yes! Create `.claude/commands/my-command.md`:
+Yes! Create `.claude/skills/my-command/SKILL.md`:
 
 ```markdown
 ---
 description: What this command does
+user-invocable: true
 ---
 
 # My Command
@@ -185,7 +195,13 @@ Yes! Create `.claude/agents/my-agent.md`:
 ---
 name: my-agent
 description: What this agent does
-tools: Read, Grep, Glob
+model: sonnet
+color: cyan
+tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
 ---
 
 # My Agent
