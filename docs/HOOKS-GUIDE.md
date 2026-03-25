@@ -138,4 +138,4 @@ exit 0  # Allow stop
 ## References
 
 - Claude Code Hooks official documentation
-- Director Mode Lite v1.4.1+ implementation
+- Director Mode Lite v1.7.1 implementation

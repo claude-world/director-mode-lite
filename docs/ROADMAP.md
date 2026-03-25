@@ -34,18 +34,19 @@ Our ultimate goal is to **democratize access to advanced AI development patterns
 
 ## Current State (v1.x)
 
-### What We Have (v1.4.0)
+### What We Have (v1.7.1)
 
 | Category | Components | Status |
 |----------|------------|--------|
 | **Commands** | 25 commands (workflow, TDD, validation, generation) | Stable |
 | **Agents** | 14 agents (3 core + 5 experts + 6 evolving) | Stable |
-| **Skills** | 29 skills (nested .claude/skills/ structure) | Stable |
+| **Skills** | 30 skills (nested .claude/skills/ structure) | Stable |
 | **Automation** | Auto-Loop (TDD), Evolving-Loop (Self-Evolution) | Stable |
 | **Observability** | Changelog system with session tracking | Stable |
 | **Memory** | Meta-Engineering memory system | Beta |
 | **Hooks** | 5 hooks (PostToolUse, PreToolUse, Stop) | Stable |
-| **Tests** | Automated test suite for install.sh and hooks | Stable |
+| **Interop** | Interop Router for external CLI routing (Codex/Gemini) | Stable |
+| **Tests** | Automated test suite + install verification script | Stable |
 | **Examples** | 4 tutorials (Calculator, REST API, CLI, Library) | Stable |
 
 ### Current Architecture
@@ -121,32 +122,59 @@ Director Mode Lite v1.x
   - CLI Tool example (file organizer)
   - TypeScript Library example (validator)
 
-### v1.5.0 - Enhanced Learning (Q2 2026)
+### v1.5.x - Agent Format & Spec Alignment (Released 2026-02-10)
 
-**Focus**: Support for multiple AI models and providers.
+**Focus**: Align agent/skill frontmatter to official Claude Code specifications.
+
+#### Features (Delivered)
+
+- [x] **Agent Frontmatter Format Upgrade**
+  - YAML list tools format (migrated from bracket arrays)
+  - Added `color`, `model`, `skills` fields
+  - Added `hooks`, `permissionMode`, `disallowedTools` fields
+  - Restored `memory` and `maxTurns` fields (incorrectly removed, then fixed in v1.7.0)
+
+- [x] **Skill Frontmatter Alignment**
+  - Added `when_to_use`, `arguments`, `version`, `model` fields
+  - Updated validators and templates for new fields
+
+- [x] **Expanded Model Support**
+  - `inherit`, `haiku`, `sonnet`, `opus`, `best`, `sonnet[1m]`, `opus[1m]`, `opusplan`
+
+### v1.6.0 - Interop Router (Released 2026-02-10)
+
+**Focus**: External CLI routing for multi-model collaboration.
+
+#### Features (Delivered)
+
+- [x] **Interop Router Skill**
+  - Auto-trigger evaluation and delegation to Codex or Gemini
+  - Decision scoring system with benefit/cost/risk calculation
+  - Safety: read-only default, automatic secret redaction
+
+### v1.7.x - Security & Verification (Released 2026-03-14)
+
+**Focus**: Security fixes and installation verification.
+
+#### Features (Delivered)
+
+- [x] **Security Fix** - Removed leaked filesystem paths from `.auto-explore/`
+- [x] **Install Verification Script** - `scripts/verify-install.sh` for post-install validation
+- [x] **README Badges** - Release, stars, license badges
+
+### Next: v1.8.0+ - Enhanced Learning (Planned)
+
+**Focus**: Support for multiple AI models and improved pattern learning.
 
 #### Features
 
 - [ ] **Model Router**
   - Automatic model selection based on task complexity
-  - Support for Haiku/Sonnet/Opus selection
   - Cost-aware routing
-
-- [ ] **External CLI Integration**
-  - Enhanced Codex/Gemini handoff
-  - Result aggregation from multiple models
-  - Cross-model validation
 
 - [ ] **Performance Optimization**
   - Reduced token consumption
   - Faster phase execution
-  - Parallel model invocation
-
-#### Technical Improvements
-
-- [ ] Model-agnostic skill format
-- [ ] Provider abstraction layer
-- [ ] Fallback mechanisms
 
 ---
 
@@ -443,7 +471,7 @@ Q4 2026: Certification program
 2026 Q1 ────────────────────────────────────────────────────────────────────►
          │
          └── v1.3.0 Skills Migration (2026-01-16) ✅
-              ├── 29 Skills in nested structure
+              ├── 30 Skills in nested structure
               ├── Context Isolation Pattern
               └── Phase Dependency Validation
 
@@ -453,16 +481,28 @@ Q4 2026: Certification program
               ├── Automated tests
               └── 4 Examples
 
+2026 Q1 (cont.) ────────────────────────────────────────────────────────────►
+         │
+         └── v1.5.x Spec Alignment (2026-02-10) ✅
+              ├── Agent Frontmatter Format Upgrade (YAML lists)
+              ├── Skill Frontmatter New Fields
+              └── All 14 Agents Updated
+
+         └── v1.6.0 Interop Router (2026-02-10) ✅
+              ├── External CLI Auto-Routing
+              ├── Decision Scoring System
+              └── Secret Redaction
+
+         └── v1.7.x Security & Verification (2026-03-14) ✅
+              ├── Security Fix (path leak)
+              ├── Install Verification Script
+              └── README Badges
+
 2026 Q2 ────────────────────────────────────────────────────────────────────►
          │
-         └── v1.5.0 Enhanced Learning (Planned)
-              ├── Pattern Library
-              ├── Learning Dashboard
-              └── Feedback Integration
-
-         └── v1.6.0 Multi-Model (Planned)
+         └── v1.8.0+ Enhanced Learning (Planned)
               ├── Model Router
-              ├── External CLI Integration
+              ├── Pattern Library
               └── Performance Optimization
 
 2026 Q3 ────────────────────────────────────────────────────────────────────►
@@ -524,6 +564,6 @@ We commit to transparent communication about any changes to this roadmap.
 
 ---
 
-*Roadmap version: 1.4.0*
-*Last updated: 2026-01-16*
+*Roadmap version: 1.7.1*
+*Last updated: 2026-03-25*
 *Part of [Director Mode Lite](https://github.com/claude-world/director-mode-lite)*
