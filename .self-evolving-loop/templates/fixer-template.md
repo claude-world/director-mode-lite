@@ -1,7 +1,8 @@
 ---
-description: [Auto-generated] Fixer for: {{TASK_NAME}}
+description: "[Auto-generated] Fixer for: {{TASK_NAME}}"
 context: fork
 allowed-tools: [Read, Write, Edit, Bash, Grep, Glob]
+lifecycle: task-scoped
 ---
 
 # Fixer: {{TASK_NAME}}

@@ -90,11 +90,13 @@ echo ""
 echo "  Checking installed components:"
 echo ""
 
-# Check skills (includes slash commands)
+# Check skills (includes slash commands) — counts computed from frontmatter
 SKILL_COUNT=$(ls -d .claude/skills/*/ 2>/dev/null | wc -l | tr -d ' ')
+CMD_COUNT=$(grep -l "^user-invocable: true" .claude/skills/*/SKILL.md 2>/dev/null | wc -l | tr -d ' ')
+INTERNAL_COUNT=$((SKILL_COUNT - CMD_COUNT))
 echo -e "  ${GREEN}✓${NC} Skills:   ${CYAN}$SKILL_COUNT${NC} installed"
-echo "    ├── 27 slash commands (user-invocable)"
-echo "    └── 5 internal skills (code-reviewer, debugger, doc-writer, test-runner, interop-router)"
+echo "    ├── $CMD_COUNT slash commands (user-invocable)"
+echo "    └── $INTERNAL_COUNT internal skills (auto-triggered / agent-loaded)"
 
 # Check agents
 AGENT_COUNT=$(find .claude/agents -name "*.md" 2>/dev/null | wc -l | tr -d ' ')

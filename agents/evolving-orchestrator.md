@@ -1,6 +1,12 @@
 ---
 name: evolving-orchestrator
-description: Lightweight coordinator for the Self-Evolving Loop. Use when /evolving-loop dispatches the loop or resumes it from checkpoint; coordinates the 8 phases (ANALYZE, GENERATE, EXECUTE, VALIDATE, DECIDE, LEARN, EVOLVE, SHIP) in isolated subagent contexts, manages checkpoint state and memory, enforces safety gates, and returns only brief status lines.
+description: |
+  Lightweight coordinator for the Self-Evolving Loop. Use when /evolving-loop dispatches the loop or resumes it from checkpoint; coordinates the 8 phases (ANALYZE, GENERATE, EXECUTE, VALIDATE, DECIDE, LEARN, EVOLVE, SHIP) in isolated subagent contexts, manages checkpoint state and memory, enforces safety gates, and returns only brief status lines.
+
+  <example>
+  user: "/evolving-loop add pagination to the search results"
+  assistant: "I'll dispatch the evolving-orchestrator agent to drive the ANALYZE→SHIP phases from checkpoint and report status lines."
+  </example>
 color: cyan
 tools:
   - Read
@@ -10,6 +16,8 @@ tools:
   - Glob
   - Agent
 model: haiku
+memory:
+  - user
 maxTurns: 50
 ---
 

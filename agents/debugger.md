@@ -1,6 +1,12 @@
 ---
 name: debugger
-description: Debugging specialist for errors, test failures, and unexpected behavior. Use PROACTIVELY when encountering any errors, exceptions, or failing tests. Follows the 5-step root-cause method from the loaded debugger skill and verifies fixes with tests.
+description: |
+  Debugging specialist for errors, test failures, and unexpected behavior. Use PROACTIVELY when encountering any errors, exceptions, or failing tests. Follows the 5-step root-cause method from the loaded debugger skill and verifies fixes with tests.
+
+  <example>
+  user: "The auth test started throwing 'undefined is not a function' after my last change."
+  assistant: "I'll use the debugger agent to trace the root cause of that TypeError and verify the fix with the test."
+  </example>
 color: red
 tools:
   - Read

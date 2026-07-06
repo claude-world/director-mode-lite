@@ -1,15 +1,43 @@
 #!/bin/bash
 # Director Mode Lite - Installation Script
 # Safe installation: backup existing config + merge hooks.json
+#
+# Usage: ./install.sh [--update] [target-dir]
+#   --update   Overwrite distributed files (agents/skills/hooks + .self-evolving-loop
+#              scaffolding) instead of skipping existing ones. CLAUDE.md is never
+#              overwritten. target-dir defaults to the current directory.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET_DIR="${1:-.}"
+
+# Parse args: optional --update flag (anywhere) + optional target dir (first non-flag arg)
+UPDATE_MODE=0
+TARGET_DIR="."
+_target_set=0
+for arg in "$@"; do
+    case "$arg" in
+        --update)
+            UPDATE_MODE=1
+            ;;
+        *)
+            if [[ $_target_set -eq 0 ]]; then
+                TARGET_DIR="$arg"
+                _target_set=1
+            fi
+            ;;
+    esac
+done
+
 BACKUP_DIR="$TARGET_DIR/.claude-backup-$(date +%Y%m%d-%H%M%S)"
 
 echo "Director Mode Lite Installer"
 echo "============================"
+if [[ $UPDATE_MODE -eq 1 ]]; then
+    echo "Mode: update (overwrite distributed files)"
+else
+    echo "Mode: install (skip existing files)"
+fi
 echo ""
 
 # Check dependencies
@@ -45,14 +73,19 @@ fi
 # Ensure .claude directory exists
 mkdir -p "$TARGET_DIR/.claude"
 
-# Copy agents (skip existing files)
+# Copy agents (skip existing, or overwrite in --update mode)
 echo "Installing agents..."
 mkdir -p "$TARGET_DIR/.claude/agents"
 for file in "$SCRIPT_DIR/agents/"*.md; do
     if [[ -f "$file" ]]; then
         filename=$(basename "$file")
         if [[ -f "$TARGET_DIR/.claude/agents/$filename" ]]; then
-            echo "  Skipped (exists): agents/$filename"
+            if [[ $UPDATE_MODE -eq 1 ]]; then
+                cp -f "$file" "$TARGET_DIR/.claude/agents/"
+                echo "  Updated: agents/$filename"
+            else
+                echo "  Skipped (exists): agents/$filename"
+            fi
         else
             cp "$file" "$TARGET_DIR/.claude/agents/"
             echo "  Installed: agents/$filename"
@@ -60,14 +93,20 @@ for file in "$SCRIPT_DIR/agents/"*.md; do
     fi
 done
 
-# Copy skills (preserve directory structure: skills/<name>/SKILL.md)
+# Copy skills (skip existing, or overwrite in --update mode)
 echo "Installing skills..."
 mkdir -p "$TARGET_DIR/.claude/skills"
 for dir in "$SCRIPT_DIR/skills/"*/; do
     if [[ -d "$dir" ]]; then
         dirname=$(basename "$dir")
         if [[ -d "$TARGET_DIR/.claude/skills/$dirname" ]]; then
-            echo "  Skipped (exists): skills/$dirname/"
+            if [[ $UPDATE_MODE -eq 1 ]]; then
+                rm -rf "$TARGET_DIR/.claude/skills/$dirname"
+                cp -r "${dir%/}" "$TARGET_DIR/.claude/skills/"
+                echo "  Updated: skills/$dirname/"
+            else
+                echo "  Skipped (exists): skills/$dirname/"
+            fi
         else
             cp -r "${dir%/}" "$TARGET_DIR/.claude/skills/"
             echo "  Installed: skills/$dirname/"
@@ -92,7 +131,7 @@ HOOK_SCRIPTS=(
 
 for hook in "${HOOK_SCRIPTS[@]}"; do
     if [[ -f "$SCRIPT_DIR/hooks/$hook" ]]; then
-        cp "$SCRIPT_DIR/hooks/$hook" "$TARGET_DIR/.claude/hooks/"
+        cp -f "$SCRIPT_DIR/hooks/$hook" "$TARGET_DIR/.claude/hooks/"
         chmod +x "$TARGET_DIR/.claude/hooks/$hook"
         echo "  Installed: hooks/$hook"
     fi
@@ -172,6 +211,37 @@ else
     echo "  Please manually add hooks from: $SCRIPT_DIR/hooks/settings-hooks.json"
 fi
 
+# Copy .self-evolving-loop scaffolding (evolving-loop hooks + templates, opt-in)
+# Only hooks/ and templates/ are distributed; state dirs are created at runtime.
+# The Stop hook is NOT merged into settings.local.json here (opt-in — see the
+# evolving-loop skill's "Hook-Driven Continuation" section).
+echo "Installing .self-evolving-loop scaffolding..."
+SEL_SRC="$SCRIPT_DIR/.self-evolving-loop"
+if [[ -d "$SEL_SRC" ]]; then
+    for sub in hooks templates; do
+        mkdir -p "$TARGET_DIR/.self-evolving-loop/$sub"
+        for file in "$SEL_SRC/$sub/"*; do
+            [[ -f "$file" ]] || continue
+            filename=$(basename "$file")
+            dest="$TARGET_DIR/.self-evolving-loop/$sub/$filename"
+            if [[ -f "$dest" ]] && [[ $UPDATE_MODE -eq 0 ]]; then
+                echo "  Skipped (exists): .self-evolving-loop/$sub/$filename"
+            else
+                if [[ -f "$dest" ]]; then
+                    cp -f "$file" "$dest"
+                    echo "  Updated: .self-evolving-loop/$sub/$filename"
+                else
+                    cp "$file" "$dest"
+                    echo "  Installed: .self-evolving-loop/$sub/$filename"
+                fi
+                if [[ "$filename" == *.sh ]]; then
+                    chmod +x "$dest"
+                fi
+            fi
+        done
+    done
+fi
+
 # Copy CLAUDE.md template (if target doesn't have one)
 if [[ ! -f "$TARGET_DIR/CLAUDE.md" ]] && [[ -f "$SCRIPT_DIR/docs/CLAUDE-TEMPLATE.md" ]]; then
     echo "Copying CLAUDE.md template..."
@@ -179,12 +249,17 @@ if [[ ! -f "$TARGET_DIR/CLAUDE.md" ]] && [[ -f "$SCRIPT_DIR/docs/CLAUDE-TEMPLATE
 fi
 
 echo ""
-echo "Installation complete!"
+if [[ $UPDATE_MODE -eq 1 ]]; then
+    echo "Update complete!"
+else
+    echo "Installation complete!"
+fi
 echo ""
 echo "Installed:"
 echo "  - .claude/skills/       (27 slash commands + 5 internal skills = 32 total)"
 echo "  - .claude/agents/       (14 specialized agents)"
 echo "  - .claude/hooks/        (5 hooks: Auto-Loop, Changelog, Validator)"
+echo "  - .self-evolving-loop/  (evolving-loop scaffolding: hooks + templates, opt-in)"
 echo ""
 echo "Features:"
 echo "  - /auto-loop     TDD-based autonomous development"

@@ -5,6 +5,52 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-07-06
+
+Completion round for v1.8.0: wires the self-evolving-loop scaffolding into the
+installer, adds an in-place upgrade path, hardens CI against count drift, and
+lifts agent descriptions to the repo's own documented standard.
+
+### Added
+- **`install.sh --update`** — in-place upgrade that overwrites distributed files
+  (after the usual backup) instead of skipping them; MIGRATION.md now leads with it
+- **`.self-evolving-loop/` scaffolding is now actually installed** (hooks +
+  templates copied to the target project, opt-in activation documented in
+  `/evolving-loop` under "Hook-Driven Continuation") — previously shipped but
+  never wired, so the Stop-hook-driven loop mode could not work
+- **`scripts/validate-frontmatter.py` + CI job** — deep validation with real YAML
+  parsing: enforces explicit `user-invocable` on every skill (the root cause of
+  past count drift), verifies the advertised "27 commands / 14 agents / 32 skills"
+  in plugin.json/marketplace.json against reality, validates agent `skills:`
+  cross-references, memory enums, and warns on unsupported agent fields
+- **`<example>` blocks in all 14 agent descriptions** (per the repo's own
+  agent-check standard) showing a concrete delegation scenario each
+- **interop-router now knows about Claude profiles** — `check_cli_available.sh`
+  detects `claude-z-*` wrappers, `score_decision.py` can recommend
+  `claude-profile` for parallel/end-to-end delegation (pairs with `/handoff-claude`)
+- **Two new install tests** — scaffolding presence and `--update` overwrite behavior
+
+### Changed
+- **memory/maxTurns conventions normalized across all 14 agents** (loop agents +
+  personas carry `memory: [user]` and turn caps; experts stay stateless) and
+  documented in agents-expert
+- **hooks-expert self-freshness** — gains WebFetch and a "Keeping Current"
+  instruction to verify hook specs against official docs before answering;
+  inline knowledge stamped "last verified v2.1.201 (2026-07-06)"
+- **skill-synthesizer generates from the shipped templates** (single {{handlebars}}
+  vocabulary; inline scaffolds kept only as fallback); templates gained the
+  `lifecycle: task-scoped` field its review gate expects
+- **auto-loop-stop.sh rewritten around jq** (quoting-safe parsing, atomic
+  checkpoint updates) with the old grep/sed path kept as a jq-less fallback
+- **demo.sh counts computed from frontmatter** instead of hardcoded
+- **Architecture links in evolving-loop/evolving-status now absolute GitHub URLs**
+  (the relative `docs/` links broke after install, since docs/ isn't copied)
+
+### Fixed
+- Templates' `description: [Auto-generated] ...` was invalid strict YAML
+  (unquoted leading bracket) — quoted in the 3 templates and the synthesizer scaffolds
+- uninstall.sh now also removes `.self-evolving-loop/`
+
 ## [1.8.0] - 2026-07-06
 
 Full-catalog optimization of all commands, agents, and skills, driven by a five-track audit
@@ -425,6 +471,7 @@ Full-catalog optimization of all commands, agents, and skills, driven by a five-
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.8.1 | 2026-07-06 | install --update, evolving scaffolding wired + opt-in hook mode, deep CI frontmatter validation, agent example blocks, interop claude-profile routing |
 | 1.8.0 | 2026-07-06 | Full-catalog optimization: spec alignment (v2.1.201, 30 hook events, Claude 5), trigger-rich descriptions, persona consolidation, /handoff-claude multi-account skill, correctness fixes (auto-loop JSON, uninstall data loss, CLI syntax) |
 | 1.7.2 | 2026-03-25 | Onboarding skill, spec alignment, CI overhaul, migration guide, expanded FAQ |
 | 1.7.1 | 2026-03-14 | Security fix (path leak), install verification script, README badges |

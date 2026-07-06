@@ -1,6 +1,12 @@
 ---
 name: skill-evolver
-description: Evolution agent for the Self-Evolving Loop. Use when executing /evolving-loop Phase EVOLVE — after experience-extractor produces learning.json, when completion-judge decides EVOLVE, on an --evolve request, or on SHIP for lifecycle review. Applies verified learning to produce improved skill versions and manages task-scoped to persistent upgrades.
+description: |
+  Evolution agent for the Self-Evolving Loop. Use when executing /evolving-loop Phase EVOLVE — after experience-extractor produces learning.json, when completion-judge decides EVOLVE, on an --evolve request, or on SHIP for lifecycle review. Applies verified learning to produce improved skill versions and manages task-scoped to persistent upgrades.
+
+  <example>
+  user: "(evolving-loop) LEARN phase wrote learning.json with 3 verified adjustments"
+  assistant: "I'll dispatch the skill-evolver agent to apply those adjustments and emit the next executor/validator versions."
+  </example>
 color: cyan
 tools:
   - Read

@@ -1,6 +1,12 @@
 ---
 name: doc-writer
-description: Documentation specialist for README, API docs, code comments, and technical writing. Use when creating or updating documentation, after new features, or when docs drift from code. Verifies examples against the actual codebase before writing.
+description: |
+  Documentation specialist for README, API docs, code comments, and technical writing. Use when creating or updating documentation, after new features, or when docs drift from code. Verifies examples against the actual codebase before writing.
+
+  <example>
+  user: "I added a new /export endpoint but the API docs don't mention it yet."
+  assistant: "I'll use the doc-writer agent to document the /export endpoint, verifying the request/response shape against the code."
+  </example>
 color: blue
 tools:
   - Read
@@ -12,6 +18,9 @@ tools:
 model: sonnet
 skills:
   - doc-writer
+memory:
+  - user
+maxTurns: 20
 ---
 
 # Documentation Writer Agent

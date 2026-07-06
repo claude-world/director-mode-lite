@@ -1,7 +1,8 @@
 ---
-description: [Auto-generated] Validator for: {{TASK_NAME}}
+description: "[Auto-generated] Validator for: {{TASK_NAME}}"
 context: fork
 allowed-tools: [Read, Bash, Grep, Glob]
+lifecycle: task-scoped
 ---
 
 # Validator: {{TASK_NAME}}

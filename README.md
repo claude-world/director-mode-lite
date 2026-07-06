@@ -204,10 +204,10 @@ claude plugin install director-mode-lite
 cd your-project
 
 # 3. Run installation script from cached plugin
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.0/install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.1/install.sh .
 
 # 4. Verify installation
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.0/scripts/verify-install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.1/scripts/verify-install.sh .
 ```
 
 <details>
@@ -223,7 +223,7 @@ claude plugin install director-mode-lite
 cat ~/.claude/plugins/installed_plugins.json | jq '.'
 
 # View plugin cache
-ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.0/
+ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.1/
 ```
 
 </details>
@@ -250,7 +250,7 @@ Run the verifier against the project where you installed Director Mode Lite:
 
 ```bash
 # Plugin install
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.0/scripts/verify-install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.1/scripts/verify-install.sh .
 
 # Clone install
 ./scripts/verify-install.sh /path/to/your/project

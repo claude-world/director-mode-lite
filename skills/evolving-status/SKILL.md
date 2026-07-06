@@ -87,4 +87,4 @@ Acceptance Criteria:
 ## Related
 
 - [/evolving-loop](../evolving-loop/SKILL.md) - Main development loop
-- [Architecture](../../docs/EVOLVING-LOOP-ARCHITECTURE.md) - Detailed design
+- [Architecture](https://github.com/claude-world/director-mode-lite/blob/main/docs/EVOLVING-LOOP-ARCHITECTURE.md) - Detailed design

@@ -5,6 +5,9 @@
 # Note: This hook uses `set -euo pipefail` (strict mode) unlike other hooks
 # because it controls the auto-loop continuation logic and must fail fast
 # on any errors to avoid infinite loops or corrupted state.
+#
+# JSON handling uses jq when available (quoting-safe, atomic); a grep/sed
+# fallback keeps jq-less installs working (install.sh warns about jq).
 
 set -euo pipefail
 
@@ -25,16 +28,26 @@ if [[ -f "$STOP_FILE" ]]; then
     exit 0
 fi
 
+HAS_JQ=false
+command -v jq &>/dev/null && HAS_JQ=true
+
 # Read checkpoint
 if ! checkpoint=$(cat "$CHECKPOINT_FILE" 2>/dev/null); then
     exit 0
 fi
 
 # Parse checkpoint fields
-status=$(echo "$checkpoint" | grep -o '"status"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4 || echo "unknown")
-current_iteration=$(echo "$checkpoint" | grep -o '"current_iteration"[[:space:]]*:[[:space:]]*[0-9]*' | grep -o '[0-9]*$' || echo "0")
-max_iterations=$(echo "$checkpoint" | grep -o '"max_iterations"[[:space:]]*:[[:space:]]*[0-9]*' | grep -o '[0-9]*$' || echo "20")
-request=$(echo "$checkpoint" | grep -o '"request"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4 || echo "")
+if $HAS_JQ; then
+    status=$(jq -r '.status // "unknown"' "$CHECKPOINT_FILE")
+    current_iteration=$(jq -r '.current_iteration // 0' "$CHECKPOINT_FILE")
+    max_iterations=$(jq -r '.max_iterations // 20' "$CHECKPOINT_FILE")
+    request=$(jq -r '.request // ""' "$CHECKPOINT_FILE")
+else
+    status=$(echo "$checkpoint" | grep -o '"status"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4 || echo "unknown")
+    current_iteration=$(echo "$checkpoint" | grep -o '"current_iteration"[[:space:]]*:[[:space:]]*[0-9]*' | grep -o '[0-9]*$' || echo "0")
+    max_iterations=$(echo "$checkpoint" | grep -o '"max_iterations"[[:space:]]*:[[:space:]]*[0-9]*' | grep -o '[0-9]*$' || echo "20")
+    request=$(echo "$checkpoint" | grep -o '"request"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4 || echo "")
+fi
 
 # Check if completed or max iterations reached
 if [[ "$status" == "completed" ]]; then
@@ -42,8 +55,13 @@ if [[ "$status" == "completed" ]]; then
 fi
 
 if [[ "$current_iteration" -ge "$max_iterations" ]]; then
-    # Update status to completed
-    echo "$checkpoint" | sed 's/"status"[[:space:]]*:[[:space:]]*"[^"]*"/"status": "max_iterations_reached"/' > "$CHECKPOINT_FILE"
+    # Update status and allow exit
+    if $HAS_JQ; then
+        jq '.status = "max_iterations_reached"' "$CHECKPOINT_FILE" > "$CHECKPOINT_FILE.tmp" \
+            && mv "$CHECKPOINT_FILE.tmp" "$CHECKPOINT_FILE"
+    else
+        echo "$checkpoint" | sed 's/"status"[[:space:]]*:[[:space:]]*"[^"]*"/"status": "max_iterations_reached"/' > "$CHECKPOINT_FILE"
+    fi
     exit 0
 fi
 
@@ -51,11 +69,21 @@ fi
 new_iteration=$((current_iteration + 1))
 echo "$new_iteration" > "$ITERATION_FILE"
 
-# Update checkpoint
-echo "$checkpoint" | sed "s/\"current_iteration\"[[:space:]]*:[[:space:]]*[0-9]*/\"current_iteration\": $new_iteration/" > "$CHECKPOINT_FILE"
+# Update checkpoint (atomic with jq)
+if $HAS_JQ; then
+    jq ".current_iteration = $new_iteration" "$CHECKPOINT_FILE" > "$CHECKPOINT_FILE.tmp" \
+        && mv "$CHECKPOINT_FILE.tmp" "$CHECKPOINT_FILE"
+else
+    echo "$checkpoint" | sed "s/\"current_iteration\"[[:space:]]*:[[:space:]]*[0-9]*/\"current_iteration\": $new_iteration/" > "$CHECKPOINT_FILE"
+fi
 
-# Extract AC status for prompt (safe: pass via stdin, not embedded in code)
-ac_status=$(echo "$checkpoint" | python3 -c "
+# Extract AC status for prompt
+if $HAS_JQ; then
+    ac_status=$(jq -r 'if (.acceptance_criteria // []) | length == 0 then "No AC defined"
+        else .acceptance_criteria[] | (if .done then "[x] " else "[ ] " end) + (.description // "Unknown") end' \
+        "$CHECKPOINT_FILE" 2>/dev/null || echo "Check .auto-loop/checkpoint.json")
+else
+    ac_status=$(echo "$checkpoint" | python3 -c "
 import json, sys
 try:
     data = json.load(sys.stdin)
@@ -69,6 +97,7 @@ try:
 except:
     print('Unable to parse AC')
 " 2>/dev/null || echo "Check .auto-loop/checkpoint.json")
+fi
 
 # Build TDD prompt for next iteration
 tdd_prompt="Continue Auto-Loop iteration #$new_iteration / $max_iterations
@@ -88,16 +117,17 @@ Follow the TDD cycle:
 
 If all ACs are complete, update status to \"completed\"."
 
-# Block stop with reason for next iteration (per Hooks guide)
-# Use Python to properly JSON-encode the prompt, with safe fallback
-json_reason=$(echo "$tdd_prompt" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))' 2>/dev/null) || {
-    # Fallback: simple JSON string (iteration number is always safe integer)
-    json_reason="\"Continue Auto-Loop iteration #$new_iteration\""
-}
-
-cat <<EOF
+# Block stop with reason for next iteration (official Stop-hook schema)
+if $HAS_JQ; then
+    jq -n --arg reason "$tdd_prompt" '{decision: "block", reason: $reason}'
+else
+    json_reason=$(echo "$tdd_prompt" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))' 2>/dev/null) || {
+        json_reason="\"Continue Auto-Loop iteration #$new_iteration\""
+    }
+    cat <<EOF
 {
   "decision": "block",
   "reason": $json_reason
 }
 EOF
+fi

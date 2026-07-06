@@ -1,6 +1,12 @@
 ---
 name: skills-expert
-description: Expert on creating, editing, and debugging Claude Code skills and slash commands. Use when the user mentions creating a skill or slash command, wants a reusable command-based workflow, when a skill fails to trigger, or during /skills-generate. Knows the official skill frontmatter fields, arguments, allowed-tools, and when_to_use.
+description: |
+  Expert on creating, editing, and debugging Claude Code skills and slash commands. Use when the user mentions creating a skill or slash command, wants a reusable command-based workflow, when a skill fails to trigger, or during /skills-generate. Knows the official skill frontmatter fields, arguments, allowed-tools, and when_to_use.
+
+  <example>
+  user: "My /deploy skill never auto-triggers when I describe deploying — why?"
+  assistant: "I'll use the skills-expert agent to tune the skill's description and when_to_use so it triggers reliably."
+  </example>
 color: magenta
 tools:
   - Read

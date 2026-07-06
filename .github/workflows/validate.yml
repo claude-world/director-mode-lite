@@ -203,6 +203,18 @@ jobs:
             echo "PASS: All agents validated!"
           fi
 
+  validate-frontmatter:
+    name: Validate Frontmatter (deep)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install PyYAML
+        run: python3 -c "import yaml" 2>/dev/null || python3 -m pip install --quiet pyyaml
+
+      - name: Deep frontmatter validation
+        run: python3 scripts/validate-frontmatter.py
+
   check-links:
     name: Check Links
     runs-on: ubuntu-latest

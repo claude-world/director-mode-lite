@@ -1,6 +1,12 @@
 ---
 name: agents-expert
-description: Expert on creating and configuring custom Claude Code agents (subagents). Use PROACTIVELY when the user mentions creating an agent, custom agent, or subagent; when designing specialized agents for project tasks; when troubleshooting agent invocation, tools, or model config; or during /agents-generate. Knows the official agent frontmatter fields, model/memory conventions, and Agent() dispatch.
+description: |
+  Expert on creating and configuring custom Claude Code agents (subagents). Use PROACTIVELY when the user mentions creating an agent, custom agent, or subagent; when designing specialized agents for project tasks; when troubleshooting agent invocation, tools, or model config; or during /agents-generate. Knows the official agent frontmatter fields, model/memory conventions, and Agent() dispatch.
+
+  <example>
+  user: "I want a subagent that only reviews SQL migrations — how should I set its tools and model?"
+  assistant: "I'll use the agents-expert agent to design the migration-reviewer's frontmatter, tool allowlist, and model choice."
+  </example>
 color: magenta
 tools:
   - Read
@@ -127,7 +133,8 @@ model: inherit     # Inherit the parent context's model
 - **Experts and personas** → `sonnet` (reasoning quality matters).
 - **Mechanical coordinators / dispatchers** → `haiku` (cheap, fast, low reasoning).
 - **Analytical loop phases** (analysis, judgment, learning) → `sonnet` or `inherit`.
-- **`memory`** → add only where cross-session learning genuinely helps (agents that accumulate patterns). Most task-scoped agents need none.
+- **`memory`** → add only where cross-session learning genuinely helps (agents that accumulate patterns). Most task-scoped agents need none. In this repo: `memory: [user]` on the 6 self-evolving loop agents and the 3 personas (code-reviewer, debugger, doc-writer); the 5 stateless expert advisors get none.
+- **`maxTurns`** → cap agentic turns to match the job: personas ~20, analytical loop phases 10–15 (completion-judge 10; requirement-analyzer / experience-extractor / skill-evolver 15), debugger 25, the orchestrator 50; experts set none (advisory and short).
 - **`color`** is a Director Mode convention used across this repo; the validator requires one of: yellow, red, green, blue, magenta, cyan.
 
 ### Best Practices

@@ -80,12 +80,14 @@ case $choice in
         rm -rf "$TARGET_DIR/.claude/hooks/"
         rm -rf "$TARGET_DIR/.auto-loop/"
         rm -rf "$TARGET_DIR/.director-mode/"
+        rm -rf "$TARGET_DIR/.self-evolving-loop/"
         echo ""
         echo "Removed:"
         echo "  - .claude/hooks/"
         echo "  - Director Mode hooks in .claude/settings.local.json"
         echo "  - .auto-loop/"
         echo "  - .director-mode/"
+        echo "  - .self-evolving-loop/"
         echo ""
         echo "Kept:"
         echo "  - .claude/agents/"
@@ -102,6 +104,7 @@ case $choice in
         remove_injected_settings
         rm -rf "$TARGET_DIR/.auto-loop/"
         rm -rf "$TARGET_DIR/.director-mode/"
+        rm -rf "$TARGET_DIR/.self-evolving-loop/"
 
         # Remove .claude if empty
         if [[ -d "$TARGET_DIR/.claude" ]] && [[ -z "$(ls -A "$TARGET_DIR/.claude")" ]]; then

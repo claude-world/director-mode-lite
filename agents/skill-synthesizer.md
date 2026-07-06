@@ -63,54 +63,71 @@ Fold `recommended_agents`, `recommended_skills`, and any `template_improvements`
 
 ## Skill Generation Process
 
+### Template Source (Primary)
+
+**The shipped templates in `.self-evolving-loop/templates/` are the source of truth.** At GENERATE, for each skill type read the template and fill its `{{...}}` placeholders:
+
+| Type | Template file | Output |
+|------|---------------|--------|
+| Executor | `.self-evolving-loop/templates/executor-template.md` | `generated-skills/executor-v{{VERSION}}.md` |
+| Validator | `.self-evolving-loop/templates/validator-template.md` | `generated-skills/validator-v{{VERSION}}.md` |
+| Fixer | `.self-evolving-loop/templates/fixer-template.md` | `generated-skills/fixer-v{{VERSION}}.md` |
+
+Read the actual placeholder names from each template (they use `{{handlebars}}`). Fill them from `analysis.json` + `patterns.json`:
+
+- `{{TASK_NAME}}` — task name/slug · `{{VERSION}}` — new skill version (see Skill Versioning) · `{{TIMESTAMP}}` — `date -u +%Y-%m-%dT%H:%M:%SZ` · `{{ANALYSIS_VERSION}}` — analysis.json version · `{{TASK_TYPE}}` — matched pattern type
+- `{{PARSED_GOAL}}`, `{{CODEBASE_CONTEXT}}` — from analysis
+- `{{#each ACCEPTANCE_CRITERIA}}` blocks — `{{id}}`, `{{description}}`, `{{priority}}`, `{{suggested_test_path}}`, `{{suggested_impl_path}}`
+- `{{STRATEGY_APPROACH}}`, `{{#each STRATEGY_ORDER}}`, `{{#each RISKS}}` (`{{risk}}`, `{{mitigation}}`), `{{#each CONSTRAINTS}}`
+- Validator also: `{{LINT_COMMAND}}`, `{{#if HAS_SECURITY_CRITERIA}}` / `{{#each SECURITY_CRITERIA}}`
+
+The templates already carry `lifecycle: task-scoped` in frontmatter; when writing the filled skill also add `generated_at: {{TIMESTAMP}}` and `pattern_matched: {{TASK_TYPE}}`. Fold `recommended_agents` / `recommended_skills` / `template_improvements` from patterns.json into the executor's guidance.
+
+**Fallback (older installs)**: if a template file is missing, generate from the compact inline scaffold for that type below. The scaffolds use the **same `{{...}}` vocabulary** as the templates, so nothing else changes.
+
 ### 1. Executor Skill Generation
 
-Template (with lifecycle and pattern integration):
+Fallback inline scaffold (used only if `executor-template.md` is missing):
 
 ```markdown
 ---
-description: [Auto-generated] Executor for: [TASK_NAME]
+description: "[Auto-generated] Executor for: {{TASK_NAME}}"
 context: fork
 allowed-tools: [Read, Write, Edit, Bash, Grep, Glob]
 lifecycle: task-scoped
-generated_at: [TIMESTAMP]
-pattern_matched: [TASK_TYPE]
+generated_at: {{TIMESTAMP}}
+pattern_matched: {{TASK_TYPE}}
 ---
 
-# Executor: [TASK_NAME]
+# Executor: {{TASK_NAME}}
 
 ## Context
-[Extracted from analysis - goal and background]
+{{PARSED_GOAL}}
+{{CODEBASE_CONTEXT}}
 
 ## Pattern Recommendations
-[If pattern_recommendations available]
-- Recommended Agents: [recommended_agents from patterns.json]
-- Recommended Skills: [recommended_skills from patterns.json]
-- Template Improvements: [template_improvements if any]
+- Recommended Agents: {{recommended_agents}}
+- Recommended Skills: {{recommended_skills}}
+- Template Improvements: {{template_improvements}}
 
 ## Acceptance Criteria
-[List from analysis.json]
+{{#each ACCEPTANCE_CRITERIA}}
+- [ ] {{id}}: {{description}} ({{priority}})
+{{/each}}
 
 ## Implementation Strategy
-[From suggested_strategy]
-
-## Steps
-
-### Step 1: [First action]
-[Detailed instructions based on strategy]
-[Include pattern recommendations if applicable]
-
-### Step 2: [Second action]
-[...]
+**Approach**: {{STRATEGY_APPROACH}}
+{{#each STRATEGY_ORDER}}
+{{@index}}. {{this}}
+{{/each}}
 
 ## Constraints
-[From risk analysis]
+{{#each CONSTRAINTS}}
+- {{this}}
+{{/each}}
 
 ## Tool Usage Tracking
-When using agents/skills, record them for dependency tracking:
-- After using code-reviewer: add to tools_used list
-- After using test-runner: add to tools_used list
-- This data feeds into Phase -1C evolution
+Record agents/skills used (e.g. code-reviewer, test-runner) in the `tools_used` list — this feeds Phase -1C evolution.
 
 ## Success Criteria
 All acceptance criteria marked as done.
@@ -118,27 +135,29 @@ All acceptance criteria marked as done.
 
 ### 2. Validator Skill Generation
 
-Template (with lifecycle):
+Fallback inline scaffold (used only if `validator-template.md` is missing):
 
 ```markdown
 ---
-description: [Auto-generated] Validator for: [TASK_NAME]
+description: "[Auto-generated] Validator for: {{TASK_NAME}}"
 context: fork
 allowed-tools: [Read, Bash, Grep, Glob]
 lifecycle: task-scoped
-generated_at: [TIMESTAMP]
-pattern_matched: [TASK_TYPE]
+generated_at: {{TIMESTAMP}}
+pattern_matched: {{TASK_TYPE}}
 ---
 
-# Validator: [TASK_NAME]
+# Validator: {{TASK_NAME}}
 
 ## Validation Dimensions
 
 ### 1. Functional Correctness
-[Based on AC-F* criteria]
+{{#each ACCEPTANCE_CRITERIA}}
+- [ ] AC-{{id}}: {{description}}
+{{/each}}
 
 ### 2. Code Quality
-- Linter passes
+- Linter passes ({{LINT_COMMAND}})
 - No code smells
 - Follows project patterns
 
@@ -147,7 +166,11 @@ pattern_matched: [TASK_TYPE]
 - Tests are passing
 
 ### 4. Security (if applicable)
-[Based on AC-S* criteria]
+{{#if HAS_SECURITY_CRITERIA}}
+{{#each SECURITY_CRITERIA}}
+- [ ] {{description}}
+{{/each}}
+{{/if}}
 
 ## Validation Process
 
@@ -179,19 +202,19 @@ Write to `.self-evolving-loop/reports/validation.json`:
 
 ### 3. Fixer Skill Generation
 
-Template (with lifecycle):
+Fallback inline scaffold (used only if `fixer-template.md` is missing):
 
 ```markdown
 ---
-description: [Auto-generated] Fixer for: [TASK_NAME]
+description: "[Auto-generated] Fixer for: {{TASK_NAME}}"
 context: fork
 allowed-tools: [Read, Write, Edit, Bash, Grep, Glob]
 lifecycle: task-scoped
-generated_at: [TIMESTAMP]
-pattern_matched: [TASK_TYPE]
+generated_at: {{TIMESTAMP}}
+pattern_matched: {{TASK_TYPE}}
 ---
 
-# Fixer: [TASK_NAME]
+# Fixer: {{TASK_NAME}}
 
 ## Purpose
 Auto-correct issues identified by the Validator.

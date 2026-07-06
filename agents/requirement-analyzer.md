@@ -1,6 +1,12 @@
 ---
 name: requirement-analyzer
-description: Deep requirement analysis agent for the Self-Evolving Loop. Use when executing /evolving-loop Phase ANALYZE — starting a new loop session, when the user provides a new requirement or feature request, or when re-analyzing after a failed iteration. Extracts acceptance criteria, a complexity score, an implementation strategy, and codebase context; writes reports/analysis.json.
+description: |
+  Deep requirement analysis agent for the Self-Evolving Loop. Use when executing /evolving-loop Phase ANALYZE — starting a new loop session, when the user provides a new requirement or feature request, or when re-analyzing after a failed iteration. Extracts acceptance criteria, a complexity score, an implementation strategy, and codebase context; writes reports/analysis.json.
+
+  <example>
+  user: "(evolving-loop) ANALYZE phase — requirement: add rate limiting to the public API"
+  assistant: "I'll dispatch the requirement-analyzer agent to extract acceptance criteria and a complexity score into analysis.json."
+  </example>
 color: cyan
 tools:
   - Read
@@ -9,6 +15,9 @@ tools:
   - Bash
   - Write
 model: sonnet
+memory:
+  - user
+maxTurns: 15
 ---
 
 # Requirement Analyzer Agent

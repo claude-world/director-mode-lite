@@ -4,17 +4,24 @@ How to upgrade Director Mode Lite between versions.
 
 ---
 
-## Important: install.sh Skips Existing Files
+## Important: install.sh Skips Existing Files by Default
 
-The install script uses **skip-existing** logic: it will NOT overwrite files that already exist in your `.claude/` directory. This means upgrading requires manual steps.
+By default the install script uses **skip-existing** logic: it will NOT overwrite files that already exist in your `.claude/` directory. To upgrade in place, re-run it with `--update` (see below), which overwrites the distributed files after backing up your `.claude/`. Your `CLAUDE.md` is never overwritten.
 
 ---
 
-## Upgrading to v1.8.0 (Current)
+## Upgrading to v1.8.x (Current)
 
 v1.8.0 is a content-quality overhaul: corrected spec claims (30 hook events, current model lineup, `codex exec` / `gemini -p` syntax), rewritten trigger descriptions across all skills and agents, consolidated persona skill/agent pairs, safer auto-loop checkpoint writes, a fixed uninstaller that preserves your settings, and one new skill (`/handoff-claude` for multi-account delegation).
 
-Because install.sh skips existing files, upgrading requires replacing the distributed files:
+Upgrade in place with `--update`. It overwrites the distributed files (agents, skills, hooks) and now also installs the `.self-evolving-loop/` scaffolding (hooks + templates). Your existing `.claude/` is backed up to `.claude-backup-<timestamp>/` first, and `CLAUDE.md` plus any custom files/settings are preserved:
+
+```bash
+/path/to/director-mode-lite/install.sh --update .
+```
+
+<details>
+<summary>Manual fallback (control exactly what gets replaced)</summary>
 
 ```bash
 # 1. Backup your customizations
@@ -28,6 +35,7 @@ rm -rf .claude/agents/ .claude/skills/ .claude/hooks/
 
 # 4. Copy back only YOUR custom files from .claude-backup-manual/
 ```
+</details>
 
 > Nothing in v1.8.0 changes state-file formats: existing `.auto-loop/` and `.self-evolving-loop/` checkpoints keep working.
 

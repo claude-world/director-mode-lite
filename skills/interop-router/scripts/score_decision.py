@@ -117,7 +117,12 @@ def calculate_risk_score(task, write_required, has_secrets):
 
 
 def recommend_cli(task):
-    """Recommend which CLI to use based on task."""
+    """Recommend which CLI to use based on task.
+
+    claude-profile wins for full-toolset delegation (independent end-to-end
+    tasks, parallel work on a second account's quota — see /handoff-claude);
+    gemini for long-context analysis; codex for mechanical bulk edits.
+    """
     task_lower = task.lower()
 
     codex_keywords = ["edit", "code", "implement", "fix", "debug", "refactor"]
@@ -126,6 +131,14 @@ def recommend_cli(task):
     gemini_keywords = ["explain", "analyze", "document", "review", "plan", "long"]
     gemini_score = sum(1 for kw in gemini_keywords if kw in task_lower)
 
+    claude_keywords = [
+        "parallel", "independent", "end-to-end", "full workflow", "worktree",
+        "another account", "second account", "background task",
+    ]
+    claude_score = sum(1 for kw in claude_keywords if kw in task_lower)
+
+    if claude_score > max(codex_score, gemini_score):
+        return "claude-profile"
     if gemini_score > codex_score:
         return "gemini"
     return "codex"

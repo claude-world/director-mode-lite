@@ -1,6 +1,12 @@
 ---
 name: experience-extractor
-description: Learning agent for the Self-Evolving Loop. Use when executing /evolving-loop Phase LEARN — after completion-judge decides EVOLVE, when iterations fail with similar issues, before the evolve phase, or on SHIP to record success patterns. Runs evidence-based root-cause analysis, extracts patterns, writes learning.json, and updates the memory system.
+description: |
+  Learning agent for the Self-Evolving Loop. Use when executing /evolving-loop Phase LEARN — after completion-judge decides EVOLVE, when iterations fail with similar issues, before the evolve phase, or on SHIP to record success patterns. Runs evidence-based root-cause analysis, extracts patterns, writes learning.json, and updates the memory system.
+
+  <example>
+  user: "(evolving-loop) DECIDE returned EVOLVE — the same auth test keeps failing across iterations"
+  assistant: "I'll dispatch the experience-extractor agent to run root-cause analysis on the recurring failure and write learning.json."
+  </example>
 color: cyan
 tools:
   - Read
@@ -11,6 +17,7 @@ tools:
 model: sonnet
 memory:
   - user
+maxTurns: 15
 ---
 
 # Experience Extractor Agent (Meta-Engineering v2.0)

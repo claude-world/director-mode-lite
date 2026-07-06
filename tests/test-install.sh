@@ -139,16 +139,52 @@ test_skip_existing() {
     # First install
     "$PROJECT_ROOT/install.sh" "$TEST_DIR" > /dev/null 2>&1
 
-    # Modify an agent file
+    # Modify an agent file, then snapshot it. Compare via files (diff), not by
+    # embedding content into the assert condition — agent files may contain
+    # quotes/apostrophes that would break an inline [[ '...' == '...' ]] eval.
     echo "# Modified" >> "$TEST_DIR/.claude/agents/code-reviewer.md"
-    local original_content=$(cat "$TEST_DIR/.claude/agents/code-reviewer.md")
+    cp "$TEST_DIR/.claude/agents/code-reviewer.md" "$TEST_DIR/skip-snapshot.md"
 
-    # Second install
+    # Second install (default mode: should skip existing files)
     "$PROJECT_ROOT/install.sh" "$TEST_DIR" > /dev/null 2>&1
 
-    # Check file was not overwritten
-    local new_content=$(cat "$TEST_DIR/.claude/agents/code-reviewer.md")
-    assert "Existing files not overwritten" "[[ '$original_content' == '$new_content' ]]"
+    # Check file was not overwritten (still matches the modified snapshot)
+    assert "Existing files not overwritten" "diff -q '$TEST_DIR/skip-snapshot.md' '$TEST_DIR/.claude/agents/code-reviewer.md' > /dev/null 2>&1"
+
+    teardown
+}
+
+# Test: Installs .self-evolving-loop scaffolding
+test_installs_evolving_scaffolding() {
+    echo "Test: Installs .self-evolving-loop scaffolding"
+    setup
+
+    "$PROJECT_ROOT/install.sh" "$TEST_DIR" > /dev/null 2>&1
+
+    assert "continue-loop.sh exists" "[[ -f '$TEST_DIR/.self-evolving-loop/hooks/continue-loop.sh' ]]"
+    assert "continue-loop.sh is executable" "[[ -x '$TEST_DIR/.self-evolving-loop/hooks/continue-loop.sh' ]]"
+    assert "executor-template.md exists" "[[ -f '$TEST_DIR/.self-evolving-loop/templates/executor-template.md' ]]"
+
+    teardown
+}
+
+# Test: --update overwrites modified files
+test_update_overwrites() {
+    echo "Test: --update overwrites modified files"
+    setup
+
+    # First install
+    "$PROJECT_ROOT/install.sh" "$TEST_DIR" > /dev/null 2>&1
+
+    # Modify an installed skill file
+    local skill_file="$TEST_DIR/.claude/skills/evolving-loop/SKILL.md"
+    echo "# LOCAL MODIFICATION" >> "$skill_file"
+
+    # Re-run in update mode
+    "$PROJECT_ROOT/install.sh" --update "$TEST_DIR" > /dev/null 2>&1
+
+    # File should be restored to distributed content (matches source, modification gone)
+    assert "Update restored skill to distributed content" "diff -q '$PROJECT_ROOT/skills/evolving-loop/SKILL.md' '$skill_file' > /dev/null 2>&1"
 
     teardown
 }
@@ -166,6 +202,10 @@ echo ""
 test_backup_existing
 echo ""
 test_skip_existing
+echo ""
+test_installs_evolving_scaffolding
+echo ""
+test_update_overwrites
 echo ""
 
 # Exit with status

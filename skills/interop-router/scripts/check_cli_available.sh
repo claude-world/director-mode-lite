@@ -30,6 +30,14 @@ gemini_result=$(check_command "gemini" "--version")
 gemini_status="${gemini_result%%|*}"
 gemini_version="${gemini_result#*|}"
 
+# Check additional Claude Code profiles (claude-z-* wrappers on PATH,
+# each backed by its own CLAUDE_CONFIG_DIR — see /handoff-claude)
+claude_profiles=()
+while IFS= read -r wrapper; do
+    [[ -n "$wrapper" ]] && claude_profiles+=("$(basename "$wrapper")")
+done < <(compgen -c 2>/dev/null | grep -E '^claude-z-[a-z0-9-]+$' | sort -u || true)
+claude_profile_count=${#claude_profiles[@]}
+
 # Check for API keys
 has_openai_key=false
 has_google_key=false
@@ -82,6 +90,10 @@ if $JSON_OUTPUT; then
     "version": "$gemini_version",
     "authenticated": $gemini_auth
   },
+  "claude_profiles": {
+    "count": $claude_profile_count,
+    "names": [$(printf '"%s",' "${claude_profiles[@]+"${claude_profiles[@]}"}" | sed 's/,$//')]
+  },
   "api_keys": {
     "openai": $has_openai_key,
     "google": $has_google_key
@@ -103,6 +115,7 @@ else
     echo ""
     echo "Codex CLI:  ${codex_status} ${codex_version:+($codex_version)}"
     echo "Gemini CLI: ${gemini_status} ${gemini_version:+($gemini_version)}"
+    echo "Claude profiles: ${claude_profile_count} found${claude_profiles[0]:+ (${claude_profiles[*]})}"
     echo ""
     echo "=== Authentication ==="
     echo "Codex:  $( $codex_auth && echo 'authenticated' || echo 'not authenticated' )"

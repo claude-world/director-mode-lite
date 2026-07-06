@@ -1,6 +1,12 @@
 ---
 name: claude-md-expert
-description: Expert on CLAUDE.md design patterns, best practices, and project configuration. Use when creating or reviewing CLAUDE.md / project instructions, when the user asks about Claude Code project configuration, or during /project-init. Covers file precedence (project / local / user), structure templates, and what to include vs. leave out.
+description: |
+  Expert on CLAUDE.md design patterns, best practices, and project configuration. Use when creating or reviewing CLAUDE.md / project instructions, when the user asks about Claude Code project configuration, or during /project-init. Covers file precedence (project / local / user), structure templates, and what to include vs. leave out.
+
+  <example>
+  user: "Our CLAUDE.md is 600 lines and Claude still ignores half of it — can you review it?"
+  assistant: "I'll use the claude-md-expert agent to review the file and recommend what to keep, tighten, or drop."
+  </example>
 color: magenta
 tools:
   - Read

@@ -1,7 +1,8 @@
 ---
-description: [Auto-generated] Executor for: {{TASK_NAME}}
+description: "[Auto-generated] Executor for: {{TASK_NAME}}"
 context: fork
 allowed-tools: [Read, Write, Edit, Bash, Grep, Glob]
+lifecycle: task-scoped
 ---
 
 # Executor: {{TASK_NAME}}

@@ -1,6 +1,12 @@
 ---
 name: completion-judge
-description: Decision-making agent for the Self-Evolving Loop. Use when executing /evolving-loop Phase DECIDE — after the validator writes validation.json, when an iteration cycle completes, or at a manual decision point. Applies the SHIP/FIX/EVOLVE/ABORT threshold rule against verified evidence and writes reports/decision.json.
+description: |
+  Decision-making agent for the Self-Evolving Loop. Use when executing /evolving-loop Phase DECIDE — after the validator writes validation.json, when an iteration cycle completes, or at a manual decision point. Applies the SHIP/FIX/EVOLVE/ABORT threshold rule against verified evidence and writes reports/decision.json.
+
+  <example>
+  user: "(evolving-loop) VALIDATE phase finished with score 76"
+  assistant: "I'll dispatch the completion-judge agent to weigh that score against the evidence and decide SHIP/FIX/EVOLVE."
+  </example>
 color: cyan
 tools:
   - Read
@@ -10,6 +16,7 @@ tools:
 model: haiku
 memory:
   - user
+maxTurns: 10
 ---
 
 # Completion Judge Agent

@@ -1,6 +1,12 @@
 ---
 name: code-reviewer
-description: Expert code reviewer for quality, security, and best practices. Use PROACTIVELY after writing or modifying code, when reviewing PRs, or before commits. Reports findings by severity (critical/warnings/suggestions) with file:line references and concrete fixes.
+description: |
+  Expert code reviewer for quality, security, and best practices. Use PROACTIVELY after writing or modifying code, when reviewing PRs, or before commits. Reports findings by severity (critical/warnings/suggestions) with file:line references and concrete fixes.
+
+  <example>
+  user: "I just finished the login endpoint — can you check it before I commit?"
+  assistant: "I'll dispatch the code-reviewer agent to review the new endpoint for security and quality issues before the commit."
+  </example>
 color: yellow
 tools:
   - Read
@@ -12,6 +18,7 @@ skills:
   - code-reviewer
 memory:
   - user
+maxTurns: 20
 ---
 
 # Code Reviewer Agent

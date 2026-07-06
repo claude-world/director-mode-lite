@@ -8,7 +8,7 @@ user-invocable: true
 
 Execute an autonomous development cycle that dynamically generates, validates, and evolves its own execution strategy. Integrates with Meta-Engineering memory system for pattern learning and tool evolution.
 
-> **Architecture Details**: See [docs/EVOLVING-LOOP-ARCHITECTURE.md](../../docs/EVOLVING-LOOP-ARCHITECTURE.md)
+> **Architecture Details**: See [docs/EVOLVING-LOOP-ARCHITECTURE.md](https://github.com/claude-world/director-mode-lite/blob/main/docs/EVOLVING-LOOP-ARCHITECTURE.md)
 
 ---
 
@@ -226,8 +226,33 @@ touch .self-evolving-loop/state/stop
 
 ---
 
+## Hook-Driven Continuation (optional)
+
+By default the loop runs through the **evolving-orchestrator** agent in fork context (see [Delegate to Orchestrator](#3-delegate-to-orchestrator) above) — each phase stays in an isolated context.
+
+If you instead want the loop driven by a **Stop hook** — so it resumes phase-by-phase in your **main** context and survives context exhaustion — merge the shipped hook config into `.claude/settings.local.json`:
+
+```bash
+# Activate: append the loop's Stop + PostToolUse hooks
+python3 - <<'PY'
+import json
+s   = json.load(open('.claude/settings.local.json'))
+add = json.load(open('.self-evolving-loop/hooks/settings-hooks.json'))
+h   = s.setdefault('hooks', {})
+for event, entries in add['hooks'].items():
+    h.setdefault(event, []).extend(entries)
+json.dump(s, open('.claude/settings.local.json', 'w'), indent=2)
+PY
+```
+
+To deactivate, remove those Stop/PostToolUse entries from `.claude/settings.local.json` again (or restore a pre-merge backup).
+
+**Tradeoff**: hook mode runs each phase in your **main context** (visible, but consumes context as the task grows); agent mode (default) keeps each phase in an **isolated fork context**.
+
+---
+
 ## Related
 
 - [/evolving-status](../evolving-status/SKILL.md) - View status and memory
 - [evolving-orchestrator](../../agents/evolving-orchestrator.md) - Phase coordinator
-- [Architecture Details](../../docs/EVOLVING-LOOP-ARCHITECTURE.md) - Full technical docs
+- [Architecture Details](https://github.com/claude-world/director-mode-lite/blob/main/docs/EVOLVING-LOOP-ARCHITECTURE.md) - Full technical docs
