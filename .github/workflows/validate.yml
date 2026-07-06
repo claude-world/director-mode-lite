@@ -11,7 +11,7 @@ jobs:
     name: Validate SKILL.md Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Validate Skills Format
         run: |
@@ -96,7 +96,7 @@ jobs:
     name: Validate Agent Files
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Validate Agent Format
         run: |
@@ -104,7 +104,7 @@ jobs:
 
           ERRORS=0
           VALID_COLORS="yellow red green blue magenta cyan"
-          VALID_MODELS="inherit haiku sonnet opus best"
+          VALID_MODELS="inherit haiku sonnet opus fable default best"
 
           for agent_file in agents/*.md; do
             if [[ ! -f "$agent_file" ]]; then
@@ -207,7 +207,7 @@ jobs:
     name: Check Links
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check Internal Links
         run: |
@@ -248,7 +248,7 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Scan for Sensitive Data
         run: |
@@ -289,7 +289,7 @@ jobs:
     name: Test Installation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Test Install Script
         run: |

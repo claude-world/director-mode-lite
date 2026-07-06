@@ -126,6 +126,10 @@ Acceptance Criteria:
 </tr>
 </table>
 
+<p align="center">
+  <img src="docs/assets/auto-loop-demo.gif" alt="Animated terminal demo of the Auto-Loop TDD cycle: acceptance criteria are parsed, a failing test is written (RED), a minimal implementation makes it pass (GREEN), code is refactored, and the loop finishes when all criteria are complete" width="748">
+</p>
+
 ---
 
 ## NEW: Self-Evolving Loop
