@@ -93,14 +93,14 @@ echo ""
 # Check skills (includes slash commands)
 SKILL_COUNT=$(ls -d .claude/skills/*/ 2>/dev/null | wc -l | tr -d ' ')
 echo -e "  ${GREEN}✓${NC} Skills:   ${CYAN}$SKILL_COUNT${NC} installed"
-echo "    ├── 25 slash commands (user-invocable)"
-echo "    └── 4 internal skills (code-reviewer, debugger, doc-writer, test-runner)"
+echo "    ├── 27 slash commands (user-invocable)"
+echo "    └── 5 internal skills (code-reviewer, debugger, doc-writer, test-runner, interop-router)"
 
 # Check agents
 AGENT_COUNT=$(find .claude/agents -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
 echo -e "  ${GREEN}✓${NC} Agents:   ${CYAN}$AGENT_COUNT${NC} installed"
 echo "    ├── 3 core (code-reviewer, debugger, doc-writer)"
-echo "    ├── 5 experts (claude, mcp, agents, skills, hooks)"
+echo "    ├── 5 experts (claude-md, mcp, agents, skills, hooks)"
 echo "    └── 6 self-evolving (orchestrator, analyzer, synthesizer, etc.)"
 
 # Check hooks

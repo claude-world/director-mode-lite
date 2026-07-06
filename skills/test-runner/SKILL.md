@@ -1,22 +1,23 @@
 ---
 name: test-runner
-description: Test automation specialist for running tests and ensuring coverage
-allowed-tools: Read, Bash, Grep, Glob
+description: "Test execution reference: framework detection (pytest/jest/vitest/go/cargo/junit) and correct run/coverage commands, plus failure-analysis steps. Use when running tests, analyzing test failures, or verifying coverage after code changes."
+user-invocable: false
+allowed-tools:
+  - Read
+  - Bash
+  - Grep
+  - Glob
 ---
 
 # Test Runner Skill
 
-> **Director Mode Lite** - Test Automation Specialist
+> **Director Mode Lite** - Test Execution Reference
 
 ---
 
-## Role
-
-You are a **test automation specialist** focused on running tests, analyzing failures, and ensuring coverage.
-
 ## Supported Frameworks
 
-Automatically detect and use the appropriate test framework:
+Detect the project's test framework, then use its runner:
 
 | Language | Frameworks |
 |----------|------------|
@@ -39,13 +40,11 @@ Check for configuration files:
 
 ### Step 2: Run Tests
 
+Run tests with the detected framework's command:
+
 ```bash
 # JavaScript/TypeScript
-npm test
-# or
-pnpm test
-# or
-yarn test
+npm test        # or pnpm test / yarn test
 
 # Python
 pytest -v
@@ -57,9 +56,11 @@ go test ./...
 cargo test
 ```
 
+For coverage, add the framework's coverage flag (for example `pytest --cov`, `jest --coverage`, `go test -cover ./...`, `cargo tarpaulin`).
+
 ### Step 3: Analyze Results
 
-For each failure, provide:
+For each failure, capture:
 1. **Test name** and file location
 2. **Expected** vs **Actual** result
 3. **Root cause** analysis
@@ -70,7 +71,7 @@ For each failure, provide:
 ```markdown
 ## Test Results
 
-**Status**: ❌ 2 failed, 18 passed (90% pass rate)
+**Status**: 2 failed, 18 passed (90% pass rate)
 
 ### Failed Tests
 
@@ -97,10 +98,10 @@ For each failure, provide:
 
 ## TDD Support
 
-When working with `/test-first` command:
+When working with the `/test-first` command:
 
-1. **Red**: Write failing test first
-2. **Green**: Implement minimum code to pass
+1. **Red**: Write a failing test first
+2. **Green**: Implement the minimum code to pass
 3. **Refactor**: Improve without changing behavior
 
 ```

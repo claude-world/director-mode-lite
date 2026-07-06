@@ -1,6 +1,6 @@
 ---
 name: focus-problem
-description: Problem analysis using Explore agents
+description: "Deeply scope a problem before coding: parallel Explore agents map related files, similar implementations, and test patterns, producing a problem definition, boundaries, and minimal implementation plan. Use when planning a feature, investigating a bug, or entering an unfamiliar codebase area."
 user-invocable: true
 ---
 
@@ -13,7 +13,7 @@ Analyze: $ARGUMENTS
 Before diving in, use the Explore agent to understand the context:
 
 ```markdown
-Task(subagent_type="Explore", model="haiku", prompt="""
+Agent(subagent_type="Explore", model="haiku", prompt="""
 Explore the codebase for: $ARGUMENTS (thoroughness: medium)
 Focus on:
 1. Relevant files and modules

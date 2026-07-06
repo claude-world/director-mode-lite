@@ -1,6 +1,6 @@
 ---
 name: handoff-codex
-description: Delegate tasks to Codex CLI to save Claude context
+description: Delegate bulk mechanical tasks (mass refactors, template generation, simple batch edits) to OpenAI Codex CLI via non-interactive `codex exec`, preserving Claude context. Use when the user says 'use codex'/'hand off to codex' or a task is 10+ files of mechanical changes.
 user-invocable: true
 ---
 
@@ -40,12 +40,15 @@ npm install -g @openai/codex
 ```
 
 ### 2. Generate Command
+
+Always use `codex exec`. Bare `codex` opens the interactive TUI; `codex exec "..."` runs the task non-interactively and exits, which is required when Claude delegates via Bash.
+
 ```bash
 # Single file
-codex "Update login function in src/auth.ts to add rate limiting"
+codex exec "Update login function in src/auth.ts to add rate limiting"
 
 # Multiple files
-codex "Refactor console.log to logger in src/**/*.ts"
+codex exec "Refactor console.log to logger in src/**/*.ts"
 ```
 
 ### 3. Provide Instructions
@@ -61,7 +64,7 @@ codex "Refactor console.log to logger in src/**/*.ts"
 ## Task: Update All Import Statements
 
 **Command:**
-codex "Update all imports from 'lodash' to 'lodash-es' in src/**/*.ts"
+codex exec "Update all imports from 'lodash' to 'lodash-es' in src/**/*.ts"
 
 **Expected:**
 - ~15 files modified

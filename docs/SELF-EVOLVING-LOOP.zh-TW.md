@@ -476,7 +476,7 @@ if usage_count >= 5 and success_rate >= 0.80:
   "task_patterns": {
     "auth": {
       "keywords": ["登入", "認證", "JWT", "OAuth"],
-      "recommended_agents": ["security-checker"],
+      "recommended_agents": ["code-reviewer"],
       "recommended_skills": ["test-runner"],
       "success_rate": 0.82,
       "sample_count": 12

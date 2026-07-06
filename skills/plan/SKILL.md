@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Create detailed execution plan with task breakdown
+description: Break a complex task into an ordered, dependency-aware task list with estimates and verification steps. Use when a request spans multiple components or days, before starting large features, or when the user runs /plan.
 user-invocable: true
 ---
 

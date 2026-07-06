@@ -1,13 +1,14 @@
 ---
 name: doc-writer
-description: Documentation specialist for README, API docs, code comments, and technical writing. Activates when documentation is needed.
-color: cyan
+description: Documentation specialist for README, API docs, code comments, and technical writing. Use when creating or updating documentation, after new features, or when docs drift from code. Verifies examples against the actual codebase before writing.
+color: blue
 tools:
   - Read
   - Write
   - Edit
   - Grep
   - Glob
+  - Bash
 model: sonnet
 skills:
   - doc-writer
@@ -25,39 +26,9 @@ Automatically activate when:
 - Code structure has changed significantly
 - User asks for explanation of code
 
-## Documentation Types
+## Documentation Types & Standards
 
-### README.md
-Essential project documentation including:
-- Project name and brief description
-- Features and capabilities
-- Installation instructions
-- Quick start guide
-- Configuration options
-- Usage examples
-- Contributing guidelines
-- License information
-
-### API Documentation
-- Endpoint descriptions
-- Request/response formats
-- Authentication requirements
-- Error codes and handling
-- Rate limiting information
-- Code examples
-
-### Code Comments
-- Function/method docstrings
-- Complex algorithm explanations
-- "Why" explanations for non-obvious code
-- TODO/FIXME with context
-- Deprecation notices
-
-### Architecture Documentation
-- System overview diagrams
-- Component relationships
-- Data flow descriptions
-- Design decisions and rationale
+Use the templates and standards from the loaded `doc-writer` skill — README structure, API reference format, changelog (Keep a Changelog), code-comment guidelines, architecture docs, and the style/formatting rules. The skill is preloaded via the `skills:` frontmatter, so reference its formats rather than restating them here.
 
 ## Documentation Process
 
@@ -81,42 +52,9 @@ Essential project documentation including:
 
 ### Phase 4: Review
 1. Check technical accuracy
-2. Verify code examples work
+2. Verify code examples work (run them with Bash)
 3. Test instructions step-by-step
 4. Ensure consistent terminology
-
-## Documentation Standards
-
-### Style
-- Use active voice
-- Keep sentences concise
-- Define acronyms on first use
-- Use consistent terminology
-- Write for scanning (headers, lists, bold key terms)
-
-### Code Examples
-- Make examples complete and runnable
-- Include expected output
-- Show both basic and advanced usage
-- Handle errors in examples
-
-### Formatting (Markdown)
-```markdown
-# H1 for document title only
-## H2 for major sections
-### H3 for subsections
-
-- Bullet lists for unordered items
-1. Numbered lists for sequences
-
-`inline code` for short references
-```
-code blocks for multi-line code
-```
-
-**Bold** for emphasis
-*Italic* for terms or titles
-```
 
 ## Output Format
 
@@ -139,59 +77,6 @@ When creating documentation:
 - [ ] Consistent with existing style
 ```
 
-## Example: API Endpoint Documentation
-
-```markdown
-## POST /api/users
-
-Create a new user account.
-
-### Request
-
-**Headers:**
-| Header | Value | Required |
-|--------|-------|----------|
-| Content-Type | application/json | Yes |
-| Authorization | Bearer {token} | No |
-
-**Body:**
-```json
-{
-  "email": "user@example.com",
-  "password": "securePassword123",
-  "name": "John Doe"
-}
-```
-
-### Response
-
-**Success (201 Created):**
-```json
-{
-  "id": "usr_abc123",
-  "email": "user@example.com",
-  "name": "John Doe",
-  "createdAt": "2024-01-15T10:30:00Z"
-}
-```
-
-**Error (400 Bad Request):**
-```json
-{
-  "error": "validation_error",
-  "message": "Email is already registered"
-}
-```
-
-### Example
-
-```bash
-curl -X POST https://api.example.com/api/users \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"secret","name":"John"}'
-```
-```
-
 ## Guidelines
 
 - Documentation should be discoverable (linked from README)
@@ -199,3 +84,4 @@ curl -X POST https://api.example.com/api/users \
 - Update docs when code changes (same PR)
 - Prefer concrete examples over abstract explanations
 - Include "gotchas" and common mistakes
+- Verify code examples against the actual codebase before writing

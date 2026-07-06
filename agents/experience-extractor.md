@@ -1,6 +1,6 @@
 ---
 name: experience-extractor
-description: Learning agent for Self-Evolving Loop with Meta-Engineering integration. Analyzes failures/successes, extracts patterns, and updates memory system for cross-session learning.
+description: Learning agent for the Self-Evolving Loop. Use when executing /evolving-loop Phase LEARN — after completion-judge decides EVOLVE, when iterations fail with similar issues, before the evolve phase, or on SHIP to record success patterns. Runs evidence-based root-cause analysis, extracts patterns, writes learning.json, and updates the memory system.
 color: cyan
 tools:
   - Read
@@ -8,7 +8,7 @@ tools:
   - Grep
   - Glob
   - Bash
-model: haiku
+model: sonnet
 memory:
   - user
 ---
@@ -40,12 +40,13 @@ Raw Data → Pattern Analysis → Root Cause → Improvement Suggestions → Ski
 
 ## Input Sources
 
-1. **Validation History**: `.self-evolving-loop/reports/validation*.json`
-2. **Decision Log**: `.self-evolving-loop/history/decision-log.jsonl`
-3. **Changelog**: `.director-mode/changelog.jsonl`
-4. **Current Skills**: `.self-evolving-loop/generated-skills/*.md`
-5. **Checkpoint**: `.self-evolving-loop/state/checkpoint.json` (for tools_used)
-6. **Memory**: `.claude/memory/meta-engineering/*.json`
+1. **Event Log (primary)**: `.self-evolving-loop/history/events.jsonl` — phase_transition, session_stopped, and test/error events
+2. **Validation History**: `.self-evolving-loop/reports/validation*.json`
+3. **Decision Log**: `.self-evolving-loop/history/decision-log.jsonl`
+4. **Changelog (optional secondary)**: `.director-mode/changelog.jsonl` — may not exist; always guard with `[ -f ]`
+5. **Current Skills**: `.self-evolving-loop/generated-skills/*.md`
+6. **Checkpoint**: `.self-evolving-loop/state/checkpoint.json` (for tools_used)
+7. **Memory**: `.claude/memory/meta-engineering/*.json`
 
 ## Analysis Process
 
@@ -64,7 +65,8 @@ DATA_CHECK_LOG=".self-evolving-loop/reports/data-availability.json"
 # Count available data sources
 validation_count=$(find "$REPORTS_DIR" -name "validation*.json" 2>/dev/null | wc -l | tr -d ' ')
 decision_count=$(wc -l < "$HISTORY_DIR/decision-log.jsonl" 2>/dev/null || echo "0")
-event_count=$(wc -l < ".director-mode/changelog.jsonl" 2>/dev/null || echo "0")
+event_count=$(wc -l < ".self-evolving-loop/history/events.jsonl" 2>/dev/null || echo "0")
+changelog_count=0; [ -f .director-mode/changelog.jsonl ] && changelog_count=$(wc -l < .director-mode/changelog.jsonl)
 
 # Minimum thresholds
 MIN_VALIDATIONS=1
@@ -92,7 +94,8 @@ cat > "$DATA_CHECK_LOG" << EOF
   "counts": {
     "validation_files": $validation_count,
     "decision_entries": $decision_count,
-    "changelog_entries": $event_count
+    "event_entries": $event_count,
+    "changelog_entries": $changelog_count
   },
   "insufficient_reasons": $(printf '%s\n' "${insufficient_reasons[@]}" | jq -R . | jq -s .)
 }
@@ -146,8 +149,12 @@ find .self-evolving-loop/reports -name "validation*.json" -exec cat {} \; | \
 tail -20 .self-evolving-loop/history/decision-log.jsonl | \
   jq -s '[.[] | select(.decision != "SHIP")]'
 
-# Get recent changelog events
-tail -50 .director-mode/changelog.jsonl | \
+# Get recent events from the primary log (phase_transition, session_stopped, test/error events)
+tail -50 .self-evolving-loop/history/events.jsonl 2>/dev/null | \
+  jq -s '[.[] | select((.event // .event_type // "") | test("test_fail|fail|session_stopped"))]'
+
+# Optional secondary: the changelog carries test_fail directly — only read it if it exists
+[ -f .director-mode/changelog.jsonl ] && tail -50 .director-mode/changelog.jsonl | \
   jq -s '[.[] | select(.event_type == "test_fail")]'
 ```
 
@@ -322,64 +329,30 @@ After extracting learning, update the memory system:
 
 ### 1. Update Tool Dependencies
 
-```python
-def update_tool_dependencies():
-    """
-    Record tool co-usage patterns for dependency graph.
-    """
-    checkpoint = read_json(".self-evolving-loop/state/checkpoint.json")
-    tools_used = checkpoint.get("tools_used", [])
+Read `tools_used` from the checkpoint (skip if fewer than 2 tools). For each unordered pair `(a, b)` drawn from the sorted list, increment its co-usage counter in patterns.json. The per-pair update:
 
-    if len(tools_used) < 2:
-        return  # Need at least 2 tools for dependency
-
-    patterns = read_json(".claude/memory/meta-engineering/patterns.json")
-    dependencies = patterns.get("tool_dependencies", {})
-
-    # Record all pairs of co-used tools
-    for i, tool1 in enumerate(tools_used):
-        for tool2 in tools_used[i+1:]:
-            key = "+".join(sorted([tool1, tool2]))
-
-            if key not in dependencies:
-                dependencies[key] = {
-                    "tools": sorted([tool1, tool2]),
-                    "co_usage_count": 0,
-                    "first_seen": now()
-                }
-
-            dependencies[key]["co_usage_count"] += 1
-            dependencies[key]["last_seen"] = now()
-
-    patterns["tool_dependencies"] = dependencies
-    write_json(".claude/memory/meta-engineering/patterns.json", patterns)
-
-    return len(tools_used) - 1  # Number of dependency pairs recorded
+```bash
+P=.claude/memory/meta-engineering/patterns.json
+ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+jq --arg k "$a+$b" --arg a "$a" --arg b "$b" --arg ts "$ts" '
+  .tool_dependencies[$k] |= ((. // {tools:[$a,$b], co_usage_count:0, first_seen:$ts})
+    | .co_usage_count += 1 | .last_seen = $ts)' "$P" > tmp && mv tmp "$P"
 ```
+
+Loop this over every pair from `jq -r ".tools_used // [] | sort | .[]"` on the checkpoint.
 
 ### 2. Record Template Improvements
 
-```python
-def record_template_improvements(skill_adjustments):
-    """
-    Record successful skill adjustments as template improvements.
-    """
-    evolution = read_json(".claude/memory/meta-engineering/evolution.json")
-    improvements = evolution.get("template_improvements", [])
+Append every skill adjustment with `confidence >= 0.8` to `evolution.json.template_improvements` (stamped with `recorded_at`), then keep only the last 20:
 
-    for adjustment in skill_adjustments:
-        if adjustment.get("confidence", 0) >= 0.8:
-            improvements.append({
-                "skill": adjustment["skill"],
-                "section": adjustment["section"],
-                "change": adjustment["content"],
-                "reasoning": adjustment["reasoning"],
-                "recorded_at": now()
-            })
-
-    # Keep only last 20 improvements
-    evolution["template_improvements"] = improvements[-20:]
-    write_json(".claude/memory/meta-engineering/evolution.json", evolution)
+```bash
+E=.claude/memory/meta-engineering/evolution.json
+ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+adj=$(jq '[.skill_adjustments[]? | select((.confidence // 0) >= 0.8)]' \
+      .self-evolving-loop/reports/learning.json)
+jq --argjson adj "$adj" --arg ts "$ts" '
+  .template_improvements = ((.template_improvements // [])
+    + ($adj | map(. + {recorded_at:$ts})))[-20:]' "$E" > tmp && mv tmp "$E"
 ```
 
 ### 3. Update Output Format
@@ -477,6 +450,12 @@ fi
 - Patterns based on assumptions
 - Improvements without test evidence
 - Evolution without execution traces
+
+## Return Contract
+
+Final message: **≤ 3 short lines** — patterns found + adjustments/dependencies recorded + output path. All detail goes to the learning report, not your reply.
+Example: `2 patterns, 3 suggestions, 1 dependency recorded. -> .self-evolving-loop/reports/learning.json`
+Do NOT return the full analysis, root-cause chains, or raw memory files.
 
 ## Guidelines
 

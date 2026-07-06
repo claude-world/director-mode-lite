@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: Complete 5-step development workflow
+description: "Run the complete 5-step development workflow: focus problem → prevent over-development → test-first (TDD) → document → smart commit. Use when starting a new feature, or when the user runs /workflow or asks for the full development flow."
 user-invocable: true
 ---
 
@@ -34,8 +34,11 @@ Step 5: Smart Commit     → Conventional Commits
 - [ ] Is there existing similar functionality?
 
 ### Use Explore Agent
+
+(Claude invokes this tool; shown here as pseudo-code.)
+
 ```markdown
-Task(subagent_type="Explore", model="haiku", prompt="""
+Agent(subagent_type="Explore", model="haiku", prompt="""
 Explore the codebase for: [feature name] (thoroughness: medium)
 Find related files, similar implementations, and test patterns.
 """)

@@ -1,6 +1,6 @@
 ---
 name: getting-started
-description: Guided 5-minute onboarding for Director Mode Lite
+description: Guided 5-minute onboarding for Director Mode Lite. Use immediately after installing Director Mode Lite, or when unsure which command to run next.
 user-invocable: true
 ---
 
@@ -15,7 +15,7 @@ Welcome! This guide walks you through your first 5 minutes with Director Mode Li
 Run a quick check:
 
 ```bash
-ls .claude/skills/ | wc -l    # Should show 31+
+ls .claude/skills/ | wc -l    # Should show 32
 ls .claude/agents/ | wc -l    # Should show 14
 ls .claude/hooks/ | wc -l     # Should show 5+
 ```
@@ -85,7 +85,7 @@ Acceptance Criteria:
 |-------|----------|
 | **Beginner** | `/workflow`, `/auto-loop`, `/focus-problem`, `/smart-commit`, `/plan` |
 | **Intermediate** | `/test-first`, `/check-environment`, `/project-health-check`, `/changelog` |
-| **Advanced** | `/evolving-loop`, `/evolving-status`, `/handoff-codex`, `/handoff-gemini` |
+| **Advanced** | `/evolving-loop`, `/evolving-status`, `/handoff-claude`, `/handoff-codex`, `/handoff-gemini` |
 | **Customization** | `/agent-template`, `/skill-template`, `/hook-template` |
 | **Validation** | `/claude-md-check`, `/agent-check`, `/skill-check`, `/hooks-check`, `/mcp-check` |
 

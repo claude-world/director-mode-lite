@@ -1,6 +1,6 @@
 ---
 name: handoff-gemini
-description: Delegate tasks to Gemini CLI to save Claude context
+description: Delegate long-context analysis, research, and large-document summarization to Google Gemini CLI (1M-token context) via non-interactive `gemini -p`, preserving Claude context. Use when the user says 'use gemini'/'hand off to gemini' or a task needs 100K+ tokens of context.
 user-invocable: true
 ---
 
@@ -42,16 +42,24 @@ npm install -g @google/gemini-cli
 ```
 
 ### 2. Generate Command
+
+Pass the prompt with `-p` (non-interactive). Reference files or directories inline with `@<path>`, or pipe content via stdin. There is no `-f` flag.
+
 ```bash
-# Analyze large file
-gemini "Summarize components in codebase" -f src/**/*.ts
+# Analyze a directory (@ reads it recursively)
+gemini -p "Summarize the components in @src/"
 
-# Research task
-gemini "Research best practices for [topic]"
+# Research task (no file context)
+gemini -p "Research best practices for [topic]"
 
-# Document analysis
-gemini "Extract key points" -f docs/spec.md
+# Document analysis (single file via @)
+gemini -p "Extract key points from @docs/spec.md"
+
+# Large or generated context via stdin
+cat docs/spec.md | gemini -p "Extract key points"
 ```
+
+> **Note**: A `src/**/*.ts`-style glob only expands if the shell has globstar enabled (`shopt -s globstar` in bash). Prefer a directory reference like `@src/`, which Gemini reads recursively without relying on shell globbing.
 
 ### 3. Provide Instructions
 - Why Gemini is suitable
@@ -66,7 +74,7 @@ gemini "Extract key points" -f docs/spec.md
 ## Task: Research API Best Practices
 
 **Command:**
-gemini "Research REST API versioning strategies. Summarize pros/cons."
+gemini -p "Research REST API versioning strategies. Summarize pros/cons."
 
 **After:**
 - Review research

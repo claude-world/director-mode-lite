@@ -1,8 +1,6 @@
 ---
 name: interop-router
-description: >
-  Automatically routes tasks to external AI CLIs (Codex or Gemini) when more efficient.
-  No manual commands needed - routing decisions are made automatically based on task type.
+description: "Automatically routes tasks to external AI CLIs (Codex or Gemini) when more efficient; routing decisions are made automatically based on task type, with no manual commands needed. Use when a task is a large refactor, a batch operation, or needs 100K+ tokens of context better handled by an external CLI."
 user-invocable: false
 allowed-tools:
   - Read
@@ -49,6 +47,7 @@ Calculate delegation score using 3 factors:
 | Batch implementation | Codex | Fast bulk generation |
 | Complex architecture analysis | Gemini | Deep reasoning |
 | Template generation | Codex | Efficient structured output |
+| Parallel full-capability delegation (separate account quota) | claude-z-N profiles via /handoff-claude | full Claude Code toolset on another authorized account |
 
 ---
 
@@ -57,13 +56,18 @@ Calculate delegation score using 3 factors:
 ### 1. Check CLI Availability
 
 ```bash
-bash "$CLAUDE_PROJECT_DIR/skills/interop-router/scripts/check_cli_available.sh" --json
+# Works for both plugin install (CLAUDE_PLUGIN_ROOT) and local .claude install
+IR_DIR="${CLAUDE_PLUGIN_ROOT:-$CLAUDE_PROJECT_DIR/.claude}/skills/interop-router"
+bash "$IR_DIR/scripts/check_cli_available.sh" --json
 ```
+
+Beyond Codex and Gemini, additional authorized `claude` profiles (separate accounts/config dirs — see [/handoff-claude](../handoff-claude/SKILL.md)) are also valid delegation targets when you need the full Claude Code toolset on another account's quota.
 
 ### 2. Score the Decision
 
 ```bash
-python3 "$CLAUDE_PROJECT_DIR/skills/interop-router/scripts/score_decision.py" \
+IR_DIR="${CLAUDE_PLUGIN_ROOT:-$CLAUDE_PROJECT_DIR/.claude}/skills/interop-router"
+python3 "$IR_DIR/scripts/score_decision.py" \
   --task "task description" \
   --files 15 \
   --complexity high \
@@ -73,7 +77,8 @@ python3 "$CLAUDE_PROJECT_DIR/skills/interop-router/scripts/score_decision.py" \
 ### 3. Wrap Context (if delegating)
 
 ```bash
-python3 "$CLAUDE_PROJECT_DIR/skills/interop-router/scripts/wrap_context.py" \
+IR_DIR="${CLAUDE_PLUGIN_ROOT:-$CLAUDE_PROJECT_DIR/.claude}/skills/interop-router"
+python3 "$IR_DIR/scripts/wrap_context.py" \
   --files src/*.py \
   --diff \
   --output /tmp/context.md
@@ -82,11 +87,11 @@ python3 "$CLAUDE_PROJECT_DIR/skills/interop-router/scripts/wrap_context.py" \
 ### 4. Execute with External CLI
 
 ```bash
-# Codex
-codex "Your task description" < /tmp/context.md
+# Codex (non-interactive)
+codex exec "Your task description" < /tmp/context.md
 
-# Gemini
-gemini "Your task description" -f /tmp/context.md
+# Gemini (context piped via stdin; -p carries the prompt)
+gemini -p "Your task description" < /tmp/context.md
 ```
 
 ---

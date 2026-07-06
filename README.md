@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/claude-world/director-mode-lite/releases"><img src="https://img.shields.io/github/v/release/claude-world/director-mode-lite" alt="GitHub Release"></a>
   <a href="https://github.com/claude-world/director-mode-lite/stargazers"><img src="https://img.shields.io/github/stars/claude-world/director-mode-lite?style=social" alt="GitHub Stars"></a>
-  <a href="https://claude.ai/code"><img src="https://img.shields.io/badge/Claude%20Code-Opus%204.6%20compatible-blueviolet?logo=anthropic" alt="Claude Code"></a>
+  <a href="https://claude.ai/code"><img src="https://img.shields.io/badge/Claude%20Code-Claude%205%20compatible-blueviolet?logo=anthropic" alt="Claude Code"></a>
   <a href="https://discord.com/invite/rBtHzSD288"><img src="https://img.shields.io/discord/1459859959398531294?color=7289da&label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 </p>
@@ -43,14 +43,15 @@ After installing, run these 3 commands:
 <details>
 <summary><strong>Compatibility</strong></summary>
 
-Director Mode Lite is fully compatible with the latest Claude Code release (Opus 4.6 era), including support for:
+Director Mode Lite is fully compatible with the latest Claude Code release (Claude 5 era), including support for:
 
-- **Claude Opus 4.6** model selection in agent/skill frontmatter
+- **Claude 5 family** model selection in agent/skill frontmatter (`fable`, `opus`, `sonnet`, `haiku` aliases)
 - **Agent Teams** (experimental multi-agent collaboration)
 - **1M context window** models (`opus[1m]`, `sonnet[1m]`)
-- All 12 hook types including `SessionStart`, `PreCompact`, and `PostCompact`
+- All 30 hook event types including `SessionStart`, `PreCompact`, and `PostCompact`
+- **Multi-account delegation** via `CLAUDE_CONFIG_DIR` profiles (`/handoff-claude`)
 
-> Tested with Claude Code CLI as of March 2026. Works with Sonnet 4.6, Opus 4.6, and Haiku 4.5.
+> Tested with Claude Code CLI v2.1.201 as of July 2026. Works with Claude Fable 5, Opus 4.8, Sonnet 5, and Haiku 4.5.
 
 </details>
 
@@ -199,10 +200,10 @@ claude plugin install director-mode-lite
 cd your-project
 
 # 3. Run installation script from cached plugin
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.2/install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.0/install.sh .
 
 # 4. Verify installation
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.2/scripts/verify-install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.0/scripts/verify-install.sh .
 ```
 
 <details>
@@ -218,7 +219,7 @@ claude plugin install director-mode-lite
 cat ~/.claude/plugins/installed_plugins.json | jq '.'
 
 # View plugin cache
-ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.2/
+ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.0/
 ```
 
 </details>
@@ -245,7 +246,7 @@ Run the verifier against the project where you installed Director Mode Lite:
 
 ```bash
 # Plugin install
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.7.2/scripts/verify-install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.0/scripts/verify-install.sh .
 
 # Clone install
 ./scripts/verify-install.sh /path/to/your/project
@@ -279,7 +280,7 @@ It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and e
 <tr>
 <td valign="top" width="33%">
 
-### Commands (26)
+### Commands (27)
 
 **Workflow:**
 | Command | Purpose |
@@ -322,8 +323,9 @@ It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and e
 | Command | Purpose |
 |---------|---------|
 | `/changelog` | Session events |
-| `/handoff-codex` | Delegate |
-| `/handoff-gemini` | Delegate |
+| `/handoff-codex` | Delegate to Codex |
+| `/handoff-gemini` | Delegate to Gemini |
+| `/handoff-claude` | **Multi-account Claude** |
 | `/agents` | List agents |
 | `/skills` | List skills |
 
@@ -361,22 +363,22 @@ It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and e
 </td>
 <td valign="top" width="34%">
 
-### Skills (31)
+### Skills (32)
 
-| Skill | Purpose |
+27 of the skills are the slash commands listed left. The other 5 are internal knowledge bases, auto-loaded by agents or triggered by Claude:
+
+| Internal Skill | Purpose |
 |-------|---------|
-| `code-reviewer` | Code checklist |
-| `test-runner` | TDD support |
+| `code-reviewer` | Review checklists |
 | `debugger` | 5-step method |
 | `doc-writer` | Doc templates |
+| `test-runner` | Test commands |
+| `interop-router` | Auto CLI routing |
 
 **Plus:**
-- 5 Expert Agents
-- 6 Self-Evolving Agents
-- 5 Validator Commands
-- 4 Generator Commands
 - CLAUDE.md template
-- Starter hooks
+- Starter hooks (Auto-Loop, changelog, validator)
+- 4 hands-on examples
 
 </td>
 </tr>
@@ -811,16 +813,16 @@ See [LICENSE](LICENSE) for details.
 
 ## About Director Mode Lite
 
-This is a **free, open-source toolkit** (v1.7.2) from the [Claude World](https://claude-world.com) community, compatible with the latest Claude Code (Opus 4.6).
+This is a **free, open-source toolkit** (v1.8.0) from the [Claude World](https://claude-world.com) community, compatible with the latest Claude Code (Claude 5 era).
 
 <table>
 <tr>
 <td width="50%">
 
 **What's included (FREE):**
-- 26 Commands (incl. validators & generators)
+- 27 Commands (incl. validators & generators)
 - 14 Agents (3 Core + 5 Experts + 6 Self-Evolving)
-- 31 Skills
+- 32 Skills
 - Auto-Loop with TDD
 - Expert-guided project setup
 - Validation & template generation

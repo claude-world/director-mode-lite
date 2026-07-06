@@ -1,25 +1,44 @@
 # Claude Code Hooks Guide
 
-> Reference documentation for hook implementation aligned with Claude Code v2.1.76.
+> Reference documentation for hook implementation aligned with Claude Code v2.1.201.
 
 ---
 
-## 1. Hook Types (Complete List)
+## 1. Hook Events
+
+Claude Code currently defines **30 hook event types**. The ones you'll use most:
 
 | Event | When it Fires | Use Case |
 |-------|---------------|----------|
 | `PreToolUse` | Before a tool runs | Block, validate, modify input, add context |
 | `PostToolUse` | After a tool completes | Log, notify, react to results |
+| `PostToolUseFailure` | After a tool call fails | Error handling, diagnostics |
 | `UserPromptSubmit` | User submits a prompt | Context injection, input validation |
 | `Stop` | Main agent stopping | Completeness check, continue loops |
-| `SubagentStop` | Subagent finishes | Task validation |
+| `SubagentStart` / `SubagentStop` | Subagent spawned / finishes | Setup, task validation |
 | `SessionStart` | Session begins | Context loading, env setup |
 | `SessionEnd` | Session ends | Cleanup, logging, summary |
 | `PreCompact` | Before context compaction | Preserve critical context |
 | `PostCompact` | After compaction completes | Context recovery |
 | `Notification` | User is notified | External alerts (Slack, etc.) |
+| `PermissionRequest` | Permission dialog appears | Auto-approve policies |
 | `Elicitation` | MCP server requests input | Override elicitation responses |
 | `ElicitationResult` | Elicitation result available | Post-process elicitation |
+
+<details>
+<summary>Remaining events (less common)</summary>
+
+`Setup`, `StopFailure`, `PostToolBatch`, `PermissionDenied`, `UserPromptExpansion`,
+`TaskCreated`, `TaskCompleted`, `TeammateIdle`, `MessageDisplay`, `ConfigChange`,
+`CwdChanged`, `FileChanged`, `InstructionsLoaded`, `WorktreeCreate`, `WorktreeRemove`
+
+See the official hooks documentation for the full, current list.
+
+</details>
+
+> Hook entries support `type: "command"` (shell, used throughout this guide) plus
+> `"prompt"` (LLM-evaluated), `"http"`, `"mcp_tool"`, and `"agent"`. Optional fields:
+> `timeout` (seconds, default 60), `once`, `if`, `statusMessage`.
 
 ---
 
@@ -246,5 +265,5 @@ exit 0
 
 ## References
 
-- Claude Code Hooks official documentation (v2.1.76)
-- Director Mode Lite v1.7.1 implementation
+- Claude Code Hooks official documentation (v2.1.201)
+- Director Mode Lite v1.8.0 implementation

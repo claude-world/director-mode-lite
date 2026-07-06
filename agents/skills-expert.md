@@ -1,6 +1,6 @@
 ---
 name: skills-expert
-description: Expert on creating Claude Code skills (slash commands). Helps design reusable command-based workflows.
+description: Expert on creating, editing, and debugging Claude Code skills and slash commands. Use when the user mentions creating a skill or slash command, wants a reusable command-based workflow, when a skill fails to trigger, or during /skills-generate. Knows the official skill frontmatter fields, arguments, allowed-tools, and when_to_use.
 color: magenta
 tools:
   - Read
@@ -83,12 +83,18 @@ $ARGUMENTS = "hello world"
 ```yaml
 ---
 description: What this skill does (required)
-user-invocable: true    # Show in / menu
-allowed-tools: [Read, Write, Edit, Bash]  # Restrict tools
-context: fork           # Isolated context (advanced)
-agent: my-agent         # Run as specific agent
+name: my-skill                          # SKILL.md: must match the skill's directory name
+when_to_use: When Claude should auto-trigger this skill
+user-invocable: true                    # Show in the / menu
+disable-model-invocation: false         # true = manual-only, never auto-triggered
+allowed-tools: Read, Write, Edit, Bash  # CSV — or a YAML list — to restrict tools
+model: sonnet                           # inherit | haiku | sonnet | opus | fable | default | best
+argument-hint: <path>                   # Hint shown after the command name
+arguments: file mode                    # Space-separated argument names
 ---
 ```
+
+These are the most-used of Claude Code's ~16 official skill/command frontmatter fields — see the official skills reference for the complete list. `allowed-tools` accepts either a CSV string (`Read, Write`) or a YAML list (`[Read, Write]`).
 
 ### Best Practices
 
@@ -229,34 +235,35 @@ Fix the following issue: $ARGUMENTS
 
 ### Advanced Features
 
-#### Context Fork (Isolated Execution)
+#### Auto-Trigger Control
 ```yaml
 ---
-context: fork
+description: Reviews code for security issues
+when_to_use: When the user asks for a security review or mentions vulnerabilities
+disable-model-invocation: false   # keep false so Claude can auto-invoke it
 ---
 
-# This skill runs in isolated context
-# Useful for parallel or experimental work
-```
-
-#### Agent Mode
-```yaml
----
-agent: security-auditor
----
-
-# This skill runs as the security-auditor agent
-# Inherits agent's expertise and tool permissions
+# Claude decides to invoke a skill by matching the request against
+# `description` + `when_to_use`. Set disable-model-invocation: true to make
+# it manual-only (the user must type the slash command).
 ```
 
 #### Tool Restrictions
 ```yaml
 ---
-allowed-tools: [Read, Grep, Glob]
+allowed-tools: Read, Grep, Glob     # CSV form
+---
+```
+or, equivalently, as a YAML list:
+```yaml
+---
+allowed-tools:
+  - Read
+  - Grep
+  - Glob
 ---
 
-# This skill can only read, not modify
-# Good for review/audit skills
+# A read-only skill — good for review/audit workflows.
 ```
 
 ## When Helping Users
@@ -291,3 +298,8 @@ allowed-tools: [Read, Grep, Glob]
 - Refer to **agents-expert** for subtask delegation
 - Refer to **hooks-expert** for automatic skill triggering
 - Refer to **claude-md-expert** for project context
+
+## Reference
+
+Official skills & slash-command documentation (the complete frontmatter field list):
+- https://docs.claude.com/en/docs/claude-code/skills

@@ -1,7 +1,12 @@
 ---
 name: code-reviewer
-description: Code review specialist for quality, security, and best practices
-allowed-tools: Read, Grep, Glob, Bash
+description: "Code review knowledge base: quality, security (OWASP Top 10), error-handling, performance, and test-coverage checklists with severity-ranked output format. Use when reviewing code changes, PRs, or before commits. Loaded automatically by the code-reviewer agent."
+user-invocable: false
+allowed-tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
 ---
 
 # Code Reviewer Skill
@@ -10,40 +15,46 @@ allowed-tools: Read, Grep, Glob, Bash
 
 ---
 
-## Role
-
-You are a **code review specialist** focused on quality, security, and best practices.
-
 ## Review Checklist
 
-When reviewing code, check these areas:
+Canonical checklist for reviewing code changes. Work through every section.
 
 ### 1. Code Quality
-- [ ] Clear naming conventions
-- [ ] Proper function/method length (< 30 lines)
+- [ ] Clear, descriptive naming for functions and variables
+- [ ] Proper function/method length (< 30 lines), focused and single-purpose
 - [ ] Single responsibility principle
 - [ ] No code duplication (DRY)
-- [ ] Proper error handling
+- [ ] Code is simple, readable, and self-documenting
+- [ ] Comments explain "why", not "what"
 
 ### 2. Security (OWASP Top 10)
-- [ ] Input validation
-- [ ] SQL injection prevention
+- [ ] Input validation at system boundaries
+- [ ] SQL injection prevention (parameterized queries)
 - [ ] XSS prevention
+- [ ] Command injection prevention
+- [ ] No exposed secrets, API keys, or credentials
 - [ ] Authentication/Authorization checks
-- [ ] Sensitive data exposure
+- [ ] Sensitive data handled securely (no data exposure)
 
-### 3. Performance
-- [ ] No N+1 queries
+### 3. Error Handling
+- [ ] Appropriate error handling for edge cases
+- [ ] Meaningful error messages
+- [ ] Graceful degradation where appropriate
+- [ ] No silent failures
+
+### 4. Performance
+- [ ] No N+1 queries; efficient database queries
 - [ ] Efficient algorithms
-- [ ] Proper caching considerations
+- [ ] Proper caching where beneficial
 - [ ] Memory leak prevention
+- [ ] No unnecessary loops or computations
 
-### 4. Testing
+### 5. Testing
 - [ ] Tests exist for new code
-- [ ] Edge cases covered
-- [ ] Test naming is clear
+- [ ] Happy path and edge cases covered
+- [ ] Test names clearly describe what is being tested
 
-### 5. Documentation
+### 6. Documentation
 - [ ] Complex logic is commented
 - [ ] Public APIs are documented
 - [ ] README updated if needed
@@ -54,7 +65,7 @@ When reviewing code, check these areas:
 Step 1: Read the code changes
 Step 2: Run through the checklist
 Step 3: Provide feedback with:
-        - Category (Quality/Security/Performance/Testing/Docs)
+        - Category (Quality/Security/Error Handling/Performance/Testing/Docs)
         - Severity (Critical/Major/Minor/Suggestion)
         - Specific line reference
         - Suggested fix

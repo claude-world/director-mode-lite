@@ -1,6 +1,6 @@
 ---
 name: project-init
-description: Expert-guided project setup with 6 phases
+description: "Set up Director Mode in a project: detect language/framework, generate CLAUDE.md, configure agents/skills/hooks and MCP, and verify the install. Use on first setup of a project, after cloning, or when the user runs /project-init."
 user-invocable: true
 ---
 
@@ -100,9 +100,11 @@ ls -la .claude/hooks/auto-loop-stop.sh
 # chmod +x .claude/hooks/auto-loop-stop.sh
 ```
 
+Hooks belong in `.claude/settings.local.json` for per-user installs (the Director Mode default); use `.claude/settings.json` instead when the team shares hooks in version control.
+
 Verify settings.local.json has the Stop hook configured:
 ```bash
-cat .claude/settings.local.json | grep -A5 "Stop"
+jq '.hooks.Stop' .claude/settings.local.json
 ```
 
 **If hooks are not configured:** Run the install script again or manually add the Stop hook entry to `.claude/settings.local.json`.

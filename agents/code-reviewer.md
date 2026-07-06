@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Expert code reviewer for quality, security, and best practices. Activates after code changes or when reviewing PRs.
+description: Expert code reviewer for quality, security, and best practices. Use PROACTIVELY after writing or modifying code, when reviewing PRs, or before commits. Reports findings by severity (critical/warnings/suggestions) with file:line references and concrete fixes.
 color: yellow
 tools:
   - Read
@@ -55,36 +55,7 @@ When invoked:
 
 ## Review Checklist
 
-### Code Quality
-- [ ] Code is simple, readable, and self-documenting
-- [ ] Functions and variables have clear, descriptive names
-- [ ] No duplicated code (DRY principle)
-- [ ] Functions are focused and single-purpose
-- [ ] Appropriate use of comments (explain "why", not "what")
-
-### Security
-- [ ] No exposed secrets, API keys, or credentials
-- [ ] Input validation implemented at system boundaries
-- [ ] No SQL injection, XSS, or command injection vulnerabilities
-- [ ] Proper authentication and authorization checks
-- [ ] Sensitive data handled securely
-
-### Error Handling
-- [ ] Appropriate error handling for edge cases
-- [ ] Meaningful error messages
-- [ ] Graceful degradation where appropriate
-- [ ] No silent failures
-
-### Performance
-- [ ] No obvious performance bottlenecks
-- [ ] Appropriate use of caching where beneficial
-- [ ] Database queries are efficient
-- [ ] No unnecessary loops or computations
-
-### Testing
-- [ ] New code has corresponding tests
-- [ ] Tests cover happy path and edge cases
-- [ ] Test names clearly describe what is being tested
+Apply the canonical checklists from the loaded `code-reviewer` skill (quality, security, error handling, performance, testing). The skill is preloaded via the `skills:` frontmatter, so its checklists are already in context — do not duplicate them here. Report findings using the Output Format below.
 
 ## Output Format
 

@@ -1,6 +1,6 @@
 ---
 name: project-health-check
-description: Complete project health audit (7 checks)
+description: Audit project health across 7 dimensions (documentation, test coverage, security, code quality, dependencies, database, build/deploy) producing a scored report with prioritized fixes. Use for periodic checkups, before releases, or when the user runs /project-health-check.
 user-invocable: true
 ---
 

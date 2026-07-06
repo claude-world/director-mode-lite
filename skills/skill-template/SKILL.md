@@ -1,6 +1,6 @@
 ---
 name: skill-template
-description: Generate custom skill/command from template
+description: Generate custom skill/command from template. Use when creating a new skill or slash command from scratch, or scaffolding a skill file with correct frontmatter.
 user-invocable: true
 ---
 
@@ -20,7 +20,7 @@ Generate a custom skill (slash command) based on requirements.
 | Generator | Creator | File creation |
 | Checker | Validator | Validation rules |
 | Automation | Runner | Command execution |
-| Agent-backed | Delegator | Runs as agent |
+| Agent-backed | Delegator | Runs in a forked subagent |
 
 ---
 
@@ -29,10 +29,10 @@ Generate a custom skill (slash command) based on requirements.
 1. **Gather Requirements**
    - Skill name (lowercase, hyphenated)
    - Purpose
-   - Arguments (if any)
+   - Arguments (if any — space-separated names)
    - Workflow steps
-   - Context isolation (fork)?
-   - Agent backing?
+   - Context isolation (`context: fork`)?
+   - Agent backing (`agent:`, only with `context: fork`)?
    - Tool restrictions?
 
 2. **Select Template** based on purpose
@@ -43,30 +43,38 @@ Generate a custom skill (slash command) based on requirements.
 
 ---
 
-## Frontmatter Reference
+## Frontmatter Reference (official fields)
+
+Only `description` is meaningfully required (`name` defaults to the directory
+name). All other fields are optional.
 
 ```yaml
 ---
-name: skill-name              # Required: lowercase, hyphenated
-description: What it does     # Required: shown in / menu
-version: 0.1.0                # Optional: semantic version
-user-invocable: true          # Optional: appears in / menu (default true)
-model: sonnet                 # Optional: inherit, haiku, sonnet, opus, best, sonnet[1m], opus[1m], opusplan
-allowed-tools:                # Optional: restrict available tools (YAML list)
-  - Read
+name: skill-name              # Optional: defaults to directory name; lowercase, hyphenated
+description: What it does      # Recommended: shown in / menu and used for triggering
+when_to_use: When to reach for it  # Optional: appended to description for triggering
+                              #   (description + when_to_use truncated at 1,536 chars in listings)
+user-invocable: true          # Optional: default true; false hides from / menu (Skill tool still works)
+model: sonnet                 # Optional: fable, opus, sonnet, haiku, inherit, default, best,
+                              #   sonnet[1m], opus[1m] (or a full model ID). NOT opusplan (session-only)
+effort: medium                # Optional: low, medium, high, xhigh, max
+allowed-tools:                # Optional: pre-approved tools. Accepts a comma-separated string
+  - Read                      #   OR a YAML list — BOTH are official (list shown here as house style)
   - Write
   - Bash
-context: fork                 # Optional: isolated context
-agent: agent-name             # Optional: delegate to agent (requires context: fork)
-argument-hint: "<hint>"       # Optional: hint shown after skill name
-# arguments:                  # Optional: structured argument definitions
-#   - name: target
-#     description: The target to process
-#     required: true
-# when_to_use: >              # Optional: auto-trigger description (underscore, NOT hyphen)
-#   Use when the user asks about deployment or mentions staging.
-disable-model-invocation: false  # Optional: prevent programmatic invocation
-hooks:                        # Optional: lifecycle hooks
+disallowed-tools:             # Optional: explicitly blocked tools (string or YAML list)
+  - WebFetch
+context: fork                 # Optional: run the skill in a subagent
+agent: agent-name             # Optional: subagent type when context: fork (default: general-purpose)
+argument-hint: "[issue-number]"  # Optional: autocomplete hint shown after the skill name
+arguments: target flags       # Optional: space-separated argument NAMES for $name substitution
+                              #   (arguments "target flags" -> use $target and $flags in the body).
+                              #   NOT a structured array of name/description/required objects.
+disable-model-invocation: false  # Optional: bool; true also blocks scheduled-task invocation
+paths:                        # Optional: glob patterns that limit where the skill activates
+  - "src/**/*.ts"
+shell: bash                   # Optional: bash or powershell for inline !`command` blocks
+hooks:                        # Optional: skill-scoped lifecycle hooks (same schema as settings.json)
   PreToolUse:
     - matcher: Bash
       hooks:
@@ -80,6 +88,9 @@ hooks:                        # Optional: lifecycle hooks
 ---
 ```
 
+Non-official fields to avoid: `metadata`, `license`, `version` (not part of the
+spec). `once` is valid only inside a `hooks[]` entry, never at the top level.
+
 ---
 
 ## Workflow Template Structure
@@ -87,7 +98,7 @@ hooks:                        # Optional: lifecycle hooks
 ```markdown
 ---
 name: [name]
-description: [What it does]
+description: [What it does. Include when to use it.]
 user-invocable: true
 allowed-tools:
   - Read
@@ -97,6 +108,8 @@ allowed-tools:
   - Glob
 context: fork
 argument-hint: "<task-description>"
+# when_to_use: Use when the user asks about X or mentions Y.  # Optional trigger hint
+# arguments: target mode                                      # Optional: names for $target, $mode
 ---
 
 # [Skill Name]
@@ -107,7 +120,7 @@ argument-hint: "<task-description>"
 ### Step 3: [Name]
 
 ## Arguments
-Uses `$ARGUMENTS` for input
+Uses `$ARGUMENTS` for raw input (or `$name` per the `arguments` field)
 
 ## Output
 Summary when complete

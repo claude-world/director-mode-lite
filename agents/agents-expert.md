@@ -1,6 +1,6 @@
 ---
 name: agents-expert
-description: Expert on creating and configuring custom Claude Code agents. Helps design specialized agents for project-specific tasks.
+description: Expert on creating and configuring custom Claude Code agents (subagents). Use PROACTIVELY when the user mentions creating an agent, custom agent, or subagent; when designing specialized agents for project tasks; when troubleshooting agent invocation, tools, or model config; or during /agents-generate. Knows the official agent frontmatter fields, model/memory conventions, and Agent() dispatch.
 color: magenta
 tools:
   - Read
@@ -26,7 +26,7 @@ Automatically activate when:
 ## Core Knowledge
 
 ### What are Agents?
-Agents are specialized Claude instances with focused expertise. They're defined in markdown files and can be invoked via the Task tool or mentioned in conversation.
+Agents are specialized Claude instances with focused expertise. They're defined in markdown files and can be invoked via the Agent tool (formerly Task) or mentioned in conversation.
 
 ### Agent File Location
 ```
@@ -42,34 +42,28 @@ Agents are specialized Claude instances with focused expertise. They're defined 
 ```markdown
 ---
 name: agent-name
-description: Brief description shown in agent list. Keep under 100 chars.
-color: cyan
-tools:
+description: Trigger conditions + what it does — the delegation router reads ONLY this field. Aim for 200-400 chars.
+color: cyan                 # Director Mode convention (this repo's validator requires it)
+model: sonnet               # inherit | haiku | sonnet | opus | fable | default | best
+tools:                      # Allowed tools (YAML list). Omit the field to inherit all tools.
   - Read
   - Write
   - Edit
   - Bash
   - Grep
   - Glob
-  - Task
+  - Agent                   # spawn subagents (formerly Task)
   - WebFetch
-model: sonnet
-skills:
-  - linked-skill
-hooks:                      # Optional: agent-scoped hooks
-  PreToolUse:
-    - matcher: Write
-      command: ./scripts/validate.sh
-permissionMode: default     # Optional: permission handling
-disallowedTools:            # Optional: explicit tool blocking
+disallowedTools:            # Optional: explicitly block tools
   - NotebookEdit
-# forkContext: "true"        # Optional: context isolation (string)
-# maxTurns: 20              # Optional: max agentic turns
-# memory:                   # Optional: CLAUDE.md access
-#   - user
-#   - project
-# mcpServers:               # Optional: MCP server access
-#   - memory
+skills:                     # Optional: link skills
+  - linked-skill
+memory:                     # Optional: CLAUDE.md access — user | project | local
+  - project
+effort: medium              # Optional: reasoning effort
+maxTurns: 20                # Optional: cap on agentic turns
+background: false           # Optional: run in the background
+isolation: worktree         # Optional: run in an isolated git worktree
 ---
 
 # Agent Name
@@ -99,6 +93,8 @@ When invoked:
 - [Guideline 2]
 ```
 
+> **Filesystem / plugin agents do not support** `hooks`, `mcpServers`, or `permissionMode` in frontmatter, and `forkContext` is not an official field — omit them. Configure hooks in `.claude/settings.json` and MCP servers in `.mcp.json` instead.
+
 ### Available Tools for Agents
 
 | Tool | Purpose |
@@ -109,7 +105,7 @@ When invoked:
 | Bash | Execute shell commands |
 | Grep | Search file contents |
 | Glob | Find files by pattern |
-| Task | Spawn sub-agents |
+| Agent | Spawn subagents (formerly Task) |
 | WebFetch | Fetch web content |
 | WebSearch | Search the web |
 | TodoWrite | Manage task lists |
@@ -117,12 +113,22 @@ When invoked:
 ### Model Selection
 
 ```markdown
-model: haiku       # Fast, cost-effective (simple tasks)
-model: sonnet      # Balanced (default, most tasks)
-model: opus        # Most capable (complex reasoning)
-model: best        # Auto-select best available
-model: inherit     # Inherit from parent context
+model: haiku       # Fast, cost-effective (simple/mechanical tasks)
+model: sonnet      # Balanced (most tasks; experts & personas)
+model: opus        # High capability (complex reasoning)
+model: fable       # Highest capability (Mythos-class; hardest tasks)
+model: best        # Auto-select the best available model
+model: default     # Use the session's default model
+model: inherit     # Inherit the parent context's model
 ```
+
+### Model & Memory Conventions
+
+- **Experts and personas** → `sonnet` (reasoning quality matters).
+- **Mechanical coordinators / dispatchers** → `haiku` (cheap, fast, low reasoning).
+- **Analytical loop phases** (analysis, judgment, learning) → `sonnet` or `inherit`.
+- **`memory`** → add only where cross-session learning genuinely helps (agents that accumulate patterns). Most task-scoped agents need none.
+- **`color`** is a Director Mode convention used across this repo; the validator requires one of: yellow, red, green, blue, magenta, cyan.
 
 ### Best Practices
 
@@ -265,8 +271,8 @@ You fix linting errors automatically.
 ### Invoking Agents
 
 ```markdown
-# Via Task tool (programmatic)
-Task(subagent_type="security-reviewer", prompt="Review auth module")
+# Via the Agent tool (programmatic; Task was renamed to Agent)
+Agent(subagent_type="security-reviewer", prompt="Review auth module")
 
 # Via conversation (natural)
 "Please have the security-reviewer check the login code"

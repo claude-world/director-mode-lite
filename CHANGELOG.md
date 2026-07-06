@@ -5,6 +5,91 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-07-06
+
+Full-catalog optimization of all commands, agents, and skills, driven by a five-track audit
+(official-spec verification against Claude Code v2.1.201 + per-file review of all 31 skills,
+14 agents, hooks, and cross-file consistency). Net −800 lines while adding one new skill.
+
+### Added
+- **`/handoff-claude` skill** — Delegate tasks to other authorized Claude Code instances
+  (e.g. `claude-z-1`, `claude-z-2` profiles) via headless `claude -p`. Documents the full
+  multi-account setup: one `CLAUDE_CONFIG_DIR` per profile (official isolation mechanism for
+  settings/sessions/auth), wrapper commands, one-time `claude auth login` per profile, and
+  conflict-free parallel fan-out with git worktrees. Also added to interop-router routing
+  targets, getting-started, README, and FAQ
+- **`## Execution` steps in `/smart-commit`** — was a style reference with no actionable steps;
+  now inspects the diff, groups changes, runs quality gates, stages, commits, verifies
+- **Return Contract sections in all 6 self-evolving agents** — final message ≤ 3 lines,
+  details to files (closes the context-leak hole on the Stop-hook continuation path)
+- **FAQ**: plugin-only installs don't activate hooks (and how to); `/handoff-claude` entry
+- **CI link checker now scans README + docs/ + skills/** (code-block aware), previously README only
+
+### Changed
+- **Spec alignment to Claude Code v2.1.201 (July 2026)**
+  - Hook events: "12 types" → **30 official event types** across hook-template, hooks-check,
+    hooks-expert, HOOKS-GUIDE, README; added `http`/`mcp_tool`/`agent` hook types, `if`/`statusMessage` fields
+  - Subagent tool naming: `Task(...)` → `Agent(...)` (renamed in v2.1.63) in all skill/agent examples
+  - Model lineup: Claude 5 family (Fable 5 / Opus 4.8 / Sonnet 5 / Haiku 4.5); model lists gain
+    `fable` + `default`, drop `opusplan` from frontmatter validators (session-only alias)
+  - Skill `arguments` field corrected to space-separated names (was documented as structured array)
+  - Agent validators/templates: dropped non-official `forkContext`; warn on `hooks`/`mcpServers`/
+    `permissionMode` (unsupported in filesystem/plugin agents); added `effort`, `background`,
+    `isolation`, `disallowedTools`; `color`/`model` relabeled "Director Mode convention (CI), optional per spec"
+  - `allowed-tools` accepts both CSV and YAML list (both official; YAML list = house style)
+- **Every description rewritten with trigger conditions (WHAT + WHEN)** — all 32 skills and
+  14 agents; delegation routing reads only the description, and triggers previously lived in
+  body-only Activation sections
+- **Persona pairs consolidated to a single source of truth** — code-reviewer / debugger /
+  doc-writer skills now hold the canonical checklists (union of drifted copies); the same-named
+  agents keep role/process/output and load the skill via `skills:` frontmatter
+- **`evolving-orchestrator` slimmed 23 KB → 9 KB** — inline pseudo-Python and five embedded
+  multi-page scripts converted to concise bash/jq steps and decision rules (it coordinates the
+  loop that is supposed to minimize context consumption)
+- **completion-judge decision boundary unified at score ≥ 80** (was SHIP ≥ 90 vs validator
+  pass = 80, forcing a wasted iteration for scores 80-89)
+- **Internal skills made explicit**: `user-invocable: false` added to code-reviewer, debugger,
+  doc-writer, test-runner (joining interop-router) — the "27 commands + 5 internal = 32 skills"
+  arithmetic is now enforced by frontmatter, not defaults
+- **test-runner reshaped from agent-voice to skill-voice**; kept framework detection + run commands
+- **`/changelog` skill trimmed 345 → 194 lines**; documents both rotation thresholds (100-line
+  session-start archive vs 500-line auto-rotation)
+- **README refresh**: Claude 5-era compatibility section, 27/14/32 counts, handoff-claude,
+  Skills panel now explains the command/internal split
+
+### Fixed
+- **auto-loop checkpoint injection bug** — `"request": "$ARGUMENTS"` heredoc produced invalid
+  JSON for multiline/quoted requests (the documented usage!); now written safely with `jq -n --arg`
+- **uninstall.sh data loss** — deleted the user's entire `.claude/settings.local.json`; now
+  surgically removes only the hooks/settings that install.sh injected
+- **`.self-evolving-loop/hooks/continue-loop.sh` emitted a non-schema Stop output**
+  (`{"continue":true,"prompt":...}`) that cannot continue a loop; now uses the official
+  `{"decision":"block","reason":...}`; its settings-hooks.json paths now use `$CLAUDE_PROJECT_DIR`
+- **`/changelog` filter examples matched nothing** — docs said `file_created`/`file_modified`
+  but the hook emits `file_write`/`file_edit`; docs aligned to reality (+ documented `test_run`)
+- **handoff-codex taught the interactive TUI form** — all examples now `codex exec` (non-interactive)
+- **handoff-gemini used a non-existent `-f` flag** — now `gemini -p "..." @path` / stdin
+- **interop-router script paths broke after install** — `$CLAUDE_PROJECT_DIR/skills/...` resolved
+  nowhere; now `${CLAUDE_PLUGIN_ROOT:-$CLAUDE_PROJECT_DIR/.claude}/skills/...` (plugin + local installs)
+- **mcp-check validated the wrong file** — project MCP servers live in `.mcp.json`
+  (via `claude mcp add --scope project`), not `.claude/settings.json`
+- **hooks-expert factual errors** — `PrePromptSubmit` → `UserPromptSubmit`, input field
+  `hook_type` → `hook_event_name`, Stop continuation key `prompt` → `reason`, PreToolUse
+  decisions via `hookSpecificOutput.permissionDecision`
+- **mcp-expert pointed at a non-existent package and API** — `@anthropic/context7-mcp` →
+  `@upstash/context7-mcp`; removed the fictional `api.anthropic.com/mcp-registry` endpoint
+- **skill-synthesizer and skill-evolver lacked Bash** — their MANDATORY security-check /
+  evidence-gate / symlink-registration steps could not execute; requirement-analyzer gained
+  Write (+ sonnet for the analytical phase), completion-judge gained Write
+- **experience-extractor read the wrong event log** — now primary `.self-evolving-loop/history/events.jsonl`
+- **`/agents` listed 8 of 14 agents; `/skills` listed 23 of 31** — both complete now
+- **3 broken `../../../docs/` links** (evolving-loop ×2, evolving-status) and
+  EVOLVING-LOOP-ARCHITECTURE's `../.claude/skills/` path; changelog skill's `hooks/hooks.json` reference
+- **Stale versions/counts** — 1.7.1 leftovers in MIGRATION/DEVELOPMENT-PATTERNS/ROADMAP/HOOKS-GUIDE
+  (contradicting v1.7.2's "all files updated" claim), demo.sh "25 commands/4 internal",
+  demo.sh "claude" expert → "claude-md", docs referencing non-existent `security-checker` agent →
+  `code-reviewer`, check-environment example CLI version 2.1.76 → 2.1.201
+
 ## [1.7.2] - 2026-03-25
 
 ### Added
@@ -340,6 +425,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.8.0 | 2026-07-06 | Full-catalog optimization: spec alignment (v2.1.201, 30 hook events, Claude 5), trigger-rich descriptions, persona consolidation, /handoff-claude multi-account skill, correctness fixes (auto-loop JSON, uninstall data loss, CLI syntax) |
 | 1.7.2 | 2026-03-25 | Onboarding skill, spec alignment, CI overhaul, migration guide, expanded FAQ |
 | 1.7.1 | 2026-03-14 | Security fix (path leak), install verification script, README badges |
 | 1.7.0 | 2026-02-10 | Agent/Skill frontmatter restored & expanded fields, official spec alignment |

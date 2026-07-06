@@ -1,6 +1,6 @@
 ---
 name: skill-evolver
-description: Evolution agent for Self-Evolving Loop with Meta-Engineering integration. Applies learning insights, manages lifecycle upgrades, and updates evolution metrics.
+description: Evolution agent for the Self-Evolving Loop. Use when executing /evolving-loop Phase EVOLVE — after experience-extractor produces learning.json, when completion-judge decides EVOLVE, on an --evolve request, or on SHIP for lifecycle review. Applies verified learning to produce improved skill versions and manages task-scoped to persistent upgrades.
 color: cyan
 tools:
   - Read
@@ -8,6 +8,7 @@ tools:
   - Edit
   - Grep
   - Glob
+  - Bash
 model: haiku
 memory:
   - user
@@ -61,31 +62,15 @@ CURRENT_EXECUTOR=".self-evolving-loop/generated-skills/executor-v${EXECUTOR_V}.m
 
 ### 2. Apply Adjustments
 
-For each adjustment in learning report:
+List the adjustments to process, then for each one read its `section`, `action`, and `content` and edit the current skill file with the Edit tool:
 
-```python
-def apply_adjustment(skill_content, adjustment):
-    """
-    Apply a single adjustment to skill content.
-    """
-    section = adjustment['section']
-    action = adjustment['action']
-    content = adjustment['content']
-
-    if action == 'add':
-        # Add new section after specified location
-        return insert_section(skill_content, section, content)
-
-    elif action == 'modify':
-        # Replace existing section content
-        return replace_section(skill_content, section, content)
-
-    elif action == 'remove':
-        # Remove section entirely
-        return remove_section(skill_content, section)
-
-    return skill_content
+```bash
+jq -c '.skill_adjustments[]' .self-evolving-loop/reports/learning.json
 ```
+
+- **add** → insert `content` as a new section after the named `section`.
+- **modify** → replace the named `section`'s body with `content`.
+- **remove** → delete the named `section` entirely.
 
 ---
 
@@ -104,89 +89,13 @@ def apply_adjustment(skill_content, adjustment):
 
 ### Section Merge Algorithm
 
-```python
-MAX_EXAMPLES_PER_SECTION = 5
-MAX_PATTERNS_PER_SECTION = 10
+When merging a new section into an existing skill, apply these rules in order (limits: **≤ 5 examples** and **≤ 10 patterns** per section):
 
-def merge_sections(existing: dict, new: dict) -> dict:
-    """
-    Merge new section content into existing skill.
-
-    Rules:
-    1. New content appends, doesn't blindly overwrite
-    2. Duplicates are detected and removed
-    3. Size limits are enforced
-    4. Conflicts are logged
-    """
-    merged = existing.copy()
-    conflicts = []
-
-    for section_name, new_content in new.items():
-        if section_name not in merged:
-            # New section - add directly
-            merged[section_name] = new_content
-        else:
-            # Existing section - merge carefully
-            existing_content = merged[section_name]
-
-            # Check for exact duplicate
-            if new_content == existing_content:
-                continue  # Skip duplicate
-
-            # Check for conflicting content
-            if is_conflicting(existing_content, new_content):
-                conflicts.append({
-                    "section": section_name,
-                    "existing": existing_content[:100],
-                    "new": new_content[:100],
-                    "resolution": "kept_new"
-                })
-                merged[section_name] = new_content  # New wins
-            else:
-                # Merge by appending
-                merged[section_name] = merge_content(existing_content, new_content)
-
-    # Enforce size limits
-    merged = enforce_limits(merged)
-
-    return merged, conflicts
-
-def merge_content(existing: str, new: str) -> str:
-    """
-    Merge content strings, avoiding duplicates.
-    """
-    existing_lines = set(existing.strip().split('\n'))
-    new_lines = new.strip().split('\n')
-
-    # Add only truly new lines
-    for line in new_lines:
-        if line not in existing_lines:
-            existing_lines.add(line)
-
-    return '\n'.join(sorted(existing_lines))
-
-def enforce_limits(sections: dict) -> dict:
-    """
-    Enforce size limits on merged sections.
-    """
-    for name, content in sections.items():
-        # Count examples (lines starting with - or *)
-        examples = [l for l in content.split('\n') if l.strip().startswith(('-', '*', '•'))]
-        if len(examples) > MAX_EXAMPLES_PER_SECTION:
-            # Keep only most recent examples
-            sections[name] = trim_examples(content, MAX_EXAMPLES_PER_SECTION)
-
-    return sections
-
-def is_conflicting(a: str, b: str) -> bool:
-    """
-    Check if two content strings are conflicting (contradictory).
-    """
-    # Simple heuristic: if they start differently, they conflict
-    a_first = a.strip().split('\n')[0] if a.strip() else ""
-    b_first = b.strip().split('\n')[0] if b.strip() else ""
-    return a_first != b_first and len(a_first) > 10 and len(b_first) > 10
-```
+1. **New section** (name not present) → add it directly.
+2. **Exact duplicate** (identical content) → skip.
+3. **Conflicting** (both non-trivial, and their first lines differ) → the newer content wins; append an entry to the merge conflict log.
+4. **Otherwise** → append only the genuinely new lines, deduplicating against the existing lines.
+5. **Enforce limits** after merging: if a section exceeds 5 example (bullet) lines or 10 patterns, trim the oldest first.
 
 ### Merge Conflict Log
 
@@ -324,61 +233,25 @@ Check and upgrade skill lifecycle from `task-scoped` to `persistent`:
 
 ### Upgrade Conditions
 
-```python
-MIN_USAGE_COUNT = 5
-MIN_SUCCESS_RATE = 0.80
+A skill upgrades from `task-scoped` to `persistent` once it has proven itself: `usage_count >= 5` AND `success_rate >= 0.80`. Check with jq:
 
-def check_lifecycle_upgrade(skill_name):
-    """
-    Check if a skill should be upgraded from task-scoped to persistent.
-    """
-    tool_usage = read_json(".claude/memory/meta-engineering/tool-usage.json")
-
-    for tool in tool_usage.get("tools", []):
-        if tool["name"] == skill_name:
-            usage_count = tool.get("usage_count", 0)
-            success_rate = tool.get("success_rate", 0)
-
-            if usage_count >= MIN_USAGE_COUNT and success_rate >= MIN_SUCCESS_RATE:
-                return {
-                    "should_upgrade": True,
-                    "usage_count": usage_count,
-                    "success_rate": success_rate
-                }
-
-    return {"should_upgrade": False}
+```bash
+TU=.claude/memory/meta-engineering/tool-usage.json
+jq -r --arg s "$SKILL" '
+  (.tools[] | select(.name==$s)) as $t
+  | if ($t.usage_count>=5 and $t.success_rate>=0.80) then "upgrade" else "keep" end' "$TU"
 ```
 
 ### Upgrade Process
 
-```python
-def upgrade_lifecycle(skill_name):
-    """
-    Upgrade a skill from task-scoped to persistent.
-    """
-    # 1. Update skill file frontmatter
-    skill_path = find_skill_path(skill_name)
-    update_frontmatter(skill_path, "lifecycle", "persistent")
-
-    # 2. Update checkpoint
-    checkpoint = read_json(".self-evolving-loop/state/checkpoint.json")
-    checkpoint["skill_lifecycle"][skill_name] = "persistent"
-    write_json(".self-evolving-loop/state/checkpoint.json", checkpoint)
-
-    # 3. Record in evolution history
-    evolution = read_json(".claude/memory/meta-engineering/evolution.json")
-    evolution.setdefault("lifecycle_upgrades", []).append({
-        "skill": skill_name,
-        "from": "task-scoped",
-        "to": "persistent",
-        "usage_count": usage_count,
-        "success_rate": success_rate,
-        "upgraded_at": now()
-    })
-    write_json(".claude/memory/meta-engineering/evolution.json", evolution)
-
-    return f"{skill_name} upgraded to persistent"
-```
+When the check returns `upgrade`:
+1. Set `lifecycle: persistent` in the skill file's frontmatter (Edit tool).
+2. Set `skill_lifecycle["$SKILL"] = "persistent"` in the checkpoint:
+   ```bash
+   C=.self-evolving-loop/state/checkpoint.json
+   jq --arg s "$SKILL" '.skill_lifecycle[$s]="persistent"' "$C" > tmp && mv tmp "$C"
+   ```
+3. Append an entry to `evolution.json.lifecycle_upgrades` (skill, from `task-scoped`, to `persistent`, usage_count, success_rate, timestamp) with jq.
 
 ## Output Format
 
@@ -519,6 +392,12 @@ echo "✅ Evidence verified - Evolution allowed"
 - Actual `git diff` shows specific changes
 - Command output captured with real errors
 - Validation with `evidence_source: "actual_execution"`
+
+## Return Contract
+
+Final message: **≤ 3 short lines** — evolved skill versions + lifecycle change + output path. All detail goes to the evolution report, not your reply.
+Example: `Evolved executor-v2, validator-v2. Lifecycle: validator -> persistent. -> .self-evolving-loop/reports/evolution.json`
+Do NOT return skill bodies, merge diffs, or the learning report.
 
 ## Guidelines
 

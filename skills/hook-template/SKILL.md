@@ -1,6 +1,6 @@
 ---
 name: hook-template
-description: Generate hook script from template
+description: Generate hook script from template. Use when adding a new hook, wiring a PreToolUse/PostToolUse/Stop/Notification hook, or scaffolding hook config for settings.json.
 user-invocable: true
 ---
 
@@ -8,26 +8,30 @@ user-invocable: true
 
 Generate a hook script and configuration based on requirements.
 
-**Usage**: `/hook-template [hook-type] [purpose]`
+**Usage**: `/hook-template [hook-event] [purpose]`
 
 ---
 
-## Hook Types
+## Hook Events
 
-| Type | When it Runs | Use Case |
-|------|--------------|----------|
-| `PreToolUse` | Before a tool runs | Block, validate, add context |
-| `PostToolUse` | After a tool completes | Log, notify, react |
-| `UserPromptSubmit` | User submits a prompt | Context injection, validation |
-| `Stop` | Main agent stopping | Completeness check, continue loops |
-| `SubagentStop` | Subagent finishes | Task validation |
-| `SessionStart` | Session begins | Context loading, env setup |
-| `SessionEnd` | Session ends | Cleanup, logging |
-| `PreCompact` | Before context compaction | Preserve critical context |
-| `PostCompact` | After compaction completes | Context recovery |
-| `Notification` | User is notified | External alerts (Slack, etc.) |
-| `Elicitation` | MCP server requests input | Override elicitation |
-| `ElicitationResult` | Elicitation result available | Post-process |
+Claude Code defines **30 hook events**. The common ones, grouped:
+
+| Group | Events |
+|-------|--------|
+| Lifecycle | `SessionStart`, `SessionEnd`, `Setup` |
+| Prompt | `UserPromptSubmit`, `UserPromptExpansion` |
+| Tool | `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PostToolBatch` |
+| Permission | `PermissionRequest`, `PermissionDenied` |
+| Subagent | `SubagentStart`, `SubagentStop` |
+| Stop | `Stop`, `StopFailure` |
+| Task | `TaskCreated`, `TaskCompleted` |
+| Compaction | `PreCompact`, `PostCompact` |
+| Notification | `Notification`, `MessageDisplay` |
+| MCP elicitation | `Elicitation`, `ElicitationResult` |
+| Environment | `ConfigChange`, `CwdChanged`, `FileChanged`, `InstructionsLoaded`, `WorktreeCreate`, `WorktreeRemove`, `TeammateIdle` |
+
+That is all 30 events. See the official Claude Code hooks docs for the full list
+and each event's payload. The templates below cover the practical 90%.
 
 ---
 
@@ -35,17 +39,24 @@ Generate a hook script and configuration based on requirements.
 
 | Field | Type | Required | Default | Notes |
 |-------|------|----------|---------|-------|
-| `type` | String | Yes | - | `"command"` or `"prompt"` |
+| `type` | String | No | `command` | `command`, `prompt`, `http`, `mcp_tool`, or `agent` |
 | `command` | String | If type=command | - | Shell command to execute |
-| `prompt` | String | If type=prompt | - | Natural language prompt for LLM |
-| `timeout` | Integer | No | 60s (command), 30s (prompt) | Seconds |
+| `prompt` | String | If type=prompt | - | Natural language prompt evaluated by an LLM |
+| `matcher` | String | No | - | For tool events: tool name, regex, or `*` |
+| `timeout` | Integer | No | 60 | Seconds, per hook |
 | `once` | Boolean | No | false | Run hook only once per session |
+| `if` | String | No | - | Conditional guard for the hook |
+| `statusMessage` | String | No | - | Message shown while the hook runs |
+
+`type: command` (default) and `type: prompt` (LLM-evaluated) cover most needs.
+The `http`, `mcp_tool`, and `agent` entry types also exist for calling an
+endpoint, invoking an MCP tool, or dispatching a subagent.
 
 ---
 
 ## Hook Input (stdin JSON)
 
-All hooks receive JSON on stdin with these fields:
+All hooks receive JSON on stdin. The event name is in `hook_event_name`:
 
 ```json
 {
@@ -59,14 +70,23 @@ All hooks receive JSON on stdin with these fields:
 }
 ```
 
+### Decision output cheatsheet
+
+- **PreToolUse**: return `hookSpecificOutput.permissionDecision` of `allow`,
+  `deny`, or `ask`. Exit code 2 with a stderr message is the shorthand for
+  `deny`. The legacy top-level `{"decision": "approve" | "block"}` is still accepted.
+- **Stop / SubagentStop**: to continue the loop, return
+  `{"decision": "block", "reason": "<next prompt>"}` — the key is `reason`.
+- Silent success is exit `0` with no output.
+
 ---
 
 ## Process
 
 1. **Gather Requirements**
-   - Hook type
+   - Hook event
    - Purpose
-   - Matcher (for Pre/PostToolUse: tool name, regex, or `*`)
+   - Matcher (for tool events: tool name, regex, or `*`)
 
 2. **Generate Script** at `.claude/hooks/[name].sh`
 
@@ -80,7 +100,7 @@ All hooks receive JSON on stdin with these fields:
 
 ## Templates
 
-### PreToolUse (Blocker)
+### PreToolUse (Blocker, exit-code shorthand)
 ```bash
 #!/bin/bash
 INPUT=$(cat)
@@ -90,9 +110,29 @@ FILE=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 # Block edits to specific files
 if [[ "$FILE" == *"package-lock.json"* ]]; then
     echo "BLOCKED: Do not edit lockfiles directly" >&2
-    exit 2
+    exit 2   # exit 2 = deny for PreToolUse
 fi
 exit 0  # Allow (no output needed)
+```
+
+### PreToolUse (Deny via JSON permissionDecision)
+```bash
+#!/bin/bash
+INPUT=$(cat)
+FILE=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
+
+if [[ "$FILE" == *"package-lock.json"* ]]; then
+    jq -n '{
+      "hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": "deny",
+        "permissionDecisionReason": "Do not edit lockfiles directly"
+      }
+    }'
+    exit 0
+fi
+# permissionDecision may be "allow", "deny", or "ask"
+exit 0
 ```
 
 ### PreToolUse (Context Adding)
@@ -124,7 +164,7 @@ CHECKPOINT=".auto-loop/checkpoint.json"
 if [[ ! -f "$CHECKPOINT" ]]; then
     exit 0  # Allow stop
 fi
-# Block stop to continue loop
+# Block stop to continue loop — key is "reason", used as the next prompt
 jq -n --arg reason "Continuing iteration" \
     '{"decision": "block", "reason": $reason}'
 exit 0

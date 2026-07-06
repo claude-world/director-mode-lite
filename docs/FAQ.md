@@ -18,9 +18,9 @@ No. Director Mode Lite is a community project from [Claude World](https://claude
 
 | Feature | Lite (Free) | Full |
 |---------|-------------|------|
-| Commands | 26 | 85+ |
+| Commands | 27 | 85+ |
 | Agents | 14 | 35+ |
-| Skills | 31 | 60+ |
+| Skills | 32 | 60+ |
 | Auto-Loop | Yes | Yes |
 | Self-Evolving Loop | Yes | Yes |
 | Auto-Explore | No | Yes |
@@ -65,7 +65,7 @@ Or manually remove the `.claude/` directory.
 
 No. The install script:
 - Backs up existing `.claude/` directory
-- Merges hooks.json (doesn't overwrite)
+- Merges hooks into `.claude/settings.local.json` (doesn't overwrite your settings)
 - Skips files that already exist
 - Creates CLAUDE.md only if none exists
 
@@ -115,6 +115,11 @@ Auto-Loop works best with clear acceptance criteria. Without them, it may:
 Yes! Director Mode Lite includes:
 - `/handoff-codex` - Delegate to OpenAI's Codex CLI
 - `/handoff-gemini` - Delegate to Google's Gemini CLI
+- `/handoff-claude` - Delegate to another authorized Claude Code instance (separate account/quota via `CLAUDE_CONFIG_DIR` profiles)
+
+### Do hooks work with a plugin-only install?
+
+Not automatically. Installing the plugin gives you the skills and agents, but hooks (Auto-Loop, changelog) are configured in your project's `.claude/settings.local.json` by the install script — run step 3 of the Quick Start (`install.sh`) inside your project to activate them.
 
 ---
 

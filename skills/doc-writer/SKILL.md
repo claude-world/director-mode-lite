@@ -1,7 +1,13 @@
 ---
 name: doc-writer
-description: Documentation specialist for README, API docs, and code comments
-allowed-tools: Read, Write, Edit, Grep, Glob
+description: "Documentation templates and standards: README structure, API reference format, changelog (Keep a Changelog), and comment guidelines. Use when creating or updating documentation. Loaded automatically by the doc-writer agent."
+user-invocable: false
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
 ---
 
 # Doc Writer Skill
@@ -9,10 +15,6 @@ allowed-tools: Read, Write, Edit, Grep, Glob
 > **Director Mode Lite** - Documentation Specialist
 
 ---
-
-## Role
-
-You are a **documentation specialist** focused on creating clear, useful, and maintainable documentation.
 
 ## Documentation Types
 
@@ -25,31 +27,22 @@ Essential sections:
 Brief description (1-2 sentences)
 
 ## Quick Start
-
 \`\`\`bash
-# Installation
-npm install
-
-# Run
-npm start
+npm install   # Installation
+npm start     # Run
 \`\`\`
 
 ## Features
-
 - Feature 1
-- Feature 2
 
 ## Documentation
-
 - [Getting Started](docs/getting-started.md)
 - [API Reference](docs/api.md)
 
 ## Contributing
-
 See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## License
-
 MIT
 ```
 
@@ -78,20 +71,12 @@ const result = functionName('hello', 5);
 - `ValidationError`: When param1 is empty
 ```
 
+For REST endpoints, document the method and path, request headers/body, success and error responses, and a runnable `curl` example.
+
 ### 3. Code Comments
 
-When to comment:
-- [ ] Complex algorithms
-- [ ] Non-obvious business logic
-- [ ] Workarounds and their reasons
-- [ ] TODO items with context
+Comment complex algorithms, non-obvious business logic, workarounds (and why), and TODOs with context. Do NOT comment self-explanatory code or restate what the code already says.
 
-When NOT to comment:
-- [ ] Self-explanatory code
-- [ ] Obvious operations
-- [ ] Restating the code
-
-Good comment example:
 ```javascript
 // Calculate compound interest using continuous compounding formula
 // This matches the bank's calculation method (see SPEC-123)
@@ -105,50 +90,43 @@ Follow Keep a Changelog format:
 # Changelog
 
 ## [1.2.0] - 2025-01-15
-
 ### Added
 - New feature X
-
 ### Changed
 - Improved performance of Y
-
 ### Fixed
 - Bug in Z
-
 ### Removed
 - Deprecated API endpoint
 ```
 
-## Documentation Principles
+### 5. Architecture Docs
 
-### 1. Keep It Current
-- Update docs when code changes
-- Review docs during PR review
+Cover the system overview, component relationships, data flow, and design decisions with their rationale.
 
-### 2. Write for the Reader
-- Assume minimal context
-- Use examples liberally
-- Start with the most common use case
+## Documentation Standards
 
-### 3. Structure for Scanning
-- Use headers and lists
-- Keep paragraphs short
-- Highlight important info
+### Style
+- Use active voice; keep sentences concise
+- Define acronyms on first use; use consistent terminology
+- Write for scanning: H1 for the title, H2/H3 for sections, lists, and bold key terms
 
-### 4. Test Your Docs
-- Follow your own instructions
-- Ask someone else to try
-- Check all code examples run
+### Code Examples
+- Make examples complete and runnable; include expected output
+- Show both basic and advanced usage; handle errors
+
+### Principles
+- **Keep it current**: update docs in the same PR as the code change
+- **Write for the reader**: assume minimal context, lead with the common case
+- **Test your docs**: follow your own instructions; verify every example runs
 
 ## Output Format
 
-When creating documentation:
 ```markdown
 ## Documentation Update
 
 ### Files Created/Updated
 - `README.md` - Added Quick Start section
-- `docs/api.md` - New file for API reference
 
 ### Summary
 [What documentation was added/changed and why]

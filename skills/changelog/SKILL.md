@@ -6,244 +6,36 @@ user-invocable: true
 
 # Changelog Skill
 
-> **Status: Experimental**
-> This feature uses Claude Code's PostToolUse hooks. The hook interface may change in future versions.
-> If hooks don't trigger as expected, events can still be logged manually via auto-loop prompts.
+> **Status: Experimental** — uses Claude Code PostToolUse hooks; the hook interface may change in future versions. If hooks don't fire, events can still be logged manually via auto-loop prompts.
 
-Runtime observability changelog for tracking all changes during development sessions.
+Runtime observability changelog that records every change during a development session, so subagents can understand prior context and sessions can be recovered or debugged.
 
 ---
 
 ## Overview
 
-This skill provides an **automated** changelog system that:
-- **Automatically** records file changes via PostToolUse hooks
-- **Automatically** logs test results when tests are run
-- **Automatically** records git commits
-- **Automatically** rotates when exceeding 500 lines
-- Enables subagents to understand context from previous actions
-- Supports session recovery and debugging
+Automatically, via PostToolUse hooks, the changelog:
+- Records file changes (Write / Edit)
+- Logs test results when tests run (Bash)
+- Records git commits (Bash)
+- Rotates itself when it exceeds 500 lines
+
+Events are stored as append-only JSONL at `.director-mode/changelog.jsonl`.
 
 ---
 
-## Architecture
+## Usage
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Observability System                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────┐     ┌─────────────────────────────┐           │
-│  │ Write/Edit  │     │           Bash              │           │
-│  │    Tool     │     │   (test/commit/general)     │           │
-│  └──────┬──────┘     └──────────────┬──────────────┘           │
-│         │                           │                           │
-│         ▼                           ▼                           │
-│  ┌─────────────────────────────────────────────────────┐       │
-│  │              PostToolUse Hooks                       │       │
-│  │     log-file-change.sh       log-bash-event.sh      │       │
-│  └─────────────────────────┬───────────────────────────┘       │
-│                            │                                    │
-│                            ▼                                    │
-│  ┌─────────────────────────────────────────────────────┐       │
-│  │           _lib-changelog.sh                        │       │
-│  │  • log_event()      • rotate_if_needed()            │       │
-│  │  • archive_changelog()  • clear_changelog()         │       │
-│  └─────────────────────────┬───────────────────────────┘       │
-│                            │                                    │
-│                            ▼                                    │
-│  ┌─────────────────────────────────────────────────────┐       │
-│  │         .director-mode/changelog.jsonl               │       │
-│  │                                                      │       │
-│  │  {"event_type":"file_created",...}                  │       │
-│  │  {"event_type":"test_pass",...}                     │       │
-│  │  {"event_type":"commit",...}                        │       │
-│  └─────────────────────────────────────────────────────┘       │
-│                            │                                    │
-│              ┌─────────────┴─────────────┐                     │
-│              ▼                           ▼                     │
-│  ┌─────────────────┐         ┌─────────────────┐               │
-│  │  /changelog     │         │    Subagents    │               │
-│  │   command       │         │ code-reviewer   │               │
-│  │                 │         │ debugger        │               │
-│  └─────────────────┘         └─────────────────┘               │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Relationship with Checkpoint
-
-| Aspect | Checkpoint | Changelog |
-|--------|------------|-----------|
-| Location | `.auto-loop/checkpoint.json` | `.director-mode/changelog.jsonl` |
-| Purpose | Current state snapshot | Historical event stream |
-| Question answered | "Where am I now?" | "How did I get here?" |
-| Used by | Stop Hook (continue/stop decision) | Subagents (context) |
-| Format | Single JSON object | JSONL (append-only) |
-| Persistence | Overwritten each iteration | Accumulated, then rotated |
-
-**They complement each other:**
-- **Checkpoint** = Save point for resume
-- **Changelog** = Audit trail for observability
-
----
-
-## Automatic Logging via Hooks
-
-### Hook Configuration (`.claude/settings.local.json`)
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Write",
-        "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-file-change.sh" }]
-      },
-      {
-        "matcher": "Edit",
-        "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-file-change.sh" }]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-bash-event.sh" }]
-      }
-    ]
-  }
-}
-```
-
-> **Note**: Uses `$CLAUDE_PROJECT_DIR` for portable paths (resolved at runtime by Claude Code).
-
-### Hook Scripts
-
-| Script | Trigger | Events Logged |
-|--------|---------|---------------|
-| `log-file-change.sh` | Write, Edit | `file_created`, `file_modified` |
-| `log-bash-event.sh` | Bash | `test_pass`, `test_fail`, `commit` |
-
----
-
-## Automatic Rotation
-
-**Prevents unbounded growth:**
-
-```bash
-MAX_LINES=500
-
-# When changelog exceeds 500 lines:
-# 1. Move current to changelog.YYYYMMDD_HHMMSS.jsonl
-# 2. Start fresh changelog.jsonl
-# 3. Log rotation event
-```
-
-**Result:**
-
-```
-.director-mode/
-├── changelog.jsonl                    ← Current (< 500 lines)
-├── changelog.20250113_103000.jsonl    ← Archived
-├── changelog.20250112_150000.jsonl    ← Archived
-└── changelog.20250111_090000.jsonl    ← Archived
-```
-
----
-
-## Session Conflict Prevention
-
-**Only one auto-loop session per project:**
-
-```bash
-# When starting /auto-loop:
-if checkpoint exists AND status == "in_progress":
-    → Block with message:
-      "Found interrupted session at iteration #N"
-      "Use --resume or --force"
-```
-
-**Options:**
-- `/auto-loop --resume` → Continue with existing checkpoint + changelog
-- `/auto-loop --force "task"` → Archive old, start fresh
-
----
-
-## Event Schema
-
-```json
-{
-  "id": "evt_1705142400_12345",
-  "timestamp": "2025-01-13T10:30:00.000Z",
-  "event_type": "file_modified",
-  "agent": "hook",
-  "iteration": 3,
-  "summary": "file_modified: Login.tsx",
-  "files": ["src/components/Login.tsx"]
-}
-```
-
-### Event Types
-
-| Type | Source | Description |
-|------|--------|-------------|
-| `file_created` | Hook (Write) | New file created |
-| `file_modified` | Hook (Edit) | File edited |
-| `test_pass` | Hook (Bash) | Tests passing |
-| `test_fail` | Hook (Bash) | Tests failing |
-| `commit` | Hook (Bash) | Git commit made |
-| `session_start` | auto-loop | Session begins |
-| `session_end` | auto-loop | Session completes |
-| `changelog_rotated` | System | Changelog was rotated |
-
----
-
-## Subagent Integration
-
-### code-reviewer
-
-Before review, checks changelog for:
-- What files were changed recently
-- What iteration we're on
-- Recent test results
-
-### debugger
-
-Before debugging, checks changelog for:
-- When errors first occurred
-- What files changed before errors
-- Pattern of test failures
-
----
-
-## Core Functions (`_lib-changelog.sh`)
-
-```bash
-# Log an event
-log_event "file_created" "Created Login.tsx" "hook" '["src/Login.tsx"]'
-
-# Archive current changelog
-archive_changelog
-
-# Clear changelog
-clear_changelog
-
-# List archives
-list_archives
-```
-
----
-
-## Querying
-
-### Via Command
+### Via `/changelog` command
 
 ```bash
 /changelog                  # Recent 10 events
 /changelog --summary        # Statistics
-/changelog --type test      # Filter by type
-/changelog --list-archives  # Show old changelogs
+/changelog --type test      # Filter by event type
+/changelog --list-archives  # Show rotated changelogs
 /changelog --export log.json
+/changelog --archive        # Manually archive current changelog
+/changelog --clear          # Clear current changelog
 ```
 
 ### Via Bash
@@ -261,55 +53,118 @@ jq -r '.event_type' .director-mode/changelog.jsonl | sort | uniq -c
 
 ---
 
-## Example Session Flow
+## Event Schema
+
+```json
+{
+  "id": "evt_1705142400_12345",
+  "timestamp": "2025-01-13T10:30:00.000Z",
+  "event_type": "file_edit",
+  "agent": "hook",
+  "iteration": 3,
+  "summary": "file_edit: Login.tsx",
+  "files": ["src/components/Login.tsx"]
+}
+```
+
+### Event Types
+
+| Type | Source | Description |
+|------|--------|-------------|
+| `file_write` | Hook (Write) | File written via the Write tool |
+| `file_edit` | Hook (Edit) | File edited via the Edit tool |
+| `test_pass` | Hook (Bash) | Tests passing |
+| `test_fail` | Hook (Bash) | Tests failing |
+| `test_run` | Hook (Bash) | Tests ran, result undetermined |
+| `commit` | Hook (Bash) | Git commit made |
+| `session_start` | auto-loop | Session begins |
+| `session_end` | auto-loop | Session completes |
+| `changelog_rotated` | System | Changelog was rotated |
+
+---
+
+## Automatic Logging via Hooks
+
+Configured in `.claude/settings.local.json` (the shipped template is `hooks/settings-hooks.json`):
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      { "matcher": "Write", "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-file-change.sh" }] },
+      { "matcher": "Edit",  "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-file-change.sh" }] },
+      { "matcher": "Bash",  "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-bash-event.sh" }] }
+    ]
+  }
+}
+```
+
+> `$CLAUDE_PROJECT_DIR` keeps paths portable (resolved at runtime by Claude Code).
+
+| Script | Trigger | Events Logged |
+|--------|---------|---------------|
+| `log-file-change.sh` | Write, Edit | `file_write`, `file_edit` |
+| `log-bash-event.sh` | Bash | `test_pass`, `test_fail`, `test_run`, `commit` |
+
+Core helpers live in `_lib-changelog.sh`:
+
+```bash
+log_event "file_write" "Wrote Login.tsx" "hook" '["src/Login.tsx"]'
+archive_changelog   # move current changelog to a timestamped archive
+clear_changelog     # empty the current changelog
+list_archives       # list rotated changelogs
+```
+
+---
+
+## Rotation & Archiving
+
+Two independent thresholds keep the changelog bounded. They are complementary, not contradictory:
+
+| Trigger | Threshold | Who does it | When |
+|---------|-----------|-------------|------|
+| Session-start archive | > 100 lines | `/auto-loop` init | At the start of each auto-loop session, so the new session begins with a fresh log |
+| Runtime auto-rotation | > 500 lines (`MAX_LINES`) | `_lib-changelog.sh` (`rotate_if_needed`) | Continuously, as events are appended within a session |
+
+On rotation the current file is moved to `changelog.YYYYMMDD_HHMMSS.jsonl`, a fresh `changelog.jsonl` is started, and a `changelog_rotated` event is logged:
 
 ```
-1. /auto-loop "Implement login"
-   → Check: No existing session
-   → Archive old changelog (if > 100 lines)
-   → Create checkpoint (status: in_progress)
-   → Log: session_start
-
-2. TDD Iteration #1
-   → Write test file
-   → Hook logs: file_created
-   → Run tests (fail)
-   → Hook logs: test_fail
-   → Write implementation
-   → Hook logs: file_created
-   → Run tests (pass)
-   → Hook logs: test_pass
-   → Commit
-   → Hook logs: commit
-
-3. Session interrupted (crash/exit)
-   → Checkpoint remains: iteration=1, status=in_progress
-   → Changelog has full history
-
-4. /auto-loop "something"
-   → Check: Found in_progress session!
-   → Block: "Use --resume or --force"
-
-5. /auto-loop --resume
-   → Read checkpoint: iteration=1
-   → Read changelog: understand context
-   → Continue from iteration #2
+.director-mode/
+├── changelog.jsonl                    ← Current
+├── changelog.20250113_103000.jsonl    ← Archived
+└── changelog.20250112_150000.jsonl    ← Archived
 ```
+
+---
+
+## Checkpoint vs Changelog
+
+| Aspect | Checkpoint | Changelog |
+|--------|------------|-----------|
+| Location | `.auto-loop/checkpoint.json` | `.director-mode/changelog.jsonl` |
+| Purpose | Current state snapshot ("where am I now?") | Historical event stream ("how did I get here?") |
+| Used by | Stop hook (continue/stop decision) | Subagents (context) |
+| Format | Single JSON object | JSONL (append-only) |
+| Persistence | Overwritten each iteration | Accumulated, then rotated |
+
+Only one auto-loop session runs per project. Starting `/auto-loop` while a session is `in_progress` blocks with a prompt to use `--resume` (continue with the existing checkpoint + changelog) or `--force` (archive the old session, start fresh).
+
+---
+
+## Subagent Integration
+
+- **code-reviewer** — before reviewing, checks recent file changes, the current iteration, and recent test results.
+- **debugger** — before debugging, checks when errors first appeared, which files changed just before them, and the pattern of test failures.
 
 ---
 
 ## Installation
 
-Hooks are installed with Director Mode Lite:
+Hooks ship with Director Mode Lite. After install, verify:
 
 ```bash
-# After install, verify:
 ls .claude/hooks/
-# → auto-loop-stop.sh
-# → _lib-changelog.sh
-# → log-bash-event.sh
-# → log-file-change.sh
-# → pre-tool-validator.sh
+# _lib-changelog.sh  auto-loop-stop.sh  log-bash-event.sh  log-file-change.sh  pre-tool-validator.sh
 
 cat .claude/settings.local.json | jq '.hooks'
 ```
@@ -321,25 +176,19 @@ cat .claude/settings.local.json | jq '.hooks'
 ### Events not logged
 
 1. Check hooks exist: `ls .claude/hooks/*.sh`
-2. Check hooks.json: `cat hooks/hooks.json`
+2. Check the live hook config: `cat .claude/settings.local.json | jq '.hooks'` (the shipped template is `hooks/settings-hooks.json`)
 3. Check scripts are executable: `chmod +x .claude/hooks/*.sh`
 
 ### Stale session blocking
 
 ```bash
-# Check what's there
 cat .auto-loop/checkpoint.json | jq '.status'
-
-# Force restart
 /auto-loop --force "New task"
 ```
 
 ### Changelog too large
 
 ```bash
-# Manual archive
-/changelog --archive
-
-# Or clear
-/changelog --clear
+/changelog --archive   # manual archive
+/changelog --clear     # or clear
 ```

@@ -34,13 +34,13 @@ Our ultimate goal is to **democratize access to advanced AI development patterns
 
 ## Current State (v1.x)
 
-### What We Have (v1.7.1)
+### What We Have (v1.8.0)
 
 | Category | Components | Status |
 |----------|------------|--------|
-| **Commands** | 26 commands (workflow, TDD, validation, generation, onboarding) | Stable |
+| **Commands** | 27 commands (workflow, TDD, validation, generation, onboarding, handoff) | Stable |
 | **Agents** | 14 agents (3 core + 5 experts + 6 evolving) | Stable |
-| **Skills** | 31 skills (nested .claude/skills/ structure) | Stable |
+| **Skills** | 32 skills (nested .claude/skills/ structure) | Stable |
 | **Automation** | Auto-Loop (TDD), Evolving-Loop (Self-Evolution) | Stable |
 | **Observability** | Changelog system with session tracking | Stable |
 | **Memory** | Meta-Engineering memory system | Beta |
@@ -564,6 +564,6 @@ We commit to transparent communication about any changes to this roadmap.
 
 ---
 
-*Roadmap version: 1.7.1*
-*Last updated: 2026-03-25*
+*Roadmap version: 1.8.0*
+*Last updated: 2026-07-06*
 *Part of [Director Mode Lite](https://github.com/claude-world/director-mode-lite)*

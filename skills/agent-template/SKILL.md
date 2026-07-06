@@ -1,6 +1,6 @@
 ---
 name: agent-template
-description: Generate custom agent from template
+description: Generate custom agent from template. Use when creating a new subagent from scratch, or scaffolding an agent file with correct frontmatter.
 user-invocable: true
 ---
 
@@ -16,12 +16,12 @@ Generate a custom agent file based on requirements.
 
 | Purpose | Template | Tools | Color | Model |
 |---------|----------|-------|-------|-------|
-| Review/Audit | Reviewer | Read, Grep, Glob, Bash | yellow | sonnet |
-| Generate/Create | Generator | Read, Write, Grep, Glob | cyan | sonnet |
-| Fix/Modify | Fixer | Read, Write, Edit, Bash, Grep | red | sonnet |
-| Test/Validate | Tester | Read, Bash, Grep, Glob | green | sonnet |
-| Document | Documenter | Read, Write, Grep, Glob | cyan | sonnet |
-| Orchestrate | Orchestrator | Read, Write, Bash, Grep, Glob, Task | cyan | haiku |
+| Review/Audit | Reviewer | Read, Grep, Glob, Bash | yellow | inherit |
+| Generate/Create | Generator | Read, Write, Grep, Glob | cyan | inherit |
+| Fix/Modify | Fixer | Read, Write, Edit, Bash, Grep | red | inherit |
+| Test/Validate | Tester | Read, Bash, Grep, Glob | green | inherit |
+| Document | Documenter | Read, Write, Grep, Glob | cyan | inherit |
+| Orchestrate | Orchestrator | Read, Write, Bash, Grep, Glob, Agent | cyan | haiku |
 
 ---
 
@@ -31,8 +31,8 @@ Generate a custom agent file based on requirements.
    - Agent name (lowercase, hyphenated)
    - Purpose
    - Tools needed
-   - Model (haiku/sonnet/opus)
-   - Linked skill (if any)
+   - Model (fable/opus/sonnet/haiku/inherit — inherit is the recommended default)
+   - Preloaded skills (if any)
 
 2. **Select Template** based on purpose
 
@@ -42,20 +42,24 @@ Generate a custom agent file based on requirements.
 
 ---
 
-## Frontmatter Reference
+## Frontmatter Reference (official fields)
 
 ```yaml
 ---
 name: agent-name            # Required: lowercase, hyphenated, 3-50 chars
-description: >              # Required: 200-1000 chars recommended, include <example> blocks
-  Use this agent when [triggering conditions]. Examples:
+description: >              # Required: 200-1000 chars recommended, include <example> blocks.
+  Use this agent PROACTIVELY when [triggering conditions]. Examples:
   <example>
   Context: [situation]
   user: "[request]"
   assistant: "[response]"
   <commentary>[why this agent]</commentary>
   </example>
-color: cyan                 # Required: yellow, red, green, blue, magenta, cyan
+color: cyan                 # Required by Director Mode convention (CI-enforced); optional per spec
+model: inherit              # Required by Director Mode convention (CI-enforced); optional per spec.
+                            #   Valid: fable, opus, sonnet, haiku, inherit, default, best, sonnet[1m],
+                            #   opus[1m] (or a full model ID). inherit recommended. NOT opusplan.
+effort: medium              # Optional: low, medium, high, xhigh, max
 tools:                      # Optional: YAML list (omit = all tools)
   - Read
   - Write
@@ -63,47 +67,25 @@ tools:                      # Optional: YAML list (omit = all tools)
   - Bash
   - Grep
   - Glob
-  - Task
+  - Agent
   - WebFetch
   - WebSearch
   - TodoWrite
   - NotebookEdit
-model: sonnet               # Required: inherit, haiku, sonnet, opus, best, sonnet[1m], opus[1m], opusplan
-# forkContext: "true"        # Optional: context isolation (string, not boolean)
-# maxTurns: 20              # Optional: max agentic turns before stopping
-skills:                     # Optional: skills to auto-load (array)
-  - linked-skill
-# memory:                   # Optional: CLAUDE.md access (array)
-#   - user
-#   - project
-#   - local
-# mcpServers:               # Optional: MCP servers (string ref or inline config)
-#   - memory
-#   - name: custom-server
-#     type: stdio
-#     command: npx
-#     args: ["-y", "@example/server"]
-hooks:                      # Optional: agent-scoped lifecycle hooks
-  PreToolUse:
-    - matcher: Write
-      hooks:
-        - type: command
-          command: ./scripts/validate.sh
-  PostToolUse:
-    - matcher: Bash
-      hooks:
-        - type: command
-          command: ./scripts/log.sh
-  Stop:
-    - hooks:
-        - type: command
-          command: ./scripts/check.sh
-          once: true
-permissionMode: default     # Optional: default, acceptEdits, bypassPermissions, plan, delegate, dontAsk
 disallowedTools:            # Optional: explicit tool blocking
   - NotebookEdit
+maxTurns: 20                # Optional: max agentic turns before stopping (positive integer)
+skills:                     # Optional: preloaded skill names (list)
+  - linked-skill
+memory: project             # Optional: one of user, project, local
+background: false           # Optional: run the agent in the background (boolean)
+isolation: worktree         # Optional: run the agent in an isolated git worktree
 ---
 ```
+
+**Not supported in filesystem/plugin agent frontmatter** — do not emit these:
+`hooks`, `mcpServers`, `permissionMode` (security restriction), and `forkContext`
+(not an official field). Agents fork automatically when dispatched.
 
 ---
 
@@ -112,16 +94,24 @@ disallowedTools:            # Optional: explicit tool blocking
 ```markdown
 ---
 name: [name]
-description: [brief purpose]
+description: >
+  Use this agent PROACTIVELY when [triggering conditions]. Examples:
+  <example>
+  Context: [situation]
+  user: "[request]"
+  assistant: "[response]"
+  </example>
 color: yellow
 tools:
   - Read
   - Grep
   - Glob
   - Bash
-model: sonnet
+model: inherit
 skills:
   - linked-skill
+# maxTurns: 20
+# memory: project
 ---
 
 # [Name] Agent

@@ -10,7 +10,30 @@ The install script uses **skip-existing** logic: it will NOT overwrite files tha
 
 ---
 
-## Upgrading to v1.7.1 (Current)
+## Upgrading to v1.8.0 (Current)
+
+v1.8.0 is a content-quality overhaul: corrected spec claims (30 hook events, current model lineup, `codex exec` / `gemini -p` syntax), rewritten trigger descriptions across all skills and agents, consolidated persona skill/agent pairs, safer auto-loop checkpoint writes, a fixed uninstaller that preserves your settings, and one new skill (`/handoff-claude` for multi-account delegation).
+
+Because install.sh skips existing files, upgrading requires replacing the distributed files:
+
+```bash
+# 1. Backup your customizations
+cp -r .claude/ .claude-backup-manual/
+
+# 2. Remove the distributed files (keep your custom ones)
+rm -rf .claude/agents/ .claude/skills/ .claude/hooks/
+
+# 3. Re-run install
+/path/to/director-mode-lite/install.sh .
+
+# 4. Copy back only YOUR custom files from .claude-backup-manual/
+```
+
+> Nothing in v1.8.0 changes state-file formats: existing `.auto-loop/` and `.self-evolving-loop/` checkpoints keep working.
+
+---
+
+## Upgrading to v1.7.1
 
 ### From v1.4.x or Earlier
 

@@ -1,6 +1,6 @@
 ---
 name: mcp-expert
-description: Expert on Model Context Protocol (MCP) - configuration, available servers, troubleshooting. Essential for extending Claude's capabilities.
+description: Expert on Model Context Protocol (MCP) — server configuration, discovery, and troubleshooting via `.mcp.json` and `claude mcp add`. Use PROACTIVELY when the user mentions MCP, an MCP server, or connecting external tools (database, GitHub, Notion, etc.); when an MCP fails to load or times out; or during project initialization. Covers project vs user scope, context budget, and common servers.
 color: magenta
 tools:
   - Read
@@ -79,12 +79,15 @@ claude mcp add postgres -e DATABASE_URL=postgresql://user:pass@host:5432/db -- n
 
 #### 5. Context7 (Latest Docs)
 ```bash
-claude mcp add context7 -- npx -y @anthropic/context7-mcp
+claude mcp add context7 -- npx -y @upstash/context7-mcp
 ```
 
 ### MCP Configuration Files
 
-#### Project Level: `.claude/settings.json`
+#### Project scope: `.mcp.json` (repo root, shared with the team)
+
+`claude mcp add --scope project ...` writes server definitions here. This is the correct file for project-scoped servers:
+
 ```json
 {
   "mcpServers": {
@@ -95,12 +98,13 @@ claude mcp add context7 -- npx -y @anthropic/context7-mcp
         "MEMORY_FILE_PATH": "./.claude/memory.json"
       }
     }
-  },
-  "enableAllProjectMcpServers": true
+  }
 }
 ```
 
-#### User Level: `~/.claude.json`
+To auto-approve project servers without prompting, set `"enableAllProjectMcpServers": true` in `.claude/settings.json` — that flag lives in settings.json, while the server definitions live in `.mcp.json`.
+
+#### User scope: `~/.claude.json` (personal, applies to all projects)
 ```json
 {
   "mcpServers": {
@@ -201,9 +205,6 @@ MCPs consume context tokens. Monitor usage:
 
 ## Reference
 
-For latest MCP list:
-```bash
-curl -s "https://api.anthropic.com/mcp-registry/v0/servers?version=latest&limit=100"
-```
-
-Or use Context7 MCP to fetch latest documentation.
+To discover servers, browse the official MCP directory and marketplaces (there is no public MCP-registry API endpoint to curl):
+- Claude Code MCP directory: https://docs.claude.com/en/docs/claude-code/mcp
+- Or use the Context7 MCP to pull a library's latest docs on demand.

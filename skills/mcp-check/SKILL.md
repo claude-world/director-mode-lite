@@ -1,6 +1,6 @@
 ---
 name: mcp-check
-description: Validate MCP configuration and suggest improvements
+description: Validate MCP configuration and suggest improvements. Use when MCP servers fail to load, after editing .mcp.json, or when the user runs /mcp-check.
 user-invocable: true
 ---
 
@@ -13,13 +13,19 @@ Validate the project's MCP setup for correctness and completeness.
 ## Validation Steps
 
 ### 1. Check Configuration Files
-- `.claude/settings.json` (project)
-- `~/.claude.json` (user, reference)
+
+| File | Scope | What lives here |
+|------|-------|-----------------|
+| `.mcp.json` (project root) | Project | `mcpServers` — the server definitions, written by `claude mcp add --scope project` |
+| `.claude/settings.json` | Project | Toggles only: `enableAllProjectMcpServers`, `enabledMcpjsonServers` |
+| `~/.claude.json` | User | User-scope `mcpServers`, available across all projects |
+
+**The source of truth for project servers is `.mcp.json` at the project root.** Read `mcpServers` from there — `.claude/settings.json` never holds server definitions, only approval toggles.
 
 ### 2. Validate Structure
-- [ ] Valid JSON format
-- [ ] `mcpServers` object exists
-- [ ] `enableAllProjectMcpServers: true` is set
+- [ ] `.mcp.json` is valid JSON (no trailing commas)
+- [ ] `mcpServers` object exists in `.mcp.json`
+- [ ] Project servers are approved via `.claude/settings.json`: either `enableAllProjectMcpServers: true`, or each server named in `enabledMcpjsonServers`
 
 ### 3. Validate Each MCP
 - [ ] `command` is valid

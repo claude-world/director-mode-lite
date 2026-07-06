@@ -1,6 +1,6 @@
 ---
 name: agents
-description: List all available agents (core + expert)
+description: List all available agents (core, expert, self-evolving). Use when the user asks what agents are available or runs /agents.
 user-invocable: true
 ---
 
@@ -12,36 +12,38 @@ List all agents available in Director Mode Lite.
 
 ## Core Agents
 
-### code-reviewer
-**Purpose:** Code quality, security, best practices review.
-**Triggers:** "review", "check code", before commits
-
-### debugger
-**Purpose:** Systematic debugging for errors.
-**Triggers:** Errors, test failures, "bug", "debug"
-
-### doc-writer
-**Purpose:** Documentation creation and maintenance.
-**Triggers:** New features, "document", "README"
+| Agent | Purpose |
+|-------|---------|
+| `code-reviewer` | Reviews code for quality, security, and best practices after changes or on PRs |
+| `debugger` | Root-cause analysis for errors, test failures, and unexpected behavior |
+| `doc-writer` | Creates and maintains README, API docs, and code comments |
 
 ---
 
 ## Expert Agents
 
-### claude-md-expert
-CLAUDE.md design patterns and best practices.
+| Agent | Purpose |
+|-------|---------|
+| `claude-md-expert` | CLAUDE.md design patterns, best practices, and project configuration |
+| `mcp-expert` | MCP server configuration, troubleshooting, and discovery |
+| `agents-expert` | Creating, configuring, and using custom agents |
+| `skills-expert` | Creating, configuring, and managing custom skills and commands |
+| `hooks-expert` | Designing and troubleshooting PreToolUse/PostToolUse hooks |
 
-### mcp-expert
-MCP configuration and troubleshooting.
+---
 
-### agents-expert
-Custom agent creation and configuration.
+## Self-Evolving Agents
 
-### skills-expert
-Custom skill/command creation.
+Used by [/evolving-loop](../evolving-loop/SKILL.md) to run the autonomous development cycle.
 
-### hooks-expert
-Automation hooks and triggers.
+| Agent | Purpose |
+|-------|---------|
+| `evolving-orchestrator` | Coordinates the loop phases and manages memory; returns brief summaries |
+| `requirement-analyzer` | Extracts acceptance criteria, complexity, and implementation strategy |
+| `skill-synthesizer` | Generates tailored executor, validator, and fixer skills |
+| `completion-judge` | Evaluates validation results and decides continue / evolve / ship |
+| `experience-extractor` | Analyzes successes and failures to extract improvement suggestions |
+| `skill-evolver` | Applies learning insights to produce improved skill versions |
 
 ---
 
@@ -69,8 +71,14 @@ Automation hooks and triggers.
 ```markdown
 ---
 name: my-agent
-description: What this agent does
-tools: Read, Grep, Glob, Bash
+description: What this agent does, and when to use it
+color: blue
+tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
+model: sonnet
 ---
 
 # Agent Name

@@ -163,13 +163,7 @@ case "$NEXT_PHASE" in
         ;;
 esac
 
-# Output continuation signal
-cat << EOF
-{
-  "continue": true,
-  "reason": "Phase $CURRENT_PHASE completed, continuing to $NEXT_PHASE",
-  "prompt": "$PROMPT",
-  "iteration": $CURRENT_ITERATION,
-  "next_phase": "$NEXT_PHASE"
-}
-EOF
+# Output continuation signal (official Stop-hook schema: block the stop,
+# "reason" becomes the next prompt — see docs/HOOKS-GUIDE.md)
+jq -n --arg reason "[Iteration $CURRENT_ITERATION | $CURRENT_PHASE -> $NEXT_PHASE] $PROMPT" \
+    '{decision: "block", reason: $reason}'

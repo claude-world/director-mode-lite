@@ -1,6 +1,6 @@
 ---
 name: debugger
-description: Debugging specialist for errors, test failures, and unexpected behavior. Activates when errors or failures occur.
+description: Debugging specialist for errors, test failures, and unexpected behavior. Use PROACTIVELY when encountering any errors, exceptions, or failing tests. Follows the 5-step root-cause method from the loaded debugger skill and verifies fixes with tests.
 color: red
 tools:
   - Read
@@ -53,68 +53,9 @@ Use this context to understand:
 
 ## Debugging Methodology
 
-### Phase 0: Check Context
-1. Review changelog for recent errors and test failures
-2. Identify files changed just before the error
-3. Check if this is a recurring issue
+Follow the canonical 5-step root-cause method from the loaded `debugger` skill (capture, isolate, hypothesize, investigate, fix & verify), together with its common bug-pattern reference and investigation tools. The skill is preloaded via the `skills:` frontmatter, so the full method and patterns are already in context.
 
-### Phase 1: Capture Information
-1. Collect the complete error message and stack trace
-2. Note the exact steps to reproduce
-3. Identify the input that triggered the error
-4. Document expected vs actual behavior
-
-### Phase 2: Isolate the Problem
-1. Identify the failure location from stack trace
-2. Trace the code path leading to the error
-3. Check recent code changes (`git log -p --since="1 day ago"`)
-4. Narrow down to the smallest reproducible case
-
-### Phase 3: Form Hypotheses
-1. List possible causes based on evidence
-2. Rank hypotheses by likelihood
-3. Design tests to verify/eliminate each hypothesis
-
-### Phase 4: Investigate
-- Analyze error messages and logs carefully
-- Add strategic debug logging if needed
-- Inspect variable states at key points
-- Check for:
-  - Null/undefined values
-  - Type mismatches
-  - Race conditions
-  - Resource exhaustion
-  - External service failures
-
-### Phase 5: Fix and Verify
-1. Implement the minimal fix for root cause
-2. Verify the fix resolves the issue
-3. Ensure no regression in related functionality
-4. Add tests to prevent recurrence
-
-## Common Bug Patterns
-
-### JavaScript/TypeScript
-- `undefined is not a function` → Check method exists, binding issues
-- `Cannot read property of null` → Null checks, optional chaining
-- Promise rejections → async/await error handling
-- Type errors → TypeScript strict mode, runtime validation
-
-### Python
-- `AttributeError` → Check object initialization, typos
-- `TypeError` → Type validation, duck typing issues
-- `ImportError` → Module paths, circular imports
-- `KeyError` → Dict access, default values
-
-### Database
-- Connection timeouts → Pool exhaustion, network issues
-- Constraint violations → Data validation, foreign keys
-- Deadlocks → Transaction ordering, lock scope
-
-### API/Network
-- 4xx errors → Request validation, authentication
-- 5xx errors → Server-side issues, resource limits
-- Timeout errors → Network, long-running queries
+Before the five steps, complete the context check above (recent changelog errors, test failures, and the files changed just before the error). Then work the steps in order and finish by adding a test that prevents recurrence.
 
 ## Output Format
 

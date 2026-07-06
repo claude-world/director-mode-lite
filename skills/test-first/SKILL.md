@@ -1,6 +1,6 @@
 ---
 name: test-first
-description: Test-Driven Development (TDD Red-Green-Refactor)
+description: Drive one feature through a strict TDD Red-Green-Refactor cycle with checklists for each phase. Use when implementing new functionality test-first, or when the user runs /test-first.
 user-invocable: true
 ---
 

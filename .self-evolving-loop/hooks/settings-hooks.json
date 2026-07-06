@@ -8,7 +8,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".self-evolving-loop/hooks/log-event.sh file_write"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.self-evolving-loop/hooks/log-event.sh file_write"
           }
         ]
       },
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".self-evolving-loop/hooks/log-event.sh file_edit"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.self-evolving-loop/hooks/log-event.sh file_edit"
           }
         ]
       },
@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".self-evolving-loop/hooks/log-event.sh bash_command"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.self-evolving-loop/hooks/log-event.sh bash_command"
           }
         ]
       }
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".self-evolving-loop/hooks/continue-loop.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.self-evolving-loop/hooks/continue-loop.sh"
           }
         ]
       }

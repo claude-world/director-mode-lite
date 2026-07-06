@@ -209,29 +209,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check README Links
+      - name: Check Internal Links
         run: |
-          echo "Checking links in README.md..."
+          echo "Checking internal links in README.md, docs/, and skills/..."
 
           ERRORS=0
 
-          # Extract markdown links
-          links=$(grep -oE '\[([^]]+)\]\(([^)]+)\)' README.md | grep -oE '\(([^)]+)\)' | tr -d '()')
+          for file in README.md docs/*.md skills/*/SKILL.md; do
+            [[ -f "$file" ]] || continue
+            dir=$(dirname "$file")
 
-          for link in $links; do
-            # Skip external links for now, just check internal
-            if [[ "$link" =~ ^https?:// ]]; then
-              echo "  EXT: $link (skipped)"
-            elif [[ "$link" =~ ^# ]]; then
-              echo "  ANCHOR: $link (skipped)"
-            else
-              if [[ ! -e "$link" ]]; then
-                echo "  FAIL: Broken internal link: $link"
+            # Extract markdown links, ignoring fenced code blocks (templates/examples)
+            links=$(awk '/^```/{inblock=!inblock; next} !inblock' "$file" \
+              | grep -oE '\]\(([^)]+)\)' | sed -E 's/^\]\(//; s/\)$//' || true)
+
+            for link in $links; do
+              target="${link%%#*}"   # strip anchor fragment
+              if [[ -z "$target" ]]; then
+                continue  # pure anchor
+              elif [[ "$target" =~ ^(https?://|mailto:) ]]; then
+                continue  # external
+              elif [[ ! -e "$dir/$target" ]]; then
+                echo "  FAIL: $file -> broken link: $link"
                 ERRORS=$((ERRORS + 1))
-              else
-                echo "  PASS: $link"
               fi
-            fi
+            done
           done
 
           echo ""

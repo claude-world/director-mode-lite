@@ -47,10 +47,10 @@ Acceptance Criteria:
 │                      TDD Iteration                            │
 ├───────────┬───────────────────────────────────────────────────┤
 │  RED      │ Write failing test for next AC                    │
-│           │ → Auto-logged: file_created, test_fail            │
+│           │ → Auto-logged: file_write, test_fail              │
 ├───────────┼───────────────────────────────────────────────────┤
 │  GREEN    │ Write implementation to make test pass            │
-│           │ → Auto-logged: file_created/modified, test_pass   │
+│           │ → Auto-logged: file_write/edit, test_pass         │
 ├───────────┼───────────────────────────────────────────────────┤
 │  REFACTOR │ Improve code quality (no behavior change)         │
 │           │ → Use code-reviewer agent for suggestions         │
@@ -117,18 +117,13 @@ fi
 mkdir -p "$STATE_DIR" "$CHANGELOG_DIR"
 
 # Initialize checkpoint
-cat > "$CHECKPOINT" << EOF
-{
-  "request": "$ARGUMENTS",
-  "current_iteration": 0,
-  "max_iterations": 20,
-  "status": "in_progress",
-  "started_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "acceptance_criteria": [],
-  "last_test_result": null,
-  "files_changed": []
-}
-EOF
+# Build with jq so multiline requests or embedded double quotes stay valid JSON
+# (a raw heredoc would break on the quoted acceptance-criteria usage above).
+jq -n --arg req "$ARGUMENTS" \
+  '{request: $req, current_iteration: 0, max_iterations: 20, status: "in_progress", started_at: (now | todate), acceptance_criteria: [], last_test_result: null, files_changed: []}' \
+  > "$CHECKPOINT"
+
+# acceptance_criteria stays empty here; the parse step below fills it in.
 ```
 
 ### 3. Parse Acceptance Criteria
@@ -192,8 +187,8 @@ All events are automatically logged via PostToolUse hooks:
 
 | Event | Trigger | Hook |
 |-------|---------|------|
-| `file_created` | Write tool | `log-file-change.sh` |
-| `file_modified` | Edit tool | `log-file-change.sh` |
+| `file_write` | Write tool | `log-file-change.sh` |
+| `file_edit` | Edit tool | `log-file-change.sh` |
 | `test_pass/fail` | Bash (test) | `log-bash-event.sh` |
 | `commit` | Bash (git commit) | `log-bash-event.sh` |
 

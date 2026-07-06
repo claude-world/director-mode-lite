@@ -1,6 +1,6 @@
 # Self-Evolving Loop - Architecture Details
 
-> **Main Skill**: [.claude/skills/evolving-loop/SKILL.md](../.claude/skills/evolving-loop/SKILL.md)
+> **Main Skill**: [skills/evolving-loop/SKILL.md](../skills/evolving-loop/SKILL.md)
 > **Version**: 2.0.0 (Meta-Engineering integrated)
 
 This document contains detailed architecture information for the Self-Evolving Development Loop.
@@ -111,7 +111,7 @@ This document contains detailed architecture information for the Self-Evolving D
   "task_patterns": {
     "auth": {
       "keywords": ["login", "authentication", "authorize", "JWT", "OAuth", "session"],
-      "recommended_agents": ["security-checker"],
+      "recommended_agents": ["code-reviewer"],
       "recommended_skills": ["test-runner"],
       "success_rate": 0.75,
       "sample_count": 0

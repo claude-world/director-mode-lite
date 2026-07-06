@@ -8,7 +8,7 @@ user-invocable: true
 
 Execute an autonomous development cycle that dynamically generates, validates, and evolves its own execution strategy. Integrates with Meta-Engineering memory system for pattern learning and tool evolution.
 
-> **Architecture Details**: See [docs/EVOLVING-LOOP-ARCHITECTURE.md](../../../docs/EVOLVING-LOOP-ARCHITECTURE.md)
+> **Architecture Details**: See [docs/EVOLVING-LOOP-ARCHITECTURE.md](../../docs/EVOLVING-LOOP-ARCHITECTURE.md)
 
 ---
 
@@ -51,6 +51,7 @@ Acceptance Criteria:
 │  │ Phase 5: DECIDE    → SHIP/FIX/EVOLVE    │        │
 │  │ Phase 6: LEARN     → Extract patterns   │        │
 │  │ Phase 7: EVOLVE    → Improve skills     │        │
+│  │ Phase 8: SHIP      → Deliver result     │        │
 │  └──────────────────────────────────────────┘        │
 │                                                      │
 │  Phase -1C: EVOLUTION → Update memory (on SHIP)     │
@@ -137,7 +138,7 @@ fi
 **CRITICAL**: Use context isolation - orchestrator runs in fork context.
 
 ```markdown
-Task(subagent_type="evolving-orchestrator", prompt="""
+Agent(subagent_type="evolving-orchestrator", prompt="""
 Request: $ARGUMENTS
 Task Type: $TASK_TYPE (from pattern matching)
 
@@ -229,4 +230,4 @@ touch .self-evolving-loop/state/stop
 
 - [/evolving-status](../evolving-status/SKILL.md) - View status and memory
 - [evolving-orchestrator](../../agents/evolving-orchestrator.md) - Phase coordinator
-- [Architecture Details](../../../docs/EVOLVING-LOOP-ARCHITECTURE.md) - Full technical docs
+- [Architecture Details](../../docs/EVOLVING-LOOP-ARCHITECTURE.md) - Full technical docs

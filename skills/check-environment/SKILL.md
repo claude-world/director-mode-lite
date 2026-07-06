@@ -1,6 +1,6 @@
 ---
 name: check-environment
-description: Verify development environment is ready
+description: "Verify the development environment is ready for Director Mode: claude CLI, git, python3, jq, project runtime, and installed skills/agents/hooks. Use after installation, when hooks or skills misbehave, or when the user runs /check-environment."
 user-invocable: true
 ---
 
@@ -42,7 +42,7 @@ Auto-detect project type and check relevant tools:
 ### 4. Director Mode Installation
 
 - [ ] `.claude/` directory exists
-- [ ] `.claude/skills/` populated (31 skills expected)
+- [ ] `.claude/skills/` populated (32 skills expected)
 - [ ] `.claude/agents/` populated (14 agents expected)
 - [ ] `.claude/hooks/` populated (5 hook scripts expected)
 - [ ] `.claude/settings.local.json` has hooks configured
@@ -66,7 +66,7 @@ Auto-detect project type and check relevant tools:
 - [x] jq: 1.7
 
 ### Claude Code
-- [x] Version: 2.1.76
+- [x] Version: 2.1.201
 
 ### Project Tools (Node.js detected)
 - [x] node: 20.10.0
@@ -74,7 +74,7 @@ Auto-detect project type and check relevant tools:
 
 ### Director Mode Installation
 - [x] .claude/ directory exists
-- [x] 31 skills installed
+- [x] 32 skills installed
 - [x] 14 agents installed
 - [x] 5 hooks installed
 - [x] settings.local.json configured

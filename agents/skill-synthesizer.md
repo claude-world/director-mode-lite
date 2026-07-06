@@ -1,12 +1,13 @@
 ---
 name: skill-synthesizer
-description: Dynamic skill generator for Self-Evolving Loop with Meta-Engineering integration. Creates tailored executor, validator, and fixer skills based on requirement analysis and pattern recommendations.
+description: Dynamic skill generator for the Self-Evolving Loop. Use when executing /evolving-loop Phase GENERATE — after requirement-analyzer completes, when skills need (re)generation, or on a regeneration request. Creates tailored executor/validator/fixer skills from analysis.json plus pattern recommendations, runs a security check on input, and writes generated-skills/*.md.
 color: cyan
 tools:
   - Read
   - Write
   - Grep
   - Glob
+  - Bash
 model: haiku
 ---
 
@@ -48,20 +49,17 @@ cat .self-evolving-loop/reports/patterns.json | jq '.'
 
 ### Pattern Integration
 
-Before generating skills, check pattern recommendations:
+Before generating skills, pull the recommendations from patterns.json with jq:
 
-```python
-def get_pattern_recommendations():
-    patterns = read_json(".self-evolving-loop/reports/patterns.json")
-
-    return {
-        "recommended_agents": patterns.get("recommended_agents", []),
-        "recommended_skills": patterns.get("recommended_skills", []),
-        "predicted_tools": patterns.get("predicted_tools", []),
-        "template_improvements": patterns.get("template_improvements", []),
-        "pattern_success_rate": patterns.get("pattern_success_rate", 0.75)
-    }
+```bash
+P=.self-evolving-loop/reports/patterns.json
+jq -r '.recommended_agents[]?'   "$P"   # agents to prefer
+jq -r '.recommended_skills[]?'   "$P"   # skills to prefer
+jq -r '.template_improvements[]? | @json' "$P"
+jq -r '.pattern_success_rate // 0.75'    "$P"
 ```
+
+Fold `recommended_agents`, `recommended_skills`, and any `template_improvements` into the generated executor's guidance.
 
 ## Skill Generation Process
 
@@ -248,10 +246,14 @@ Save generated skills to:
 - `.self-evolving-loop/generated-skills/validator-v[N].md`
 - `.self-evolving-loop/generated-skills/fixer-v[N].md`
 
-Also create symlinks for latest:
-- `.claude/commands/_exec-current.md` → latest executor
-- `.claude/commands/_validate-current.md` → latest validator
-- `.claude/commands/_fix-current.md` → latest fixer
+Also register the latest versions as symlinks (uses the Bash tool):
+
+```bash
+mkdir -p .claude/commands
+ln -sf "$(pwd)/.self-evolving-loop/generated-skills/executor-v${N}.md"  .claude/commands/_exec-current.md
+ln -sf "$(pwd)/.self-evolving-loop/generated-skills/validator-v${N}.md" .claude/commands/_validate-current.md
+ln -sf "$(pwd)/.self-evolving-loop/generated-skills/fixer-v${N}.md"     .claude/commands/_fix-current.md
+```
 
 ## Update Checkpoint
 
@@ -278,59 +280,15 @@ After generation, update checkpoint:
 
 **CRITICAL**: All user input must be sanitized before embedding in generated skills.
 
-### Sanitization Functions
+### Sanitization Rules
 
-```python
-import re
+Apply these rules to any user-derived text before embedding it in a generated skill. The `security-check.sh` below enforces the critical ones.
 
-# Dangerous patterns to block
-DANGEROUS_PATTERNS = [
-    r'rm\s+-rf\s+/',          # rm -rf /
-    r'sudo\s+',               # sudo commands
-    r'eval\s+\$',             # eval $var
-    r'curl.*\|\s*bash',       # curl | bash
-    r'wget.*\|\s*sh',         # wget | sh
-    r';\s*rm\s+',             # ; rm
-    r'\$\(.*\)',              # command substitution in strings
-    r'`.*`',                  # backtick command substitution
-    r'>\s*/dev/sd',           # write to disk devices
-    r'mkfs\.',                # filesystem formatting
-    r'dd\s+if=',              # dd commands
-]
-
-ALLOWED_COMMANDS = [
-    'npm', 'npx', 'node', 'yarn', 'pnpm',
-    'python', 'pip', 'pytest',
-    'go', 'cargo', 'rustc',
-    'git', 'jq', 'grep', 'cat', 'ls', 'mkdir',
-    'jest', 'mocha', 'vitest',
-]
-
-def sanitize_input(text: str) -> str:
-    """
-    Sanitize user input before embedding in skills.
-    Returns sanitized text or raises SecurityError.
-    """
-    # Check for dangerous patterns
-    for pattern in DANGEROUS_PATTERNS:
-        if re.search(pattern, text, re.IGNORECASE):
-            raise SecurityError(f"Dangerous pattern detected: {pattern}")
-
-    # Escape shell metacharacters
-    sanitized = text.replace('$', '\\$')
-    sanitized = sanitized.replace('`', '\\`')
-    sanitized = sanitized.replace('"', '\\"')
-    sanitized = sanitized.replace("'", "\\'")
-
-    return sanitized
-
-def validate_command(cmd: str) -> bool:
-    """
-    Validate that a command uses only allowed executables.
-    """
-    first_word = cmd.strip().split()[0] if cmd.strip() else ""
-    return first_word in ALLOWED_COMMANDS
-```
+1. **Reject** the request if it contains a dangerous pattern:
+   `rm -rf /`, `sudo `, `eval $...`, `curl ... | bash`, `wget ... | sh`, `; rm `, backtick or `$(...)` command substitution, `> /dev/sd*`, `mkfs.`, `dd if=`.
+2. **Escape** shell metacharacters (`$`, backtick, `"`, `'`) in any value embedded verbatim.
+3. **Allow-list** the executables a generated skill may call — anything outside this set must be justified or rejected:
+   `npm npx node yarn pnpm python pip pytest go cargo rustc git jq grep cat ls mkdir jest mocha vitest`.
 
 ### Pre-Generation Security Check
 
@@ -409,6 +367,12 @@ eval "$USER_INPUT" # Injection risk
 ```
 
 ---
+
+## Return Contract
+
+Final message: **≤ 3 short lines** — which skills were generated (versions + lifecycle) and the output directory. All templates and detail go to the files, not your reply.
+Example: `Generated executor-v1, validator-v1, fixer-v1 (task-scoped). -> .self-evolving-loop/generated-skills/`
+Do NOT return the skill bodies or the analysis.
 
 ## Guidelines
 

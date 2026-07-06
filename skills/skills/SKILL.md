@@ -1,6 +1,6 @@
 ---
 name: skills
-description: List all available skills (core + custom)
+description: List all available skills grouped by category. Use when the user asks what skills are available or runs /skills.
 user-invocable: true
 ---
 
@@ -10,54 +10,88 @@ List all skills available in Director Mode Lite.
 
 ---
 
-## Core Skills
+Slash-prefixed names (`/name`) are user-invocable commands. Bare names are internal — Claude runs them automatically when relevant.
 
-| Skill | Purpose |
-|-------|---------|
-| `code-reviewer` | Code quality, security review |
-| `test-runner` | Test automation, TDD support |
-| `debugger` | 5-step debugging methodology |
-| `doc-writer` | README, API docs, comments |
-
----
-
-## Workflow Skills
+## Workflow
 
 | Skill | Function |
 |-------|----------|
-| `/workflow` | Complete 5-step development |
-| `/focus-problem` | Problem analysis |
-| `/test-first` | TDD Red-Green-Refactor |
-| `/smart-commit` | Conventional Commits |
-| `/plan` | Task breakdown |
-| `/auto-loop` | Autonomous TDD loop |
-| `/evolving-loop` | Self-evolving development |
+| `/workflow` | Complete 5-step development flow (research, plan, implement, test, review) |
+| `/plan` | Break a task into a detailed execution plan |
+| `/focus-problem` | Deep problem analysis using Explore agents |
+| `/test-first` | Test-Driven Development (Red-Green-Refactor) |
+| `/smart-commit` | Conventional Commits with pre-commit quality checks |
 
 ---
 
-## Utility Skills
+## Loops
 
 | Skill | Function |
 |-------|----------|
-| `/project-init` | Project setup |
-| `/project-health-check` | 7-point audit |
-| `/check-environment` | Verify dev environment |
-| `/claude-md-check` | Validate CLAUDE.md |
-| `/agent-check` | Validate agents |
-| `/skill-check` | Validate skills |
-| `/hooks-check` | Validate hooks |
-| `/mcp-check` | Validate MCP |
+| `/auto-loop` | Autonomous TDD loop with checkpoint recovery |
+| `/evolving-loop` | Self-evolving loop that generates and evolves its own skills |
+| `/evolving-status` | View evolving-loop session status, history, and memory |
+| `/changelog` | View and manage the runtime observability changelog |
 
 ---
 
-## Template Skills
+## Setup & Health
 
 | Skill | Function |
 |-------|----------|
-| `/claude-md-template` | Generate CLAUDE.md |
-| `/agent-template` | Generate agent |
-| `/skill-template` | Generate skill |
-| `/hook-template` | Generate hook |
+| `/getting-started` | Guided 5-minute onboarding for Director Mode Lite |
+| `/project-init` | Expert-guided project setup (6 phases) |
+| `/project-health-check` | Full project health audit (7 checks) |
+| `/check-environment` | Verify the development environment is ready |
+| `/agents` | List all available agents |
+| `/skills` | List all available skills |
+
+---
+
+## Validators
+
+| Skill | Function |
+|-------|----------|
+| `/claude-md-check` | Validate CLAUDE.md structure and completeness |
+| `/agent-check` | Validate agent file format and structure |
+| `/skill-check` | Validate skill/command file format and structure |
+| `/hooks-check` | Validate hooks configuration and scripts |
+| `/mcp-check` | Validate MCP configuration |
+
+---
+
+## Generators
+
+| Skill | Function |
+|-------|----------|
+| `/claude-md-template` | Generate a CLAUDE.md for the current project |
+| `/agent-template` | Generate a custom agent from template |
+| `/skill-template` | Generate a custom skill/command from template |
+| `/hook-template` | Generate a hook script from template |
+
+---
+
+## Handoff / Interop
+
+| Skill | Function |
+|-------|----------|
+| `/handoff-claude` | Delegate to another authorized Claude Code account/profile via `claude -p` |
+| `/handoff-codex` | Delegate bulk mechanical tasks to OpenAI Codex CLI (`codex exec`) |
+| `/handoff-gemini` | Delegate long-context analysis to Google Gemini CLI (`gemini -p`) |
+
+---
+
+## Internal (model-invoked)
+
+Not slash commands — Claude activates these automatically when it judges them relevant.
+
+| Skill | Function |
+|-------|----------|
+| `code-reviewer` | Reviews code for quality, security, and best practices |
+| `debugger` | Root-cause analysis and problem resolution |
+| `doc-writer` | Writes README, API docs, and code comments |
+| `test-runner` | Runs tests and ensures coverage |
+| `interop-router` | Auto-routes eligible tasks to an external CLI (Codex/Gemini) |
 
 ---
 

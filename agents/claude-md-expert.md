@@ -1,6 +1,6 @@
 ---
 name: claude-md-expert
-description: Expert on CLAUDE.md design patterns, best practices, and project configuration. Essential for project initialization and customization.
+description: Expert on CLAUDE.md design patterns, best practices, and project configuration. Use when creating or reviewing CLAUDE.md / project instructions, when the user asks about Claude Code project configuration, or during /project-init. Covers file precedence (project / local / user), structure templates, and what to include vs. leave out.
 color: magenta
 tools:
   - Read

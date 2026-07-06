@@ -1,7 +1,13 @@
 ---
 name: debugger
-description: Debugging specialist for root cause analysis and problem resolution
-allowed-tools: Read, Grep, Glob, Bash, Edit
+description: "Systematic debugging method: 5-step root-cause analysis (capture, isolate, hypothesize, investigate, fix & verify) plus common bug-pattern reference. Use when errors, exceptions, test failures, or unexpected behavior appear. Loaded automatically by the debugger agent."
+user-invocable: false
+allowed-tools:
+  - Read
+  - Grep
+  - Glob
+  - Bash
+  - Edit
 ---
 
 # Debugger Skill
@@ -10,51 +16,57 @@ allowed-tools: Read, Grep, Glob, Bash, Edit
 
 ---
 
-## Role
-
-You are a **debugging specialist** focused on systematic root cause analysis and problem resolution.
-
-## Debugging Methodology
-
-### 5-Step Debug Process
+## 5-Step Root-Cause Method
 
 ```
-1. REPRODUCE  → Confirm the bug exists
-2. ISOLATE    → Narrow down the scope
-3. IDENTIFY   → Find the root cause
-4. FIX        → Apply the solution
-5. VERIFY     → Confirm the fix works
+1. CAPTURE      → Collect the full error, reproduce, define expected vs actual
+2. ISOLATE      → Narrow to the smallest failing case
+3. HYPOTHESIZE  → List and rank likely causes
+4. INVESTIGATE  → Test hypotheses, inspect state
+5. FIX & VERIFY → Apply the minimal fix, confirm, prevent recurrence
 ```
 
-## Step 1: Reproduce
+## Step 1: Capture
 
-Before debugging, confirm:
-- [ ] Can reproduce the issue
-- [ ] Have clear steps to reproduce
+- [ ] Collect the complete error message and stack trace
+- [ ] Can reproduce the issue with clear steps
+- [ ] Identify the input that triggered the error
 - [ ] Know expected vs actual behavior
-- [ ] Have relevant error messages/logs
 
 ## Step 2: Isolate
 
-Narrow down the problem:
-- [ ] Which file(s) are involved?
-- [ ] Which function(s) are involved?
-- [ ] When did it start? (git bisect)
-- [ ] What changed recently?
+- [ ] Identify the failure location from the stack trace
+- [ ] Which file(s) and function(s) are involved?
+- [ ] When did it start? (`git bisect`, `git log`)
+- [ ] Narrow down to the smallest reproducible case
 
-## Step 3: Identify
+## Step 3: Hypothesize
 
-Find the root cause:
+- [ ] List possible causes based on evidence
+- [ ] Rank hypotheses by likelihood
+- [ ] Design a test to confirm or eliminate each
+
+## Step 4: Investigate
+
+- Analyze error messages and logs carefully
+- Add strategic debug logging; inspect variable state at key points
+- Check for: null/undefined values, type mismatches, race conditions, resource exhaustion, external service failures
 
 ### Common Bug Patterns
 
 | Pattern | Signs | Common Fix |
 |---------|-------|------------|
-| Null/Undefined | `Cannot read property of undefined` | Add null checks |
+| Null/Undefined | `Cannot read property of undefined` | Add null checks / optional chaining |
 | Off-by-one | Loop runs one too many/few times | Check loop bounds |
 | Race condition | Intermittent failures | Add synchronization |
 | Type coercion | `"1" + 1 = "11"` | Explicit type conversion |
 | Async issues | `Promise { <pending> }` | Await/handle promises |
+
+By language and domain:
+- **JavaScript/TypeScript**: `undefined is not a function` (binding), `Cannot read property of null` (optional chaining), promise rejections (async/await handling), type errors (strict mode)
+- **Python**: `AttributeError` (init/typos), `TypeError` (type validation), `ImportError` (paths, circular imports), `KeyError` (dict defaults)
+- **Database**: connection timeouts (pool exhaustion), constraint violations (validation, foreign keys), deadlocks (transaction ordering)
+- **API/Network**: 4xx (request validation, auth), 5xx (server-side, resource limits), timeouts (network, long-running queries)
 
 ### Investigation Tools
 
@@ -70,19 +82,15 @@ git diff HEAD~5
 grep -r "functionName" src/
 ```
 
-## Step 4: Fix
+## Step 5: Fix & Verify
 
 Apply the solution:
-- Make minimal changes
-- Don't refactor while fixing
-- One fix per commit
-
-## Step 5: Verify
+- Make the minimal change; don't refactor while fixing; one fix per commit
 
 Confirm the fix:
 - [ ] Original issue is resolved
 - [ ] No new issues introduced
-- [ ] Tests pass
+- [ ] Tests pass; add a test to prevent recurrence
 - [ ] Manual verification done
 
 ## Output Format

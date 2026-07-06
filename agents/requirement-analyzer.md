@@ -1,13 +1,14 @@
 ---
 name: requirement-analyzer
-description: Deep requirement analysis agent for Self-Evolving Loop. Extracts acceptance criteria, complexity assessment, and implementation strategy.
+description: Deep requirement analysis agent for the Self-Evolving Loop. Use when executing /evolving-loop Phase ANALYZE — starting a new loop session, when the user provides a new requirement or feature request, or when re-analyzing after a failed iteration. Extracts acceptance criteria, a complexity score, an implementation strategy, and codebase context; writes reports/analysis.json.
 color: cyan
 tools:
   - Read
   - Grep
   - Glob
   - Bash
-model: haiku
+  - Write
+model: sonnet
 ---
 
 # Requirement Analyzer Agent
@@ -108,8 +109,8 @@ Analyze existing codebase to inform strategy:
 # Check project structure
 find . -type f -name "*.ts" -o -name "*.js" -o -name "*.py" | head -20
 
-# Find related existing code
-grep -r "related_keyword" --include="*.{ts,js,py}" -l
+# Find related existing code (one --include per extension; grep does not brace-expand)
+grep -rl "related_keyword" --include="*.ts" --include="*.js" --include="*.py" .
 
 # Check test patterns
 find . -name "*.test.*" -o -name "*_test.*" -o -name "test_*" | head -10
@@ -162,12 +163,23 @@ Generate a structured analysis report:
 
 ## Save Analysis
 
-Save the analysis report:
+Ensure the reports directory exists, then use the **Write** tool to save the structured report (the JSON above) to `.self-evolving-loop/reports/analysis.json`:
 
 ```bash
-REPORT_PATH=".self-evolving-loop/reports/analysis.json"
-# Write JSON to file
+mkdir -p .self-evolving-loop/reports
 ```
+
+After writing, verify it parses:
+
+```bash
+jq -e . .self-evolving-loop/reports/analysis.json >/dev/null && echo "analysis.json valid"
+```
+
+## Return Contract
+
+Final message: **≤ 3 short lines** — status + AC count + complexity + the output path. All detail goes to the report file, not your reply.
+Example: `Analysis complete. 5 acceptance criteria, complexity 7/10. -> .self-evolving-loop/reports/analysis.json`
+Do NOT return the full analysis, the AC list, or a codebase dump.
 
 ## Guidelines
 
