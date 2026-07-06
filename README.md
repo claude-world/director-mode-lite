@@ -132,7 +132,7 @@ Acceptance Criteria:
 
 ---
 
-## NEW: Self-Evolving Loop
+## Self-Evolving Loop
 
 <table>
 <tr>
@@ -306,7 +306,7 @@ It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and e
 | `/check-environment` | Env check |
 | `/project-health-check` | 7-point audit |
 
-**Validators (NEW):**
+**Validators:**
 | Command | Purpose |
 |---------|---------|
 | `/claude-md-check` | Validate CLAUDE.md |
@@ -315,7 +315,7 @@ It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and e
 | `/skill-check` | Validate skill files |
 | `/hooks-check` | Validate hooks |
 
-**Generators (NEW):**
+**Generators:**
 | Command | Purpose |
 |---------|---------|
 | `/claude-md-template` | Generate CLAUDE.md |
@@ -354,7 +354,7 @@ It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and e
 | `skills-expert` | Custom skills |
 | `hooks-expert` | Automation hooks |
 
-**Self-Evolving Agents (NEW):**
+**Self-Evolving Agents:**
 | Agent | Purpose |
 |-------|---------|
 | `evolving-orchestrator` | Loop coordination |
@@ -467,6 +467,22 @@ cat src/auth/index.ts
 /focus-problem "understand the authentication flow"
 ```
 
+### Scale Out: Multi-Account Delegation
+
+Parallelism doesn't stop at one account. `/handoff-claude` delegates tasks to **other authorized Claude Code instances** — each with its own login, quota, and session state via `CLAUDE_CONFIG_DIR` profiles:
+
+```bash
+# One-time setup per profile (isolated login, sessions, settings)
+CLAUDE_CONFIG_DIR=~/.claude-profiles/z-1 claude auth login
+
+# Fan out to two accounts in parallel, conflict-free via git worktrees
+(cd ../proj-task-a && claude-z-1 -p "Implement feature A" --permission-mode acceptEdits) &
+(cd ../proj-task-b && claude-z-2 -p "Implement feature B" --permission-mode acceptEdits) &
+wait
+```
+
+Run `/handoff-claude` for the full setup guide (wrapper commands, auth, result collection).
+
 ---
 
 ## Agents
@@ -519,7 +535,7 @@ Creates and maintains:
 
 ---
 
-## Expert Agents (NEW)
+## Expert Agents
 
 Director Mode Lite includes **5 Expert Agents** that deeply understand Claude Code's official features:
 
@@ -592,7 +608,7 @@ Your guide for:
 
 ---
 
-## Validators & Generators (NEW)
+## Validators & Generators
 
 Pair with Expert Agents for **validate-then-fix** or **template-then-customize** workflows:
 
@@ -779,7 +795,7 @@ Report bugs, request features
 | [FAQ](docs/FAQ.md) | Common questions answered |
 | [Concepts](docs/DIRECTOR-MODE-CONCEPTS.md) | Deep dive into methodology |
 | [CLAUDE.md Template](docs/CLAUDE-TEMPLATE.md) | Project configuration guide |
-| [Hooks Guide](docs/HOOKS-GUIDE.md) | Hook implementation reference (12 types) |
+| [Hooks Guide](docs/HOOKS-GUIDE.md) | Hook implementation reference (30 event types) |
 | [Self-Evolving Loop](docs/SELF-EVOLVING-LOOP.md) | Dynamic skill evolution system |
 | [Development Patterns](docs/DEVELOPMENT-PATTERNS.md) | Learned best practices |
 
