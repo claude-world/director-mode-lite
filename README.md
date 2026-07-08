@@ -204,10 +204,12 @@ claude plugin install director-mode-lite
 cd your-project
 
 # 3. Run installation script from cached plugin
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.1/install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.9.0/install.sh .
+# ...or the interactive setup wizard:
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.9.0/install.sh . --wizard
 
 # 4. Verify installation
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.1/scripts/verify-install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.9.0/scripts/verify-install.sh .
 ```
 
 <details>
@@ -223,7 +225,7 @@ claude plugin install director-mode-lite
 cat ~/.claude/plugins/installed_plugins.json | jq '.'
 
 # View plugin cache
-ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.1/
+ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.9.0/
 ```
 
 </details>
@@ -234,6 +236,8 @@ ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.1/
 git clone https://github.com/claude-world/director-mode-lite.git
 cd director-mode-lite
 ./install.sh /path/to/your/project
+# ...or answer a few questions and pick your automation level interactively:
+./install.sh /path/to/your/project --wizard
 ```
 
 ### Option C: Try Demo First
@@ -250,7 +254,7 @@ Run the verifier against the project where you installed Director Mode Lite:
 
 ```bash
 # Plugin install
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.8.1/scripts/verify-install.sh .
+~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.9.0/scripts/verify-install.sh .
 
 # Clone install
 ./scripts/verify-install.sh /path/to/your/project
@@ -267,10 +271,12 @@ It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and e
 <details>
 <summary><strong>✨ Installation Features</strong></summary>
 
+- **Setup Wizard** - `--wizard` asks about your project and lets you pick which Stop-hook automation (none / Auto-Loop / Auto-Loop + Evolving-Loop) and safety/observability hooks to enable, instead of the fixed defaults
 - **Automatic Backup** - Backups existing `.claude/` to `.claude-backup-TIMESTAMP/`
 - **Portable Path Hooks** - All hooks use `$CLAUDE_PROJECT_DIR` for portability (no more "file not found" errors)
 - **Smart Merge** - Preserves existing settings, only adds new hooks
 - **Skip Existing** - Won't overwrite already-installed commands/agents/skills
+- **In-Place Upgrade** - `--update` overwrites distributed files with the latest version
 - **Clean Uninstall** - `./uninstall.sh` removes all installed files
 - **Automated Tests** - `./tests/run-tests.sh` validates installation
 

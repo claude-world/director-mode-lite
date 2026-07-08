@@ -5,6 +5,34 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-07-08
+
+Closes issue #13 (v1.9: guided setup wizard) as scoped in its own re-scoping
+comment: "a thin interactive layer that drives `/project-init` rather than a
+parallel implementation." Also fixes two small leftovers the v1.8.x audits missed.
+
+### Added
+- **`install.sh --wizard`** — interactive setup: asks what kind of project
+  you're installing into, then lets you choose the Stop-hook automation level
+  (none / Auto-Loop / Auto-Loop + Evolving-Loop) and whether to enable the
+  changelog + pre-write safety hooks, instead of always wiring the fixed
+  defaults. Agents and skills are still installed in full either way — the
+  wizard only changes which hooks get merged into `settings.local.json`.
+  Requires a TTY; falls back to the historical defaults under `curl | bash`
+  or any other non-interactive stdin, so existing install commands and CI
+  are unaffected. Documented in README, MIGRATION.md, and `/getting-started`
+- **`tests/test-install-wizard.sh`** — 7 tests covering all three automation
+  levels, declining observability hooks, blank-answer defaults, and the
+  non-interactive fallback path, plus a regression check that plain
+  `./install.sh` (no `--wizard`) still merges every hook exactly as before
+
+### Fixed
+- **`agents/skill-synthesizer.md`** was missing the `<example>` block the
+  v1.8.1 changelog claimed all 14 agent descriptions had — added
+- **Top-level `VERSION` file** was stale at 1.7.2 (unread by any script,
+  silently out of sync with `.claude-plugin/plugin.json` /
+  `marketplace.json` since the v1.7.2 release) — synced to 1.9.0
+
 ## [1.8.1] - 2026-07-06
 
 Completion round for v1.8.0: wires the self-evolving-loop scaffolding into the

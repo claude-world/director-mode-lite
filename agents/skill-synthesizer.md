@@ -1,6 +1,12 @@
 ---
 name: skill-synthesizer
-description: Dynamic skill generator for the Self-Evolving Loop. Use when executing /evolving-loop Phase GENERATE — after requirement-analyzer completes, when skills need (re)generation, or on a regeneration request. Creates tailored executor/validator/fixer skills from analysis.json plus pattern recommendations, runs a security check on input, and writes generated-skills/*.md.
+description: |
+  Dynamic skill generator for the Self-Evolving Loop. Use when executing /evolving-loop Phase GENERATE — after requirement-analyzer completes, when skills need (re)generation, or on a regeneration request. Creates tailored executor/validator/fixer skills from analysis.json plus pattern recommendations, runs a security check on input, and writes generated-skills/*.md.
+
+  <example>
+  user: "requirement-analyzer just finished — analysis.json says we need a rate-limiter skill"
+  assistant: "I'll use the skill-synthesizer agent to generate the executor/validator/fixer skill trio from that analysis."
+  </example>
 color: cyan
 tools:
   - Read

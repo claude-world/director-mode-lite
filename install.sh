@@ -2,23 +2,34 @@
 # Director Mode Lite - Installation Script
 # Safe installation: backup existing config + merge hooks.json
 #
-# Usage: ./install.sh [--update] [target-dir]
+# Usage: ./install.sh [--update] [--wizard] [target-dir]
 #   --update   Overwrite distributed files (agents/skills/hooks + .self-evolving-loop
 #              scaffolding) instead of skipping existing ones. CLAUDE.md is never
 #              overwritten. target-dir defaults to the current directory.
+#   --wizard   Interactive setup: ask a few questions about the project and pick
+#              which Stop-hook automation (Auto-Loop / Evolving-Loop) and
+#              observability/safety hooks to wire into settings.local.json.
+#              Requires a TTY; falls back to defaults otherwise. Agents and
+#              skills are always installed in full either way — the wizard
+#              only chooses which *hooks* get activated. Run /project-init
+#              afterwards for deep language/framework-aware CLAUDE.md setup.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Parse args: optional --update flag (anywhere) + optional target dir (first non-flag arg)
+# Parse args: optional --update/--wizard flags (anywhere) + optional target dir (first non-flag arg)
 UPDATE_MODE=0
+WIZARD_MODE=0
 TARGET_DIR="."
 _target_set=0
 for arg in "$@"; do
     case "$arg" in
         --update)
             UPDATE_MODE=1
+            ;;
+        --wizard)
+            WIZARD_MODE=1
             ;;
         *)
             if [[ $_target_set -eq 0 ]]; then
@@ -39,6 +50,67 @@ else
     echo "Mode: install (skip existing files)"
 fi
 echo ""
+
+# Hook activation flags. Defaults match the plugin's historical behavior
+# (Auto-Loop + changelog + validator on, Evolving-Loop off/opt-in) so a plain
+# `./install.sh` is unaffected. --wizard lets the user override them.
+ENABLE_STOP_AUTOLOOP=1
+ENABLE_EVOLVING_LOOP=0
+ENABLE_CHANGELOG=1
+ENABLE_VALIDATOR=1
+PROJECT_TYPE="unspecified"
+
+run_setup_wizard() {
+    echo "Setup Wizard"
+    echo "------------"
+    echo ""
+    echo "What best describes this project?"
+    echo "  1) Web app / API service"
+    echo "  2) CLI tool / library"
+    echo "  3) Exploring or prototyping"
+    echo "  4) Dogfooding Director Mode itself"
+    read -r -p "Choice [1-4, default 1]: " proj_choice
+    local recommended_auto
+    case "$proj_choice" in
+        2) PROJECT_TYPE="cli-or-library"; recommended_auto=1 ;;
+        3) PROJECT_TYPE="exploring"; recommended_auto=0 ;;
+        4) PROJECT_TYPE="dogfooding"; recommended_auto=2 ;;
+        *) PROJECT_TYPE="web-or-api"; recommended_auto=1 ;;
+    esac
+    echo ""
+
+    echo "Automation level (Stop-hook driven continuation):"
+    echo "  0) None       - commands/agents/skills only, no autonomous loop"
+    echo "  1) Auto-Loop  - TDD red-green-refactor continuation on Stop"
+    echo "  2) Auto-Loop + Evolving-Loop - also self-evolve skills across sessions"
+    read -r -p "Choice [0-2, default $recommended_auto]: " auto_choice
+    auto_choice="${auto_choice:-$recommended_auto}"
+    case "$auto_choice" in
+        0) ENABLE_STOP_AUTOLOOP=0; ENABLE_EVOLVING_LOOP=0 ;;
+        2) ENABLE_STOP_AUTOLOOP=1; ENABLE_EVOLVING_LOOP=1 ;;
+        *) ENABLE_STOP_AUTOLOOP=1; ENABLE_EVOLVING_LOOP=0 ;;
+    esac
+    echo ""
+
+    read -r -p "Enable changelog + pre-write safety hooks? [Y/n]: " obs_choice
+    case "$obs_choice" in
+        [Nn]*) ENABLE_CHANGELOG=0; ENABLE_VALIDATOR=0 ;;
+        *) ENABLE_CHANGELOG=1; ENABLE_VALIDATOR=1 ;;
+    esac
+    echo ""
+}
+
+if [[ $WIZARD_MODE -eq 1 ]]; then
+    # DML_WIZARD_FORCE lets tests feed prompt answers over a piped stdin,
+    # where -t 0 is false even though a script deliberately provided answers.
+    if [[ -t 0 || -n "${DML_WIZARD_FORCE:-}" ]]; then
+        run_setup_wizard
+    else
+        echo "Warning: --wizard requires an interactive terminal (no TTY on stdin)."
+        echo "  Falling back to defaults (Auto-Loop + changelog + validator enabled)."
+        echo ""
+    fi
+fi
 
 # Check dependencies
 MISSING_DEPS=0
@@ -156,7 +228,10 @@ done
 echo "Configuring hooks in settings.local.json..."
 
 # Use Python to safely merge hooks into existing settings
-if TARGET_DIR="$TARGET_DIR" SCRIPT_DIR="$SCRIPT_DIR" python3 -c "
+if TARGET_DIR="$TARGET_DIR" SCRIPT_DIR="$SCRIPT_DIR" \
+   ENABLE_STOP_AUTOLOOP="$ENABLE_STOP_AUTOLOOP" ENABLE_EVOLVING_LOOP="$ENABLE_EVOLVING_LOOP" \
+   ENABLE_CHANGELOG="$ENABLE_CHANGELOG" ENABLE_VALIDATOR="$ENABLE_VALIDATOR" \
+   python3 -c "
 import json
 import os
 
@@ -174,24 +249,43 @@ source_file = os.path.join(os.environ['SCRIPT_DIR'], 'hooks', 'settings-hooks.js
 with open(source_file, 'r') as f:
     source = json.load(f)
 
-# Merge hooks (no path conversion needed - uses \$CLAUDE_PROJECT_DIR)
-if 'hooks' not in existing:
-    existing['hooks'] = {}
+existing.setdefault('hooks', {})
 
-if 'Stop' in source.get('hooks', {}):
-    if 'Stop' not in existing['hooks']:
-        existing['hooks']['Stop'] = source['hooks']['Stop']
-        print('  Merged: Stop hooks')
+enable_stop = os.environ.get('ENABLE_STOP_AUTOLOOP', '1') == '1'
+enable_post = os.environ.get('ENABLE_CHANGELOG', '1') == '1'
+enable_pre = os.environ.get('ENABLE_VALIDATOR', '1') == '1'
+enable_evolving = os.environ.get('ENABLE_EVOLVING_LOOP', '0') == '1'
 
-if 'PostToolUse' in source.get('hooks', {}):
-    if 'PostToolUse' not in existing['hooks']:
-        existing['hooks']['PostToolUse'] = source['hooks']['PostToolUse']
-        print('  Merged: PostToolUse hooks (changelog)')
+if enable_stop and 'Stop' in source.get('hooks', {}) and 'Stop' not in existing['hooks']:
+    existing['hooks']['Stop'] = source['hooks']['Stop']
+    print('  Merged: Stop hook (Auto-Loop TDD continuation)')
 
-if 'PreToolUse' in source.get('hooks', {}):
-    if 'PreToolUse' not in existing['hooks']:
-        existing['hooks']['PreToolUse'] = source['hooks']['PreToolUse']
-        print('  Merged: PreToolUse hooks (file validation)')
+if enable_post and 'PostToolUse' in source.get('hooks', {}) and 'PostToolUse' not in existing['hooks']:
+    existing['hooks']['PostToolUse'] = source['hooks']['PostToolUse']
+    print('  Merged: PostToolUse hooks (changelog)')
+
+if enable_pre and 'PreToolUse' in source.get('hooks', {}) and 'PreToolUse' not in existing['hooks']:
+    existing['hooks']['PreToolUse'] = source['hooks']['PreToolUse']
+    print('  Merged: PreToolUse hooks (file validation)')
+
+# Evolving-Loop hooks ship separately under .self-evolving-loop/ and are only
+# merged here when explicitly requested (wizard automation level 2) — see
+# the evolving-loop skill's 'Hook-Driven Continuation' section for the
+# equivalent manual activation snippet.
+if enable_evolving:
+    evolving_source_file = os.path.join(os.environ['SCRIPT_DIR'], '.self-evolving-loop', 'hooks', 'settings-hooks.json')
+    if os.path.exists(evolving_source_file):
+        with open(evolving_source_file, 'r') as f:
+            evolving_source = json.load(f)
+        merged_any = False
+        for event, entries in evolving_source.get('hooks', {}).items():
+            existing_list = existing['hooks'].setdefault(event, [])
+            for entry in entries:
+                if entry not in existing_list:
+                    existing_list.append(entry)
+                    merged_any = True
+        if merged_any:
+            print('  Merged: Evolving-Loop hooks (self-evolution continuation)')
 
 # Add plansDirectory setting
 if 'plansDirectory' not in existing:
@@ -213,8 +307,10 @@ fi
 
 # Copy .self-evolving-loop scaffolding (evolving-loop hooks + templates, opt-in)
 # Only hooks/ and templates/ are distributed; state dirs are created at runtime.
-# The Stop hook is NOT merged into settings.local.json here (opt-in — see the
-# evolving-loop skill's "Hook-Driven Continuation" section).
+# The Stop hook is only merged into settings.local.json above when
+# ENABLE_EVOLVING_LOOP=1 (--wizard automation level 2); otherwise it stays
+# opt-in — see the evolving-loop skill's "Hook-Driven Continuation" section
+# for the manual activation snippet.
 echo "Installing .self-evolving-loop scaffolding..."
 SEL_SRC="$SCRIPT_DIR/.self-evolving-loop"
 if [[ -d "$SEL_SRC" ]]; then
@@ -261,10 +357,30 @@ echo "  - .claude/agents/       (14 specialized agents)"
 echo "  - .claude/hooks/        (5 hooks: Auto-Loop, Changelog, Validator)"
 echo "  - .self-evolving-loop/  (evolving-loop scaffolding: hooks + templates, opt-in)"
 echo ""
-echo "Features:"
-echo "  - /auto-loop     TDD-based autonomous development"
-echo "  - /changelog     Observability changelog (experimental)"
-echo "  - /workflow      Complete 5-step development flow"
+echo "Automation active in settings.local.json:"
+if [[ $ENABLE_STOP_AUTOLOOP -eq 1 ]]; then
+    echo "  - Auto-Loop Stop hook       ON  (TDD continuation)"
+else
+    echo "  - Auto-Loop Stop hook       off"
+fi
+if [[ $ENABLE_EVOLVING_LOOP -eq 1 ]]; then
+    echo "  - Evolving-Loop Stop hook   ON  (self-evolution continuation)"
+else
+    echo "  - Evolving-Loop Stop hook   off (opt-in — see /evolving-loop)"
+fi
+if [[ $ENABLE_CHANGELOG -eq 1 ]]; then
+    echo "  - Changelog hooks           ON"
+else
+    echo "  - Changelog hooks           off"
+fi
+if [[ $ENABLE_VALIDATOR -eq 1 ]]; then
+    echo "  - Pre-write validator hook  ON"
+else
+    echo "  - Pre-write validator hook  off"
+fi
+if [[ $WIZARD_MODE -eq 1 && -t 0 ]]; then
+    echo "  (project type: $PROJECT_TYPE — re-run ./install.sh --update --wizard anytime to change)"
+fi
 echo ""
 if [[ -d "$BACKUP_DIR" ]]; then
     echo "Backup location: $BACKUP_DIR"

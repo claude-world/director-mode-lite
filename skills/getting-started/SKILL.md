@@ -22,6 +22,8 @@ ls .claude/hooks/ | wc -l     # Should show 5+
 
 If any are missing, re-run the install script.
 
+Want a different automation level (none / Auto-Loop / Auto-Loop + Evolving-Loop) than what was installed? Re-run `install.sh --update --wizard` from the plugin directory to pick interactively instead of editing `.claude/settings.local.json` by hand.
+
 Also check dependencies:
 ```bash
 python3 --version   # Required for hook configuration

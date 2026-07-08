@@ -10,7 +10,21 @@ By default the install script uses **skip-existing** logic: it will NOT overwrit
 
 ---
 
-## Upgrading to v1.8.x (Current)
+## Upgrading to v1.9.x (Current)
+
+v1.9.0 adds an interactive setup wizard: `install.sh --wizard` asks what kind of project you're setting up and lets you choose the automation level (none / Auto-Loop / Auto-Loop + Evolving-Loop) and whether to enable the changelog + pre-write safety hooks, instead of always wiring the fixed defaults. Agents and skills are still installed in full either way — the wizard only changes which **hooks** get merged into `settings.local.json`.
+
+If you're already installed and just want to change your automation level, re-run with both flags:
+
+```bash
+/path/to/director-mode-lite/install.sh --update --wizard .
+```
+
+`--wizard` requires an interactive terminal; piped/non-interactive installs (e.g. `curl ... | bash`) automatically fall back to the same defaults as a plain install.
+
+---
+
+## Upgrading to v1.8.x
 
 v1.8.0 is a content-quality overhaul: corrected spec claims (30 hook events, current model lineup, `codex exec` / `gemini -p` syntax), rewritten trigger descriptions across all skills and agents, consolidated persona skill/agent pairs, safer auto-loop checkpoint writes, a fixed uninstaller that preserves your settings, and one new skill (`/handoff-claude` for multi-account delegation).
 
