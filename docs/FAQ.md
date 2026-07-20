@@ -34,24 +34,38 @@ No. Director Mode Lite is a community project from [Claude World](https://claude
 
 ### How do I install Director Mode Lite?
 
-**Option A: Plugin Install (Recommended)**
+**Option A: Native Plugin**
 ```bash
-claude plugin install director-mode-lite
+# Register this third-party marketplace once per Claude profile
+claude plugin marketplace add claude-world/director-mode-lite
+
+# Install the marketplace-qualified plugin
+claude plugin install director-mode-lite@director-mode-lite
+
+# Inside Claude Code, load it without restarting
+/reload-plugins
 ```
+
+The marketplace and plugin commands install the plugin, but they do not attach
+hooks to a project. Use the cloned project-integrated path below for hooks; do
+not depend on Claude Code's internal, versioned plugin-cache layout.
 
 **Option B: Clone and Install**
 ```bash
 git clone https://github.com/claude-world/director-mode-lite.git
 cd director-mode-lite
-./install.sh /path/to/your/project
+./install.sh /path/to/your/project --wizard
+./scripts/verify-install.sh /path/to/your/project
 ```
+
+Omit `--wizard` only when you want the documented non-interactive defaults.
 
 ### Can I install it globally?
 
-Yes, install to your project root or `~/.claude/`:
-```bash
-./install.sh ~/.claude
-```
+The plugin installs at user scope by default, so its namespaced skills and
+agents can be available across projects. Hook configuration remains
+project-local. Do not run `./install.sh ~/.claude`; the installer expects a
+project root and would create a nested `~/.claude/.claude/` tree.
 
 ### How do I uninstall?
 
@@ -59,15 +73,25 @@ Yes, install to your project root or `~/.claude/`:
 ./uninstall.sh /path/to/project
 ```
 
-Or manually remove the `.claude/` directory.
+Choose **hooks only** to remove Director Mode's five files from the shared
+`.claude/hooks/` directory and remove its hook registrations. This preserves
+other hook files, agents, skills, `.auto-loop/`, `.director-mode/`, and
+`.self-evolving-loop/` state. The complete-removal option is intentionally
+broader and removes shared agent/skill/hook directories, so commit or back up
+the project before selecting it. Do not replace this review with a blanket
+`rm -rf .claude/` command.
 
 ### Will it overwrite my existing CLAUDE.md?
 
 No. The install script:
 - Backs up existing `.claude/` directory
-- Merges hooks into `.claude/settings.local.json` (doesn't overwrite your settings)
-- Skips files that already exist
+- Preserves existing settings while adding Director Mode hook events when their event keys are available
+- Skips existing agent and skill files; Director Mode's five owned hook filenames are refreshed
 - Creates CLAUDE.md only if none exists
+
+If an existing `Stop`, `PreToolUse`, or `PostToolUse` event prevents a Director
+Mode registration, the verifier reports the missing hook instead of silently
+claiming the setup is ready.
 
 ---
 
@@ -119,7 +143,12 @@ Yes! Director Mode Lite includes:
 
 ### Do hooks work with a plugin-only install?
 
-Not automatically. Installing the plugin gives you the skills and agents, but hooks (Auto-Loop, changelog) are configured in your project's `.claude/settings.local.json` by the install script — run step 3 of the Quick Start (`install.sh`) inside your project to activate them.
+Not automatically. Registering the marketplace and installing
+`director-mode-lite@director-mode-lite` gives you the plugin's skills and
+agents, but Auto-Loop, changelog, and validation hooks are configured in the
+project's `.claude/settings.local.json` only by `install.sh`. Clone and inspect
+the repository, then run the project-local installer and verifier from that
+checkout.
 
 ---
 
@@ -140,7 +169,11 @@ Not automatically. Installing the plugin gives you the skills and agents, but ho
 
 3. Run install verification:
    ```bash
+   # From the cloned checkout used for project integration
    ./scripts/verify-install.sh /path/to/your/project
+
+   # If the wizard intentionally selected no hooks
+   ./scripts/verify-install.sh --allow-no-hooks /path/to/your/project
    ```
 
 4. Restart Claude Code
@@ -225,6 +258,17 @@ Run the install verification script:
 
 This checks all components and reports PASS/FAIL for each.
 
+Specifically, it validates dependencies, the 27/14/32 shipped inventory, hook
+executability, settings JSON, and at least one registered Director Mode hook.
+It accepts an existing custom `CLAUDE.md`; it does not require the bundled
+template headings. For an intentionally hook-free wizard setup, use
+`--allow-no-hooks`; the inventory is still checked while hook-only requirements
+are skipped.
+
+The verifier does not launch Claude Code, invoke commands, run project tests,
+or prove that model-generated results are correct. Treat PASS as installation
+wiring proof, then run the relevant project tests and review the actual diff.
+
 ---
 
 ## Configuration
@@ -298,4 +342,4 @@ Yes! See [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 - [Discord](https://discord.com/invite/rBtHzSD288)
 - [GitHub Issues](https://github.com/claude-world/director-mode-lite/issues)
-- [Website](https://claude-world.com)
+- [Product page](https://claude-world.com/director-mode-lite/)

@@ -303,6 +303,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Run Installation Regression Suite
+        run: ./tests/run-tests.sh
+
       - name: Test Install Script
         run: |
           echo "Testing installation..."

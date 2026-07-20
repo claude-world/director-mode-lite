@@ -25,27 +25,62 @@ echo ""
 read -p "Choice (1/2/3): " -n 1 -r choice
 echo ""
 
+# These are the only files option 1 owns inside the shared .claude/hooks/
+# directory. Never remove that directory wholesale: projects may keep their
+# own hook scripts beside Director Mode Lite.
+DML_HOOK_SCRIPTS=(
+    "_lib-changelog.sh"
+    "auto-loop-stop.sh"
+    "log-bash-event.sh"
+    "log-file-change.sh"
+    "pre-tool-validator.sh"
+)
+
+remove_dml_hook_files() {
+    local hook
+    for hook in "${DML_HOOK_SCRIPTS[@]}"; do
+        local path="$TARGET_DIR/.claude/hooks/$hook"
+        if [[ -e "$path" || -L "$path" ]]; then
+            rm -f -- "$path"
+            echo "  Removed: .claude/hooks/$hook"
+        fi
+    done
+}
+
 # Surgically remove only the hooks/settings that install.sh injected,
 # preserving any user-defined settings in settings.local.json.
 remove_injected_settings() {
     local settings_file="$TARGET_DIR/.claude/settings.local.json"
+    local remove_plans_setting="${1:-0}"
     [[ -f "$settings_file" ]] || return 0
 
     if command -v python3 &>/dev/null; then
-        SETTINGS_FILE="$settings_file" python3 - << 'PYEOF'
+        SETTINGS_FILE="$settings_file" REMOVE_PLANS_SETTING="$remove_plans_setting" python3 - << 'PYEOF'
 import json, os
 
 path = os.environ['SETTINGS_FILE']
 with open(path) as f:
     settings = json.load(f)
 
-OUR_SCRIPTS = (
-    'auto-loop-stop.sh', 'log-bash-event.sh',
-    'log-file-change.sh', 'pre-tool-validator.sh',
+OUR_HOOK_PATHS = (
+    '.claude/hooks/auto-loop-stop.sh',
+    '.claude/hooks/log-bash-event.sh',
+    '.claude/hooks/log-file-change.sh',
+    '.claude/hooks/pre-tool-validator.sh',
+    '.self-evolving-loop/hooks/continue-loop.sh',
+    '.self-evolving-loop/hooks/log-event.sh',
+    '.self-evolving-loop/hooks/phase-tracker.sh',
 )
 
 def is_ours(entry):
-    return any(s in h.get('command', '') for h in entry.get('hooks', []) for s in OUR_SCRIPTS)
+    if not isinstance(entry, dict):
+        return False
+    return any(
+        path_fragment in hook.get('command', '')
+        for hook in entry.get('hooks', [])
+        if isinstance(hook, dict)
+        for path_fragment in OUR_HOOK_PATHS
+    )
 
 hooks = settings.get('hooks', {})
 for event in list(hooks.keys()):
@@ -55,7 +90,7 @@ for event in list(hooks.keys()):
 if not hooks:
     settings.pop('hooks', None)
 
-if settings.get('plansDirectory') == '.claude/plans':
+if os.environ.get('REMOVE_PLANS_SETTING') == '1' and settings.get('plansDirectory') == '.claude/plans':
     del settings['plansDirectory']
 
 if settings:
@@ -74,25 +109,20 @@ PYEOF
 
 case $choice in
     1)
-        echo "Removing hooks..."
-        rm -f "$TARGET_DIR/.claude/hooks.json"
-        remove_injected_settings
-        rm -rf "$TARGET_DIR/.claude/hooks/"
-        rm -rf "$TARGET_DIR/.auto-loop/"
-        rm -rf "$TARGET_DIR/.director-mode/"
-        rm -rf "$TARGET_DIR/.self-evolving-loop/"
+        echo "Removing Director Mode hook registrations and owned hook files..."
+        remove_injected_settings 0
+        remove_dml_hook_files
         echo ""
         echo "Removed:"
-        echo "  - .claude/hooks/"
+        echo "  - Director Mode files from .claude/hooks/"
         echo "  - Director Mode hooks in .claude/settings.local.json"
-        echo "  - .auto-loop/"
-        echo "  - .director-mode/"
-        echo "  - .self-evolving-loop/"
         echo ""
         echo "Kept:"
+        echo "  - Other files in .claude/hooks/"
         echo "  - .claude/agents/"
         echo "  - .claude/skills/"
         echo "  - Your other settings in .claude/settings.local.json"
+        echo "  - Runtime state in .auto-loop/, .director-mode/, and .self-evolving-loop/"
         ;;
     2)
         echo "Removing Director Mode Lite completely..."
@@ -101,7 +131,7 @@ case $choice in
         rm -rf "$TARGET_DIR/.claude/hooks/"
         rm -rf "$TARGET_DIR/.claude/plans/"
         rm -f "$TARGET_DIR/.claude/hooks.json"
-        remove_injected_settings
+        remove_injected_settings 1
         rm -rf "$TARGET_DIR/.auto-loop/"
         rm -rf "$TARGET_DIR/.director-mode/"
         rm -rf "$TARGET_DIR/.self-evolving-loop/"

@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://claude-world.com">Website</a> |
+  <a href="https://claude-world.com/director-mode-lite/">Website</a> |
   <a href="#quick-start">Quick Start</a> |
   <a href="#whats-included">Features</a> |
   <a href="examples/">Examples</a> |
@@ -43,7 +43,7 @@ After installing, run these 3 commands:
 <details>
 <summary><strong>Compatibility</strong></summary>
 
-Director Mode Lite is fully compatible with the latest Claude Code release (Claude 5 era), including support for:
+Director Mode Lite v1.9.0 is aligned with the Claude 5-era Claude Code specification, including support for:
 
 - **Claude 5 family** model selection in agent/skill frontmatter (`fable`, `opus`, `sonnet`, `haiku` aliases)
 - **Agent Teams** (experimental multi-agent collaboration)
@@ -51,7 +51,7 @@ Director Mode Lite is fully compatible with the latest Claude Code release (Clau
 - All 30 hook event types including `SessionStart`, `PreCompact`, and `PostCompact`
 - **Multi-account delegation** via `CLAUDE_CONFIG_DIR` profiles (`/handoff-claude`)
 
-> Tested with Claude Code CLI v2.1.201 as of July 2026. Works with Claude Fable 5, Opus 4.8, Sonnet 5, and Haiku 4.5.
+> Last tested with Claude Code CLI v2.1.201 in July 2026. Newer CLI releases may work, but should be re-verified rather than assumed compatible.
 
 </details>
 
@@ -194,23 +194,23 @@ See [`docs/SELF-EVOLVING-LOOP.md`](docs/SELF-EVOLVING-LOOP.md) for complete docu
 
 ## Quick Start
 
-### Option A: Plugin Install (Recommended)
+### Option A: Native Plugin
 
 ```bash
-# 1. Install plugin via Claude Code marketplace
-claude plugin install director-mode-lite
+# 1. Register the third-party marketplace (once per Claude profile)
+claude plugin marketplace add claude-world/director-mode-lite
 
-# 2. Navigate to your project directory
-cd your-project
+# 2. Install the marketplace-qualified plugin
+claude plugin install director-mode-lite@director-mode-lite
 
-# 3. Run installation script from cached plugin
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.9.0/install.sh .
-# ...or the interactive setup wizard:
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.9.0/install.sh . --wizard
-
-# 4. Verify installation
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.9.0/scripts/verify-install.sh .
+# 3. Inside Claude Code, load the newly installed plugin without restarting
+/reload-plugins
 ```
+
+This portable path exposes namespaced skills and agents. It does **not** attach
+Auto-Loop, changelog, or validation hooks to the current project. Choose the
+clone path below when you want project-local assets and opt-in hooks; do not
+script against Claude Code's internal, versioned plugin-cache layout.
 
 <details>
 <summary><strong>🔧 Plugin Management Commands</strong></summary>
@@ -218,26 +218,26 @@ cd your-project
 ```bash
 # Update plugin to latest version
 claude plugin marketplace update director-mode-lite
-claude plugin uninstall director-mode-lite
-claude plugin install director-mode-lite
+claude plugin uninstall director-mode-lite@director-mode-lite
+claude plugin install director-mode-lite@director-mode-lite
 
-# Check installed plugins
-cat ~/.claude/plugins/installed_plugins.json | jq '.'
-
-# View plugin cache
-ls -la ~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.9.0/
+# Load plugin changes in an active Claude Code session
+/reload-plugins
 ```
 
 </details>
 
-### Option B: Clone and Install
+### Option B: Project-Integrated Install
 
 ```bash
 git clone https://github.com/claude-world/director-mode-lite.git
 cd director-mode-lite
-./install.sh /path/to/your/project
-# ...or answer a few questions and pick your automation level interactively:
+# Answer a few questions and pick the project's automation level:
 ./install.sh /path/to/your/project --wizard
+# ...or accept the non-interactive defaults:
+./install.sh /path/to/your/project
+# Verify the project you configured:
+./scripts/verify-install.sh /path/to/your/project
 ```
 
 ### Option C: Try Demo First
@@ -248,25 +248,42 @@ cd director-mode-lite
 ./demo.sh ~/director-mode-demo
 ```
 
+`demo.sh` uses a throwaway directory, not an operating-system sandbox. If the
+target already exists, the script can offer to delete and recreate it; inspect
+the path carefully before confirming.
+
 ## Verify Installation
 
 Run the verifier against the project where you installed Director Mode Lite:
 
 ```bash
-# Plugin install
-~/.claude/plugins/cache/director-mode-lite/director-mode-lite/1.9.0/scripts/verify-install.sh .
-
-# Clone install
+# From the cloned checkout used for project integration
 ./scripts/verify-install.sh /path/to/your/project
+
+# If the wizard intentionally selected no hooks
+./scripts/verify-install.sh --allow-no-hooks /path/to/your/project
 ```
 
 The script checks:
 
-- `CLAUDE.md` plus core `.claude/` files and directories
-- Required `CLAUDE.md` sections from the template
-- `.claude/skills/` and `.claude/agents/` are populated
+- `python3` and `jq` are available for settings and hook state handling
+- `CLAUDE.md` exists; an existing project's custom structure is accepted
+- The complete shipped inventory is present: 32 skills, including 27
+  user-invocable commands, and 14 agents (additional user assets are allowed)
+- Core and Evolving-Loop hook scripts exist and are executable
+- `.claude/settings.local.json` is valid JSON and contains at least one
+  registered Director Mode hook
 
 It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and exits `1` if any check fails.
+
+If you deliberately selected a completely hook-free wizard setup, pass
+`--allow-no-hooks`. It still verifies `CLAUDE.md` and the complete skill/agent
+inventory, while skipping hook files, hook dependencies, settings, and
+registration checks that do not apply to that mode.
+
+The verifier validates installation structure and configuration. It does not
+launch Claude Code, invoke a slash command, run your project tests, or prove
+that model-maintained acceptance criteria and outputs are correct.
 
 <details>
 <summary><strong>✨ Installation Features</strong></summary>
@@ -274,10 +291,10 @@ It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and e
 - **Setup Wizard** - `--wizard` asks about your project and lets you pick which Stop-hook automation (none / Auto-Loop / Auto-Loop + Evolving-Loop) and safety/observability hooks to enable, instead of the fixed defaults
 - **Automatic Backup** - Backups existing `.claude/` to `.claude-backup-TIMESTAMP/`
 - **Portable Path Hooks** - All hooks use `$CLAUDE_PROJECT_DIR` for portability (no more "file not found" errors)
-- **Smart Merge** - Preserves existing settings, only adds new hooks
+- **Settings Preservation** - Preserves existing settings; the verifier reports when no Director Mode hook was registered
 - **Skip Existing** - Won't overwrite already-installed commands/agents/skills
 - **In-Place Upgrade** - `--update` overwrites distributed files with the latest version
-- **Clean Uninstall** - `./uninstall.sh` removes all installed files
+- **Scoped Uninstall** - hooks-only removes Director Mode hook files and registrations while preserving custom hooks and runtime state; complete removal is intentionally broader
 - **Automated Tests** - `./tests/run-tests.sh` validates installation
 
 </details>
@@ -766,7 +783,7 @@ See [examples/](examples/) for full tutorials.
 <table>
 <tr>
 <td align="center" width="25%">
-<a href="https://claude-world.com">
+  <a href="https://claude-world.com/director-mode-lite/">
 <strong>🌐 Website</strong><br>
 claude-world.com
 </a>
@@ -825,7 +842,7 @@ Other open-source tools from the Claude World community:
 **Lucas Wang** ([@lukashanren1](https://x.com/lukashanren1))
 
 - GitHub: [@gn00295120](https://github.com/gn00295120)
-- Website: [claude-world.com](https://claude-world.com)
+- Product page: [claude-world.com/director-mode-lite](https://claude-world.com/director-mode-lite/)
 
 ---
 
@@ -839,7 +856,7 @@ See [LICENSE](LICENSE) for details.
 
 ## About Director Mode Lite
 
-This is a **free, open-source toolkit** (v1.8.0) from the [Claude World](https://claude-world.com) community, compatible with the latest Claude Code (Claude 5 era).
+This is a **free, open-source toolkit** (v1.9.0) from the [Claude World](https://claude-world.com) community, last tested with Claude Code CLI v2.1.201.
 
 <table>
 <tr>
