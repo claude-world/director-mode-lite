@@ -108,10 +108,11 @@ check_inventory_copy() {
 
 check_advisory_registration() {
     local path="$1" label="$2"
-    if [[ -f "$path" ]] && grep -q 'advisory.sh' "$path"; then
+    if [[ -f "$path" ]] && python3 "$PROJECT_ROOT/scripts/director-hooks.py" \
+        check-advisory --config "$path" >/dev/null 2>&1; then
         pass "$label"
     else
-        fail "$label ($path missing advisory.sh)"
+        fail "$label ($path missing exact .director-mode advisory registration)"
     fi
 }
 
@@ -134,12 +135,9 @@ check_file "$TARGET_DIR/.director-mode/GUIDANCE.md" "shared guidance exists"
 check_json "$TARGET_DIR/.director-mode/handoff.schema.json" "handoff schema is valid JSON"
 check_executable "$TARGET_DIR/.director-mode/bin/director-relay" "director-relay is executable"
 check_executable "$TARGET_DIR/.director-mode/bin/director-open" "director-open is executable"
+check_executable "$TARGET_DIR/.director-mode/bin/director-doctor" "director-doctor is executable"
 if [[ "$HOOK_MODE" != "none" ]]; then
     check_executable "$TARGET_DIR/.director-mode/hooks/advisory.sh" "advisory hook adapter is executable"
-elif [[ -e "$TARGET_DIR/.director-mode/hooks/advisory.sh" ]]; then
-    fail "zero-hook install does not stage an unused advisory executable"
-else
-    pass "zero-hook install has no advisory executable"
 fi
 
 if ! grep -q 'director-mode-lite:start' "$TARGET_DIR/CLAUDE.md" 2>/dev/null; then
@@ -194,7 +192,12 @@ elif [[ "$HOOK_MODE" == "automation" ]]; then
     check_advisory_registration "$TARGET_DIR/.claude/settings.local.json" "Claude advisory hook remains registered with automation"
     grep -q 'auto-loop-stop.sh' "$TARGET_DIR/.claude/settings.local.json" 2>/dev/null && pass "Legacy Auto-Loop is registered" || fail "Legacy Auto-Loop is registered"
 else
-    pass "Active hook verification skipped (--hooks none)"
+    hook_check_output=""
+    if hook_check_output="$(python3 "$PROJECT_ROOT/scripts/director-hooks.py" check-none --target "$TARGET_DIR" 2>&1)"; then
+        pass "zero-hook install has no Director Mode registrations or owned hook assets"
+    else
+        fail "zero-hook install has no Director Mode registrations or owned hook assets ($hook_check_output)"
+    fi
 fi
 
 printf "\n"

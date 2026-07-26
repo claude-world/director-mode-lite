@@ -88,6 +88,7 @@ assert "unmodified Claude asset removed" "[[ ! -e '$COMPLETE/.claude/agents/debu
 assert "unmodified Grok adapter removed" "[[ ! -e '$COMPLETE/.grok/agents/debugger.md' ]]"
 assert "unmodified runtime guide removed" "[[ ! -e '$COMPLETE/.director-mode/GUIDANCE.md' ]]"
 assert "unmodified open launcher removed" "[[ ! -e '$COMPLETE/.director-mode/bin/director-open' ]]"
+assert "unmodified doctor removed" "[[ ! -e '$COMPLETE/.director-mode/bin/director-doctor' ]]"
 assert "handoff packets explicitly removed" "[[ ! -e '$COMPLETE/.director-mode/handoffs' ]]"
 assert "ownership manifest removed" "[[ ! -e '$COMPLETE/.director-mode/install-ownership.json' ]]"
 assert "output reports modified preservation" "[[ '$output' == *'Preserved modified'* ]]"

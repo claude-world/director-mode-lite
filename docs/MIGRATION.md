@@ -1,6 +1,6 @@
 # Migrating Director Mode Lite
 
-## 1.x → 2.0
+## 1.x → 2.1
 
 Version 2 is a major behavior change: Director Mode is now guidance-first and
 supports Claude Code, Codex CLI, and Grok Build from one installation.
@@ -14,7 +14,12 @@ git pull
 ```
 
 The installer backs up the project's existing `.claude/` directory before
-updating distributed files.
+updating distributed files. It merges shipped skill files in place and keeps
+unrelated user files already present in the skill directories.
+
+Managed write paths are checked before installation. A symlinked destination
+component or a final file with multiple hard links stops the update; resolve
+that path explicitly rather than allowing the installer to write through it.
 
 ### New default
 
@@ -38,13 +43,24 @@ The legacy Auto-Loop, changelog, validator, and evolving-loop hooks now require:
 ./install.sh --update --hooks automation /path/to/project
 ```
 
-### Existing 1.x hook registrations
+### Existing 1.x or 2.0 hook registrations
 
-An update preserves existing project settings. If a 1.x project already has
-Auto-Loop hooks registered, they do not disappear merely because 2.0 defaults
-changed. Review `.claude/settings.local.json` and use `./uninstall.sh` option 1
-if you want to remove Director-owned legacy registrations before reinstalling
-the advisory setup.
+Use the default update mode to retire Director-owned hook state:
+
+```bash
+./install.sh --update --hooks none /path/to/project
+./scripts/verify-install.sh --hooks none /path/to/project
+```
+
+The migration removes Director registrations and unmodified owned hook assets.
+It preserves unrelated custom hooks and locally modified files; the verifier
+names any preserved Director asset that still needs a human decision.
+
+This ownership check is exact. Product-local commands must reference the full
+`.director-mode/...` asset path. Generic legacy `.claude/hooks/...` names are
+pruned only when the ownership inventory proves Director installed that file,
+so an unowned same-name custom hook is preserved. Automation mode warns when
+such a conflict would otherwise be overwritten.
 
 ### New cross-CLI assets
 
@@ -54,10 +70,11 @@ An `--cli all` install adds:
 .director-mode/GUIDANCE.md
 .director-mode/bin/director-relay
 .director-mode/bin/director-open
+.director-mode/bin/director-doctor
 .director-mode/handoff.schema.json
 .agents/skills/
 .codex/agents/
-.codex/hooks.json
+.codex/hooks.json             # only with --hooks guide|automation
 .grok/agents/
 AGENTS.md
 ```
@@ -70,6 +87,17 @@ Grok consumes the shared skills through compatibility without a duplicate
 `.grok/skills/` tree. It receives minimal native agent adapters because
 Claude-specific model, tool, memory, and turn-limit fields are not universally
 portable.
+
+For a read-only post-migration audit, run:
+
+```bash
+python3 scripts/director-doctor.py --cwd /path/to/project --json --no-probe
+```
+
+`runtime.source` reports whether the doctor selected a project-local, user, or
+bundled plugin runtime. It inspects project/user Claude and Codex hook configs
+and every discovered Grok `hooks/*.json` file. Malformed or shape-invalid hook
+files are listed under `hooks.invalid_surfaces`, not treated as zero-hook.
 
 ### Session continuity
 
@@ -87,6 +115,10 @@ Then print the target command:
 ```bash
 .director-mode/bin/director-relay continue --to codex
 ```
+
+Protocol v2 preserves multi-hop lineage with `--parent`. Run
+`director-relay status --json` before receiving to compare the checkpoint with
+the live worktree; v1 packets remain readable.
 
 The receiver starts a new native session. Its approvals, sandbox, tools, model,
 and network configuration remain native.

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Session Relay"
+  short_description: "Continue work across Claude, Codex, and Grok"
+  default_prompt: "Create or receive a drift-aware Director handoff packet so another CLI can continue this repository task without treating vendor session history as portable."
+policy:
+  allow_implicit_invocation: true

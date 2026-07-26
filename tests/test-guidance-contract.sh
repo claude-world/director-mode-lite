@@ -10,6 +10,23 @@ assert() {
     if eval "$2"; then printf '  PASS %s\n' "$1"; else printf '  FAIL %s\n' "$1"; FAILURES=$((FAILURES + 1)); fi
 }
 
+guidance_frontmatter_changes_permissions() {
+    local skill
+    for skill in \
+        director-mode \
+        session-relay \
+        interop-router \
+        handoff-claude \
+        handoff-codex \
+        handoff-grok; do
+        if sed -n '2,/^---$/p' "$PROJECT_ROOT/skills/$skill/SKILL.md" | \
+            grep -Eq '^(allowed-tools|allowedTools|disallowed-tools|disallowedTools|permission-mode|permissionMode|permissions|sandbox|network):'; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 echo "Test: portable product contract is guidance-first"
 assert "shared guide names all three CLIs" "grep -q 'Claude Code, Codex CLI, and' '$PROJECT_ROOT/portable/GUIDANCE.md' && grep -q 'Grok Build' '$PROJECT_ROOT/portable/GUIDANCE.md'"
 assert "shared guide adds no permission gate" "grep -q 'does not add permission gates' '$PROJECT_ROOT/portable/GUIDANCE.md'"
@@ -19,10 +36,11 @@ assert "project init does not instruct Stop-hook installation" "! grep -q 'copy 
 assert "onboarding uses current inventory" "grep -q '35 skills' '$PROJECT_ROOT/skills/getting-started/SKILL.md' && grep -q '14 canonical Claude' '$PROJECT_ROOT/skills/getting-started/SKILL.md'"
 assert "onboarding makes hooks optional" "grep -q 'Active hooks are optional' '$PROJECT_ROOT/skills/getting-started/SKILL.md'"
 assert "portable skills do not recommend bypass flags" "! grep -RE -- '--yolo|--always-approve|dangerously-(skip|bypass)' '$PROJECT_ROOT/skills/director-mode' '$PROJECT_ROOT/skills/session-relay' '$PROJECT_ROOT/skills/handoff-claude' '$PROJECT_ROOT/skills/handoff-codex' '$PROJECT_ROOT/skills/handoff-grok'"
+assert "guidance and handoff skills do not change native permissions" "! guidance_frontmatter_changes_permissions"
 assert "README describes a new native receiving session" "grep -q 'receiver starts a new native session' '$PROJECT_ROOT/README.md'"
-assert "version is 2.0.0" "[[ \$(tr -d '\\n' < '$PROJECT_ROOT/VERSION') == '2.0.0' ]]"
-assert "Claude manifest version matches" "python3 -c 'import json; assert json.load(open(\"$PROJECT_ROOT/.claude-plugin/plugin.json\"))[\"version\"] == \"2.0.0\"'"
-assert "Codex manifest version matches" "python3 -c 'import json; assert json.load(open(\"$PROJECT_ROOT/.codex-plugin/plugin.json\"))[\"version\"] == \"2.0.0\"'"
+assert "version is 2.1.0" "[[ \$(tr -d '\\n' < '$PROJECT_ROOT/VERSION') == '2.1.0' ]]"
+assert "Claude manifest version matches" "python3 -c 'import json; assert json.load(open(\"$PROJECT_ROOT/.claude-plugin/plugin.json\"))[\"version\"] == \"2.1.0\"'"
+assert "Codex manifest version matches" "python3 -c 'import json; assert json.load(open(\"$PROJECT_ROOT/.codex-plugin/plugin.json\"))[\"version\"] == \"2.1.0\"'"
 
 echo "Test: report-only CLI probe is executable"
 assert "CLI probe has valid shell syntax" "bash -n '$PROJECT_ROOT/skills/interop-router/scripts/check_cli_available.sh'"

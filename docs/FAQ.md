@@ -124,6 +124,11 @@ Use the `session-relay` skill or run:
 This prints a copyable command. Add `--run` to launch it, or `--headless` for a
 one-shot receiver.
 
+Before continuing, run `director-relay status --json` to compare the packet's
+Git snapshot with the live worktree. Add `--parent` when creating a later hop
+so protocol v2 keeps the full CLI route. Packet workspace paths are evidence;
+the launched CLI uses the receiver's live project root.
+
 ### What about `grok import`?
 
 Grok Build can import Claude Code sessions. Use it when that native shortcut is
@@ -139,6 +144,14 @@ to Claude.
 ```
 
 It installs all three adapters with no active hooks.
+
+### Does zero-hook mode remove every hook it finds?
+
+No. It removes only exact Director registrations and unmodified assets proven
+by the ownership inventory. Generic legacy `.claude/hooks/...` names require
+that ownership evidence; an unowned same-name custom hook is preserved and
+is not treated as Director-owned. Other user or project hooks remain native
+CLI configuration.
 
 ### Can I add the useful non-blocking context hook?
 
@@ -156,7 +169,9 @@ agents already work without it.
 ```
 
 The installer backs up the existing `.claude/` tree. Distributed skill and
-agent files update; project guides keep non-Director content.
+agent files update, extra user files in skill directories remain, and project
+guides keep non-Director content. It aborts before writing through a symlinked
+managed path or a final file with multiple hard links.
 
 ### What does the wizard do?
 
@@ -170,9 +185,23 @@ The recommended style is all three CLIs with no active hooks.
 ```
 
 This installs the legacy Claude Auto-Loop, changelog, validator, and evolving
-loop scaffolding. Review the native hook configuration before using it.
+loop scaffolding. Review the native hook configuration before using it. If an
+unowned same-name hook already exists, the installer preserves it and warns
+instead of overwriting it.
 
 ## Troubleshooting
+
+### How do I inspect runtime and hook discovery without changing anything?
+
+```bash
+python3 scripts/director-doctor.py --cwd /path/to/project --json --no-probe
+```
+
+`runtime.source` shows whether the doctor selected the `project`, `user`, or
+bundled `plugin` runtime. It checks project/user Claude and Codex hook configs
+and all discovered Grok `hooks/*.json` files. Parse errors and invalid shapes
+appear in `hooks.invalid_surfaces`, so a broken config is not reported as a
+healthy zero-hook setup.
 
 ### The target CLI does not see a skill
 

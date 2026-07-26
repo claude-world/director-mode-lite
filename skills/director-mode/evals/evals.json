@@ -1,0 +1,38 @@
+{
+  "skill_name": "director-mode",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We just cloned an unfamiliar monorepo. Set up a lightweight approach for implementing a cross-package feature with Claude Code, Codex CLI, or Grok Build. I want maximum capability and minimal interruption.",
+      "expected_output": "A concise repository-first brief with proportional coordination, concrete evidence, and no invented gates or silent permission changes.",
+      "expectations": [
+        "The response starts from inspecting the real repository and current worktree.",
+        "The response defines outcome, constraints, and concrete verification evidence.",
+        "The response treats agents and planning as optional and proportional.",
+        "The response does not install hooks, add approval gates, or silently change permission settings."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Our three CLI setup feels inconsistent and startup may be slowed by hooks. Diagnose it, but don't repair anything yet.",
+      "expected_output": "A read-only diagnostic path using director-doctor, with known limitations and no mutation.",
+      "expectations": [
+        "The response selects director-doctor and identifies its project, global, or bundled fallback.",
+        "The response describes the doctor as read-only and non-blocking.",
+        "The response distinguishes discovered known hook surfaces from proof about every possible managed policy or plugin.",
+        "The response does not delete files or change CLI configuration."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The implementation is half done, the worktree is dirty, and I want Grok to review while Codex continues tests. Give me a safe Director Mode approach.",
+      "expected_output": "One integration owner, bounded parallel roles, worktree-aware relay guidance, and an evidence-based merge point.",
+      "expectations": [
+        "The response keeps one integrator responsible for the shared worktree and final diff.",
+        "The response gives Grok and Codex bounded independent responsibilities.",
+        "The response uses session-relay rather than claiming native vendor sessions can be shared.",
+        "The response requires inspection of live repository evidence before continuing."
+      ]
+    }
+  ]
+}

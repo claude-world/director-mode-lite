@@ -1,0 +1,6 @@
+interface:
+  display_name: "Director Mode"
+  short_description: "Guide substantial three-CLI repository work"
+  default_prompt: "Use Director Mode to frame this repository task, coordinate useful parallel work, and define convincing completion evidence without adding gates or changing permissions."
+policy:
+  allow_implicit_invocation: true

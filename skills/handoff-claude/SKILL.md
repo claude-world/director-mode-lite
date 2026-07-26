@@ -2,11 +2,6 @@
 name: handoff-claude
 description: Continue a task in Claude Code through a portable Director handoff packet. Use when work started in Codex CLI or Grok Build should move to Claude, or when a fresh Claude session needs the current decisions and verification evidence.
 user-invocable: true
-allowed-tools:
-  - Read
-  - Bash
-  - Grep
-  - Glob
 ---
 
 # Handoff to Claude Code

@@ -1,13 +1,35 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://claude-world.com/schemas/director-handoff-v1.json",
+  "$id": "https://claude-world.com/schemas/director-handoff-v2.json",
   "title": "Director Mode portable handoff packet",
   "type": "object",
   "required": ["protocol", "id", "created_at", "privacy", "source", "target", "workspace", "task"],
   "properties": {
-    "protocol": { "const": "director-handoff/v1" },
+    "protocol": { "enum": ["director-handoff/v1", "director-handoff/v2"] },
     "id": { "type": "string", "minLength": 1 },
     "created_at": { "type": "string", "format": "date-time" },
+    "lineage": {
+      "type": "object",
+      "required": ["root_id", "parent_id", "hop", "route"],
+      "properties": {
+        "root_id": { "type": "string", "minLength": 1 },
+        "parent_id": { "type": ["string", "null"], "minLength": 1 },
+        "hop": { "type": "integer", "minimum": 0 },
+        "route": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "enum": ["claude", "codex", "grok"] }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "hop": { "const": 0 } } },
+          "then": { "properties": { "parent_id": { "type": "null" } } },
+          "else": { "properties": { "parent_id": { "type": "string", "minLength": 1 } } }
+        }
+      ],
+      "additionalProperties": false
+    },
     "privacy": {
       "type": "object",
       "required": ["capture_mode", "raw_transcript_included", "file_contents_included", "review_status"],
@@ -54,6 +76,13 @@
       "additionalProperties": false
     }
   },
+  "allOf": [
+    {
+      "if": { "properties": { "protocol": { "const": "director-handoff/v2" } } },
+      "then": { "required": ["lineage"] },
+      "else": { "not": { "required": ["lineage"] } }
+    }
+  ],
   "$defs": {
     "endpoint": {
       "type": "object",

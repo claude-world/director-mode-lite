@@ -10,7 +10,8 @@
 
 Version 2 ships first-class Claude Code, Codex CLI, and Grok Build adapters,
 35 skills, 14 canonical agents with native Codex/Grok adapters, and portable
-new-session continuity through `director-handoff/v1`. Routing is suggestion
+new-session continuity through `director-handoff/v2` with v1 compatibility.
+Routing is suggestion
 only and the default installation has no active hooks. Future work should
 improve adapter fidelity and relay ergonomics without adding policy gates.
 

@@ -5,6 +5,52 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-07-27
+
+This release deepens the two core skills while keeping the product
+guidance-first, zero-hook by default, and native to Claude Code, Codex CLI, and
+Grok Build.
+
+### Added
+
+- `director-handoff/v2` lineage for multi-hop Claude → Codex → Grok chains,
+  including root packet, parent packet, hop count, and route
+- `director-relay status` for a non-blocking comparison of packet evidence with
+  the live branch, HEAD, Git status, and diff statistics
+- `.director-mode/bin/director-doctor`, a read-only report for runtime assets,
+  CLI discovery, native skill/agent counts, project/user/plugin runtime
+  selection, and known or invalid hook surfaces
+- Plugin-only fallbacks bundled with the `director-mode` and `session-relay`
+  skills, plus Codex UI metadata and realistic skill eval cases
+- Regression coverage for v1 packet compatibility, same-second packet names,
+  untrusted workspace paths, plugin-only execution, exact hook ownership,
+  symlink/hardlink write protection, and read-only diagnosis
+
+### Changed
+
+- Relay packet writes are atomic, packet filenames include a unique suffix,
+  and the default handoff directory creates its own `.gitignore`
+- A receiving CLI always launches in the caller's live project root instead of
+  trusting a path captured by a prior session or machine
+- The session skill now separates same-provider native resume commands from
+  cross-provider continuation and documents multi-hop parent linkage
+- Cross-CLI guidance skills no longer declare permission-changing
+  `allowed-tools` frontmatter
+- Updates merge shipped skill files while preserving unrelated user files in
+  the managed skill directories
+
+### Fixed
+
+- `./install.sh --update --hooks none` now prunes Director-owned hook
+  registrations and unmodified assets while preserving custom and modified
+  hooks
+- Zero-hook verification now detects stale registrations and assets rather
+  than treating the mode as an unchecked absence
+- Hook pruning uses exact product paths and ownership evidence, preserving
+  unowned same-name custom hooks instead of claiming them
+- Installer preflight rejects managed paths through symlinks and final files
+  with multiple hard links before any write can reach the referenced target
+
 ## [2.0.0] - 2026-07-26
 
 Director Mode Lite becomes a guidance-first toolkit for Claude Code, Codex CLI,

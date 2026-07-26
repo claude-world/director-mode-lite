@@ -10,6 +10,8 @@ from pathlib import Path, PurePosixPath
 import sys
 from typing import Any
 
+from install_safety import UnsafeManagedPath, assert_safe_managed_files
+
 
 MANIFEST = Path(".director-mode/install-ownership.json")
 PENDING = Path(".director-mode/.install-ownership-pending.json")
@@ -24,6 +26,7 @@ def arguments() -> argparse.Namespace:
     begin.add_argument("--target", required=True)
     begin.add_argument("--cli", choices=("all", "claude", "codex", "grok"), default="all")
     begin.add_argument("--hooks", choices=("none", "guide", "automation"), default="none")
+    begin.add_argument("--update", action="store_true")
 
     finalize = subparsers.add_parser("finalize")
     finalize.add_argument("--target", required=True)
@@ -33,8 +36,11 @@ def arguments() -> argparse.Namespace:
     remove.add_argument(
         "--hooks-only",
         action="store_true",
-        help="remove only owned hook executables and retain the rest of the manifest",
+        help="remove only owned hook assets and retain the rest of the manifest",
     )
+    owns = subparsers.add_parser("owns")
+    owns.add_argument("--target", required=True)
+    owns.add_argument("--path", required=True)
     return parser.parse_args()
 
 
@@ -76,6 +82,7 @@ def inventory(source: Path, cli: str, hooks: str) -> list[str]:
         ".director-mode/handoff.schema.json",
         ".director-mode/bin/director-relay",
         ".director-mode/bin/director-open",
+        ".director-mode/bin/director-doctor",
         ".director-mode/handoffs/.gitignore",
     }
     if hooks != "none":
@@ -123,9 +130,55 @@ def safe_relative(value: str) -> Path | None:
     return Path(*pure.parts)
 
 
+def managed_write_paths(
+    source: Path, target: Path, cli: str, hooks: str, update: bool
+) -> set[str]:
+    """List file destinations the requested install may create, replace, or prune."""
+
+    paths = set(inventory(source, cli, hooks))
+    paths.update((MANIFEST.as_posix(), PENDING.as_posix()))
+
+    if hooks == "automation":
+        # Legacy automation always configures Claude, even when the portable
+        # adapter selection is limited to Codex or Grok.
+        paths.add(".claude/settings.local.json")
+        paths.update(
+            f".claude/hooks/{name}"
+            for name in ("log-commit.sh", "log-test-result.sh", "changelog-logger.sh")
+        )
+    elif hooks == "guide" and selected(cli, "claude"):
+        paths.add(".claude/settings.local.json")
+
+    if hooks != "none" and selected(cli, "codex"):
+        paths.add(".codex/hooks.json")
+
+    if update and hooks == "none":
+        # director-hooks prunes these surfaces during a guidance-only update.
+        paths.update(
+            (
+                ".claude/settings.local.json",
+                ".codex/hooks.json",
+                ".grok/hooks.json",
+                ".grok/hooks/director-mode.json",
+            )
+        )
+        grok_hooks = target / ".grok" / "hooks"
+        # The nominal director-mode path above verifies the hooks directory
+        # before globbing it, so an ancestor symlink is rejected first.
+        assert_safe_managed_files(target, paths)
+        if grok_hooks.is_dir():
+            paths.update(
+                f".grok/hooks/{path.name}" for path in grok_hooks.glob("*.json")
+            )
+
+    return paths
+
+
 def begin(args: argparse.Namespace) -> None:
     source = Path(args.source).expanduser().resolve()
     target = Path(args.target).expanduser().resolve()
+    paths = managed_write_paths(source, target, args.cli, args.hooks, args.update)
+    assert_safe_managed_files(target, paths)
     manifest_path = target / MANIFEST
     prior = read_object(manifest_path).get("files", {})
     if not isinstance(prior, dict):
@@ -149,6 +202,7 @@ def begin(args: argparse.Namespace) -> None:
 
 def finalize(args: argparse.Namespace) -> None:
     target = Path(args.target).expanduser().resolve()
+    assert_safe_managed_files(target, (PENDING, MANIFEST))
     pending_path = target / PENDING
     pending = read_object(pending_path)
     candidates = pending.get("candidates")
@@ -156,6 +210,13 @@ def finalize(args: argparse.Namespace) -> None:
         raise RuntimeError(f"ownership snapshot missing: {pending_path}")
 
     prior = pending.get("prior", {})
+    tracked_paths = [
+        relative
+        for collection in (prior, candidates)
+        if isinstance(collection, dict)
+        for relative in collection
+    ]
+    assert_safe_managed_files(target, (PENDING, MANIFEST, *tracked_paths))
     files: dict[str, dict[str, str]] = {}
     if isinstance(prior, dict):
         for relative, metadata in prior.items():
@@ -183,18 +244,22 @@ def finalize(args: argparse.Namespace) -> None:
 
 def remove(args: argparse.Namespace) -> None:
     target = Path(args.target).expanduser().resolve()
+    assert_safe_managed_files(target, (MANIFEST, PENDING))
     manifest_path = target / MANIFEST
     manifest = read_object(manifest_path)
     files = manifest.get("files", {})
     if not isinstance(files, dict):
         files = {}
+    assert_safe_managed_files(target, (MANIFEST, PENDING, *files))
 
     removed = 0
     preserved = 0
     parents: set[Path] = set()
     remaining = dict(files)
     for relative, metadata in sorted(files.items(), key=lambda item: item[0].count("/"), reverse=True):
-        if args.hooks_only and not relative.startswith((".claude/hooks/", ".director-mode/hooks/")):
+        if args.hooks_only and not relative.startswith(
+            (".claude/hooks/", ".director-mode/hooks/", ".self-evolving-loop/hooks/")
+        ):
             continue
         safe = safe_relative(relative)
         if safe is None or not isinstance(metadata, dict):
@@ -233,19 +298,32 @@ def remove(args: argparse.Namespace) -> None:
     print(f"  Ownership cleanup: removed {removed}, preserved {preserved}")
 
 
-def main() -> None:
+def owns(args: argparse.Namespace) -> int:
+    target = Path(args.target).expanduser().resolve()
+    relative = safe_relative(args.path)
+    if relative is None:
+        raise RuntimeError(f"unsafe ownership path: {args.path}")
+    assert_safe_managed_files(target, (MANIFEST, relative))
+    files = read_object(target / MANIFEST).get("files", {})
+    return 0 if isinstance(files, dict) and relative.as_posix() in files else 1
+
+
+def main() -> int:
     args = arguments()
     if args.command == "begin":
         begin(args)
     elif args.command == "finalize":
         finalize(args)
-    else:
+    elif args.command == "remove":
         remove(args)
+    else:
+        return owns(args)
+    return 0
 
 
 if __name__ == "__main__":
     try:
-        main()
-    except (OSError, RuntimeError) as exc:
+        raise SystemExit(main())
+    except (OSError, RuntimeError, UnsafeManagedPath) as exc:
         print(f"install-ownership: {exc}", file=sys.stderr)
         raise SystemExit(1)

@@ -2,11 +2,6 @@
 name: interop-router
 description: Suggest whether Claude Code, Codex CLI, or Grok Build is a useful next collaborator, without launching a CLI or changing controls. Use when comparing the three CLIs, planning a handoff, or deciding whether an independent implementation or review would help.
 user-invocable: true
-allowed-tools:
-  - Read
-  - Bash
-  - Glob
-  - Grep
 ---
 
 # Cross-CLI Routing Guide

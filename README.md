@@ -59,8 +59,9 @@ Start with the `director-mode` skill. When another CLI should continue, use
 | Skills | `skills/*/SKILL.md` | `.claude/skills/` | `.agents/skills/` | reads Claude-compatible skills |
 | Agents | `agents/*.md` | `.claude/agents/*.md` | generated `.codex/agents/*.toml` | generated `.grok/agents/*.md` |
 | Optional context hook | `hooks/advisory.sh` | `settings.local.json` | `.codex/hooks.json` | none (passive stdout is ignored) |
-| Session continuity | `director-handoff/v1` | new native session | new native session | new native session |
+| Session continuity | `director-handoff/v2` | new native session | new native session | new native session |
 | Open launcher | `scripts/director-open.sh` | native bypass mode | native full-access mode | native always-approve / sandbox off |
+| Read-only diagnosis | `scripts/director-doctor.py` | runtime/assets/hooks | runtime/assets/hooks | runtime/assets/hooks |
 
 Grok's Claude compatibility is reused for skills, so the installer does not
 create a second, conflicting `.grok/skills/` tree. Agents receive minimal
@@ -105,10 +106,21 @@ and next steps. The receiver starts a new native session and reads the packet.
 ```
 
 The relay automatically captures only Git metadata and diff statistics; it
-does not read raw transcripts, file contents, credentials, or environment
-variables. The packet still contains user-supplied text, paths, and Git
-filenames. Review those before sharing it outside the workspace; add
+does not scan raw transcripts, file contents, or credentials, or serialize the
+process environment. The packet still contains user-supplied text, paths, and
+Git filenames. Review those before sharing it outside the workspace; add
 `--reviewed` when you want that review recorded in the packet.
+
+Protocol v2 adds multi-hop lineage (`root_id`, `parent_id`, `hop`, and `route`)
+and still validates v1 packets. Chain a Claude → Codex → Grok handoff with:
+
+```bash
+.director-mode/bin/director-relay create --parent \
+  --from codex --to grok \
+  --goal "Finish the authentication refresh" \
+  --summary "Codex completed UI wiring; integration tests remain" \
+  --next "Run the browser integration suite"
+```
 
 ### Continue the latest packet
 
@@ -127,9 +139,20 @@ Other relay commands:
 
 ```bash
 .director-mode/bin/director-relay validate
+.director-mode/bin/director-relay status --json
 .director-mode/bin/director-relay show
 .director-mode/bin/director-relay list
 ```
+
+`status` compares the captured branch, HEAD, Git status, and diff statistics to
+the live worktree without blocking continuation. When `--run` is selected, the
+receiver starts in the caller's live project root; a packet's old workspace
+path is never trusted as an execution directory.
+
+For same-provider history, keep the provider's native resume flow: Claude Code
+uses `--continue` / `--resume`, Codex uses `resume` / `exec resume`, and Grok
+uses `--continue` / `--resume`. Cross-provider work always starts a new native
+session with the portable packet.
 
 Grok Build also provides `grok import` for Claude Code sessions. That is a
 helpful Claude→Grok shortcut; the portable packet remains the three-way format.
@@ -181,6 +204,17 @@ Hooks are independent of permission mode. In particular, Claude hooks may also
 surface in Grok through its compatibility layer. Audit existing user-level
 hooks before calling an environment zero-interference.
 
+`./install.sh --update --hooks none` is also the migration path: it surgically
+removes Director-owned registrations and unmodified hook assets while
+preserving custom hooks and locally modified files. The zero-hook verifier
+checks this state instead of assuming it.
+
+Ownership matching is exact: product-local `.director-mode/...` commands are
+matched by their full asset path, while generic legacy `.claude/hooks/...`
+names are removed only when the ownership inventory proves Director installed
+them. A pre-existing, unowned same-name hook is preserved; automation mode
+warns about the conflict instead of claiming or overwriting it.
+
 Project hooks may require native trust or approval in Codex and Grok. Review the
 generated config with the CLI's own hook inspection UI.
 
@@ -211,7 +245,12 @@ Common choices:
 
 The installer backs up an existing `.claude/` directory, preserves an existing
 project guide, and updates only its marked guidance block. Existing Codex hook
-JSON is merged rather than replaced.
+JSON is merged rather than replaced. Updates merge shipped skill files while
+preserving extra user files in the skill directories.
+
+Before writing managed files, the installer rejects symlinked destination
+components and final files with multiple hard links. It stops with an error
+instead of following a managed path to another location or inode.
 
 ### Optional legacy automation
 
@@ -230,9 +269,11 @@ control mechanism.
 ## Plugin installs
 
 The repository retains a Claude Code marketplace manifest and adds a Codex
-plugin manifest. Plugin managers can expose the shared skills, while the shell
-installer remains the complete project-local setup because it also generates
-agents, guidance, relay binaries, and optional hook adapters.
+plugin manifest. The two core skills bundle their own shared guide, relay, and
+read-only doctor, so `director-mode` and `session-relay` remain functional in a
+plugin-only install. The shell installer adds the complete project-local
+surface: generated agents, repository guidance, launchers, and optional hook
+adapters.
 
 ## Verify
 
@@ -240,11 +281,19 @@ agents, guidance, relay binaries, and optional hook adapters.
 ./tests/run-tests.sh
 ./scripts/verify-install.sh /path/to/project
 python3 scripts/director-relay.py --help
+python3 scripts/director-doctor.py --cwd /path/to/project --json --no-probe
 ```
 
+In the doctor report, `runtime.source` identifies the selected `project`,
+`user`, or bundled `plugin` runtime. Hook discovery covers project and user
+Claude/Codex configs plus every discovered Grok `hooks/*.json` surface.
+Malformed or shape-invalid files appear under `hooks.invalid_surfaces`; they
+are never treated as evidence of a healthy zero-hook state.
+
 The regression suite covers installer modes, native adapters, advisory hook
-behavior, packet creation/validation, metadata-only Git capture, update
-behavior, and uninstall preservation.
+behavior, exact hook ownership, symlink/hardlink write protection, packet
+creation/validation, metadata-only Git capture, project/user/plugin diagnosis,
+invalid hook surfaces, update behavior, and uninstall preservation.
 
 ## Upgrade from 1.x
 
@@ -254,9 +303,9 @@ git pull
 ```
 
 The important behavior change is the default: legacy automation is now opt-in.
-Existing hook registrations are preserved until you remove them or use the
-uninstaller, so review `.claude/settings.local.json` when migrating an already
-automated project.
+To retire an older Director hook setup while preserving unrelated custom hooks,
+run the same install command with `--update --hooks none` (the default is
+already `none`; spelling it out makes the migration intent explicit).
 
 See [MIGRATION.md](docs/MIGRATION.md) and [FAQ.md](docs/FAQ.md) for details.
 

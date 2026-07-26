@@ -1,7 +1,7 @@
 {
   "name": "director-mode-lite",
   "description": "Guidance-first Director workflows for Claude Code, Codex CLI, and Grok Build, with portable session relay and native adapters.",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "author": {
     "name": "Lucas Wang",
     "url": "https://claude-world.com"

@@ -83,7 +83,7 @@ case "$HOOK_MODE" in
     *) echo "Error: --hooks must be guide, none, or automation" >&2; exit 2 ;;
 esac
 
-BACKUP_DIR="$TARGET_DIR/.claude-backup-$(date +%Y%m%d-%H%M%S)"
+BACKUP_DIR=""
 
 echo "Director Mode Lite Installer"
 echo "============================"
@@ -200,20 +200,50 @@ if [[ ! -d "$TARGET_DIR" ]]; then
     echo "Error: Target directory does not exist: $TARGET_DIR"
     exit 1
 fi
+TARGET_DIR="$(cd "$TARGET_DIR" && pwd -P)"
+backup_base="$TARGET_DIR/.claude-backup-$(date +%Y%m%d-%H%M%S)"
+BACKUP_DIR="$backup_base"
+backup_suffix=1
+while [[ -e "$BACKUP_DIR" || -L "$BACKUP_DIR" ]]; do
+    BACKUP_DIR="$backup_base-$backup_suffix"
+    backup_suffix=$((backup_suffix + 1))
+done
 
 # Snapshot which package paths already exist. Complete uninstall later removes
 # only files this installation actually created and that remain unmodified.
-python3 "$SCRIPT_DIR/scripts/install-ownership.py" begin \
-    --source "$SCRIPT_DIR" \
-    --target "$TARGET_DIR" \
-    --cli "$CLI_TARGETS" \
+OWNERSHIP_BEGIN_ARGS=(
+    begin
+    --source "$SCRIPT_DIR"
+    --target "$TARGET_DIR"
+    --cli "$CLI_TARGETS"
     --hooks "$HOOK_MODE"
+)
+if [[ $UPDATE_MODE -eq 1 ]]; then
+    OWNERSHIP_BEGIN_ARGS+=(--update)
+fi
+python3 "$SCRIPT_DIR/scripts/install-ownership.py" "${OWNERSHIP_BEGIN_ARGS[@]}"
 
 # Backup existing .claude directory
 if [[ -d "$TARGET_DIR/.claude" ]]; then
     echo "Detected existing .claude directory, creating backup..."
     cp -r "$TARGET_DIR/.claude" "$BACKUP_DIR"
     echo "  Backup location: $BACKUP_DIR"
+    echo ""
+fi
+
+# An explicit guidance-only update is also a mode migration. Remove only hook
+# registrations whose commands point at Director Mode paths, then remove only
+# manifest-owned hook assets whose recorded digest is unchanged. User hooks and
+# locally modified Director hook files are preserved.
+if [[ $UPDATE_MODE -eq 1 && "$HOOK_MODE" == "none" ]]; then
+    echo "Removing Director Mode hooks for guidance-only update..."
+    python3 "$SCRIPT_DIR/scripts/director-hooks.py" prune --target "$TARGET_DIR"
+    if [[ -f "$TARGET_DIR/.director-mode/install-ownership.json" ]]; then
+        python3 "$SCRIPT_DIR/scripts/install-ownership.py" remove \
+            --target "$TARGET_DIR" --hooks-only
+    else
+        echo "  No ownership manifest; preserved hook assets and removed registrations only."
+    fi
     echo ""
 fi
 
@@ -246,20 +276,29 @@ mkdir -p "$TARGET_DIR/.claude/skills"
 for dir in "$SCRIPT_DIR/skills/"*/; do
     if [[ -d "$dir" ]]; then
         dirname=$(basename "$dir")
-        if [[ -d "$TARGET_DIR/.claude/skills/$dirname" ]]; then
+        skill_target="$TARGET_DIR/.claude/skills/$dirname"
+        if [[ -d "$skill_target" ]]; then
             if [[ $UPDATE_MODE -eq 1 ]]; then
-                rm -rf "$TARGET_DIR/.claude/skills/$dirname"
-                cp -r "${dir%/}" "$TARGET_DIR/.claude/skills/"
+                # Merge the shipped files instead of replacing the directory;
+                # user-added references, scripts, and notes remain untouched.
+                cp -R "${dir%/}/." "$skill_target/"
                 echo "  Updated: skills/$dirname/"
             else
                 echo "  Skipped (exists): skills/$dirname/"
             fi
         else
-            cp -r "${dir%/}" "$TARGET_DIR/.claude/skills/"
+            mkdir -p "$skill_target"
+            cp -R "${dir%/}/." "$skill_target/"
             echo "  Installed: skills/$dirname/"
         fi
     fi
 done
+
+manifest_owns() {
+    local relative="$1"
+    python3 "$SCRIPT_DIR/scripts/install-ownership.py" owns \
+        --target "$TARGET_DIR" --path "$relative" >/dev/null 2>&1
+}
 
 # Legacy hook automation is intentionally absent from a guidance-first install.
 # The portable installer below owns the optional advisory hook.
@@ -280,8 +319,14 @@ HOOK_SCRIPTS=(
 
 for hook in "${HOOK_SCRIPTS[@]}"; do
     if [[ -f "$SCRIPT_DIR/hooks/$hook" ]]; then
-        cp -f "$SCRIPT_DIR/hooks/$hook" "$TARGET_DIR/.claude/hooks/"
-        chmod +x "$TARGET_DIR/.claude/hooks/$hook"
+        hook_relative=".claude/hooks/$hook"
+        hook_target="$TARGET_DIR/$hook_relative"
+        if [[ -e "$hook_target" ]] && ! manifest_owns "$hook_relative"; then
+            echo "  Warning: Preserved user-owned hook conflict: $hook_relative"
+            continue
+        fi
+        cp -f "$SCRIPT_DIR/hooks/$hook" "$hook_target"
+        chmod +x "$hook_target"
         echo "  Installed: hooks/$hook"
     fi
 done
@@ -293,9 +338,15 @@ DEPRECATED_HOOKS=(
     "changelog-logger.sh"
 )
 for deprecated in "${DEPRECATED_HOOKS[@]}"; do
-    if [[ -f "$TARGET_DIR/.claude/hooks/$deprecated" ]]; then
-        rm -f "$TARGET_DIR/.claude/hooks/$deprecated"
-        echo "  Removed deprecated: hooks/$deprecated"
+    deprecated_relative=".claude/hooks/$deprecated"
+    deprecated_target="$TARGET_DIR/$deprecated_relative"
+    if [[ -e "$deprecated_target" ]]; then
+        if manifest_owns "$deprecated_relative"; then
+            rm -f "$deprecated_target"
+            echo "  Removed deprecated: hooks/$deprecated"
+        else
+            echo "  Warning: Preserved user-owned deprecated hook conflict: $deprecated_relative"
+        fi
     fi
 done
 

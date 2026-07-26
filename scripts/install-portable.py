@@ -12,8 +12,11 @@ import stat
 import sys
 from typing import Any
 
+from install_safety import UnsafeManagedPath, assert_safe_managed_files
+
 MARKER_START = "<!-- director-mode-lite:start -->"
 MARKER_END = "<!-- director-mode-lite:end -->"
+ADVISORY_ASSET = ".director-mode/hooks/advisory.sh"
 GUIDANCE_BLOCK = f"""{MARKER_START}
 ## Director Mode Lite (guidance)
 
@@ -53,9 +56,16 @@ def copy_file(
 def copy_tree(source: Path, target: Path, *, update: bool) -> None:
     if target.exists() and not update:
         return
-    if target.exists():
-        shutil.rmtree(target)
-    shutil.copytree(source, target)
+    target.mkdir(parents=True, exist_ok=True)
+    for item in sorted(source.rglob("*")):
+        if item.is_symlink():
+            raise RuntimeError(f"source skill contains a symlink: {item}")
+        destination = target / item.relative_to(source)
+        if item.is_dir():
+            destination.mkdir(parents=True, exist_ok=True)
+        elif item.is_file():
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(item, destination)
 
 
 def managed_guidance(path: Path) -> None:
@@ -88,11 +98,21 @@ def read_json(path: Path) -> dict[str, Any]:
     return data
 
 
-def same_hook(entry: Any, script_name: str) -> bool:
+def references_advisory(command: Any) -> bool:
+    if not isinstance(command, str):
+        return False
+    normalized = command.replace("\\", "/")
+    pattern = rf"(?<![A-Za-z0-9._-]){re.escape(ADVISORY_ASSET)}(?![A-Za-z0-9._/-])"
+    return re.search(pattern, normalized) is not None
+
+
+def same_hook(entry: Any) -> bool:
     if not isinstance(entry, dict):
         return False
+    if references_advisory(entry.get("command")):
+        return True
     return any(
-        script_name in hook.get("command", "")
+        references_advisory(hook.get("command"))
         for hook in entry.get("hooks", [])
         if isinstance(hook, dict)
     )
@@ -102,7 +122,7 @@ def merge_hook(path: Path, entry: dict[str, Any]) -> None:
     data = read_json(path)
     hooks = data.setdefault("hooks", {})
     session_start = hooks.setdefault("SessionStart", [])
-    if not any(same_hook(item, "advisory.sh") for item in session_start):
+    if not any(same_hook(item) for item in session_start):
         session_start.append(entry)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -173,12 +193,47 @@ def selected(cli: str, name: str) -> bool:
     return cli == "all" or cli == name
 
 
+def portable_destinations(source: Path, cli: str, hooks: str) -> set[str]:
+    paths = {
+        "CLAUDE.md",
+        "AGENTS.md",
+        ".director-mode/GUIDANCE.md",
+        ".director-mode/handoff.schema.json",
+        ".director-mode/bin/director-relay",
+        ".director-mode/bin/director-open",
+        ".director-mode/bin/director-doctor",
+        ".director-mode/handoffs/.gitignore",
+    }
+    if hooks != "none":
+        paths.add(ADVISORY_ASSET)
+    if hooks != "none" and selected(cli, "claude"):
+        paths.add(".claude/settings.local.json")
+    if hooks != "none" and selected(cli, "codex"):
+        paths.add(".codex/hooks.json")
+
+    if selected(cli, "codex"):
+        for item in (source / "skills").rglob("*"):
+            if item.is_file():
+                relative = item.relative_to(source / "skills").as_posix()
+                paths.add(f".agents/skills/{relative}")
+        for agent in (source / "agents").glob("*.md"):
+            paths.add(f".codex/agents/{agent.stem}.toml")
+
+    if selected(cli, "grok"):
+        for agent in (source / "agents").glob("*.md"):
+            paths.add(f".grok/agents/{agent.name}")
+    return paths
+
+
 def install() -> None:
     args = parse_args()
     source = Path(args.source).expanduser().resolve()
     target = Path(args.target).expanduser().resolve()
     if not source.is_dir() or not target.is_dir():
         raise RuntimeError("source and target must be existing directories")
+    assert_safe_managed_files(
+        target, portable_destinations(source, args.cli, args.hooks)
+    )
 
     runtime = target / ".director-mode"
     copy_file(source / "portable" / "GUIDANCE.md", runtime / "GUIDANCE.md", update=args.update)
@@ -196,6 +251,12 @@ def install() -> None:
     copy_file(
         source / "scripts" / "director-open.sh",
         runtime / "bin" / "director-open",
+        update=args.update,
+        executable=True,
+    )
+    copy_file(
+        source / "scripts" / "director-doctor.py",
+        runtime / "bin" / "director-doctor",
         update=args.update,
         executable=True,
     )
@@ -264,6 +325,7 @@ def install() -> None:
     print(f"  Shared guidance: {runtime / 'GUIDANCE.md'}")
     print(f"  Session relay:   {runtime / 'bin' / 'director-relay'}")
     print(f"  Open launcher:   {runtime / 'bin' / 'director-open'}")
+    print(f"  Read-only doctor:{runtime / 'bin' / 'director-doctor'}")
     if selected(args.cli, "codex"):
         print("  Codex adapters:  .agents/skills + .codex/agents")
     if selected(args.cli, "grok"):
@@ -274,6 +336,6 @@ def install() -> None:
 if __name__ == "__main__":
     try:
         install()
-    except (OSError, RuntimeError) as exc:
+    except (OSError, RuntimeError, UnsafeManagedPath) as exc:
         print(f"install-portable: {exc}", file=sys.stderr)
         raise SystemExit(1)

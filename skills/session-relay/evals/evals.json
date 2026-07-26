@@ -1,0 +1,38 @@
+{
+  "skill_name": "session-relay",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Claude Code is near its context limit. Hand this dirty-worktree task to Codex and show exactly how Codex should continue without exposing the transcript.",
+      "expected_output": "A metadata-only packet workflow, status check, and new Codex session command with no transcript or permission transfer.",
+      "expectations": [
+        "The response resolves a project, global, or bundled relay implementation.",
+        "The create command records goal, summary, next step, and actual verification evidence.",
+        "The response states that raw transcripts, credentials, and vendor session history are not transferred.",
+        "The response runs or recommends relay status before continuation and does not add bypass flags."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Codex received a Claude packet yesterday, but the branch and files may have changed. Continue safely in Grok and preserve the handoff chain.",
+      "expected_output": "Drift inspection followed by a v2 child packet using --parent and a Grok continuation in the live project.",
+      "expectations": [
+        "The response validates the packet and compares it with the live worktree before acting.",
+        "The response creates the next packet with --parent so lineage is preserved.",
+        "The response treats the packet workspace path as evidence, not a trusted execution directory.",
+        "The response starts a new Grok-native session rather than using a Claude or Codex session ID."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I only installed the plugin, there is no .director-mode directory, and I need to hand a task from Grok back to Claude. Also tell me whether --resume is appropriate.",
+      "expected_output": "Use the skill-bundled relay fallback and clearly separate same-provider native resume from a cross-provider packet.",
+      "expectations": [
+        "The response uses the bundled scripts/director-relay.py fallback relative to the skill.",
+        "The response uses a Director packet for Grok to Claude continuation.",
+        "The response says Claude --resume is only for a Claude-native session, not a Grok session ID.",
+        "The response does not require a hook or persistent permission change."
+      ]
+    }
+  ]
+}

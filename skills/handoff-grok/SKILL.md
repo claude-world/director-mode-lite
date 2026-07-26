@@ -2,11 +2,6 @@
 name: handoff-grok
 description: Continue a task in xAI Grok Build using the shared Director handoff packet. Use when the user says to use Grok, requests a Grok review, or wants Grok Build to take over work started in Claude Code or Codex CLI.
 user-invocable: true
-allowed-tools:
-  - Read
-  - Bash
-  - Grep
-  - Glob
 ---
 
 # Handoff to Grok Build

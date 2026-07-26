@@ -2,11 +2,6 @@
 name: handoff-codex
 description: Continue a task in OpenAI Codex CLI through a portable Director handoff packet. Use when the user asks Codex to take over, wants an independent Codex implementation or review, or needs to preserve decisions and verification while changing CLIs.
 user-invocable: true
-allowed-tools:
-  - Read
-  - Bash
-  - Grep
-  - Glob
 ---
 
 # Handoff to Codex CLI

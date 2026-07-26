@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 RELAY="$PROJECT_ROOT/scripts/director-relay.py"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/director-mode-relay.XXXXXX")"
+TEST_ROOT="$(cd "$TEST_ROOT" && pwd -P)"
 FAILURES=0
 
 cleanup() { rm -rf "$TEST_ROOT"; }
@@ -71,8 +72,10 @@ packet="$TEST_ROOT/.director-mode/handoffs/latest.json"
 markdown="$TEST_ROOT/.director-mode/handoffs/latest.md"
 assert "latest JSON exists" "[[ -f '$packet' ]]"
 assert "latest Markdown exists" "[[ -f '$markdown' ]]"
+assert "handoff packets are ignored by Git" "[[ \"\$(cat '$TEST_ROOT/.director-mode/handoffs/.gitignore')\" == $'*\\n!.gitignore' ]]"
 assert "packet validates" "'$RELAY' validate '$packet' >/dev/null"
-assert "protocol is recorded" "python3 -c 'import json; assert json.load(open(\"$packet\"))[\"protocol\"] == \"director-handoff/v1\"'"
+assert "protocol v2 is recorded" "python3 -c 'import json; assert json.load(open(\"$packet\"))[\"protocol\"] == \"director-handoff/v2\"'"
+assert "initial lineage is recorded" "python3 -c 'import json; p=json.load(open(\"$packet\")); l=p[\"lineage\"]; assert l[\"root_id\"] == p[\"id\"] and l[\"parent_id\"] is None and l[\"hop\"] == 0 and l[\"route\"] == [\"claude\", \"codex\"]'"
 assert "source CLI is recorded" "python3 -c 'import json; assert json.load(open(\"$packet\"))[\"source\"][\"cli\"] == \"claude\"'"
 assert "target CLI is recorded" "python3 -c 'import json; assert json.load(open(\"$packet\"))[\"target\"][\"cli\"] == \"codex\"'"
 assert "packet is unreviewed by default" "python3 -c 'import json; assert json.load(open(\"$packet\"))[\"privacy\"][\"review_status\"] == \"unreviewed\"'"
@@ -105,13 +108,63 @@ mkdir -p "$TEST_ROOT/packages/app"
 assert "subdirectory call writes at Git root" "[[ -f '$TEST_ROOT/.director-mode/handoffs/latest.json' && ! -e '$TEST_ROOT/packages/app/.director-mode' ]]"
 assert "review flag is recorded" "python3 -c 'import json; assert json.load(open(\"$TEST_ROOT/.director-mode/handoffs/latest.json\"))[\"privacy\"][\"review_status\"] == \"reviewed\"'"
 
+echo "Test: relay chains preserve lineage and resolve latest from a subdirectory"
+parent_id="$(python3 -c 'import json; print(json.load(open("'"$TEST_ROOT"'/.director-mode/handoffs/latest.json"))["id"])')"
+"$RELAY" --cwd "$TEST_ROOT/packages/app" create --parent \
+    --from claude --to codex --goal "Continue the chain" --summary "Ready" \
+    --next "Verify lineage" >/dev/null
+assert "child packet validates" "'$RELAY' validate '$TEST_ROOT/.director-mode/handoffs/latest.json' >/dev/null"
+assert "child lineage links the parent" "python3 - '$TEST_ROOT/.director-mode/handoffs/latest.json' '$parent_id' <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+l = p['lineage']
+assert l['parent_id'] == sys.argv[2]
+assert l['hop'] == 1
+assert l['route'] == ['grok', 'claude', 'codex']
+PY"
+assert "same-second packets have unique names" "[[ \$(find '$TEST_ROOT/.director-mode/handoffs' -maxdepth 1 -name '*.json' ! -name latest.json | wc -l | tr -d ' ') -ge 3 ]]"
+
+echo "Test: status reports live worktree drift without blocking"
+status_json="$("$RELAY" --cwd "$TEST_ROOT/packages/app" status --json)"
+assert "fresh packet matches live worktree" "STATUS_JSON='$status_json' python3 -c 'import json,os; d=json.loads(os.environ[\"STATUS_JSON\"])[\"drift\"]; assert all(v is True for v in d.values())'"
+printf 'new drift\n' > "$TEST_ROOT/after-packet.txt"
+status_json="$("$RELAY" --cwd "$TEST_ROOT/packages/app" status --json)"
+assert "status detects later worktree drift" "STATUS_JSON='$status_json' python3 -c 'import json,os; d=json.loads(os.environ[\"STATUS_JSON\"])[\"drift\"]; assert d[\"status_matches\"] is False'"
+
+echo "Test: v1 packets remain readable"
+python3 - "$TEST_ROOT/.director-mode/handoffs/latest.json" "$TEST_ROOT/v1.json" <<'PY'
+import json, pathlib, sys
+p = json.loads(pathlib.Path(sys.argv[1]).read_text())
+p['protocol'] = 'director-handoff/v1'
+p.pop('lineage')
+pathlib.Path(sys.argv[2]).write_text(json.dumps(p))
+PY
+assert "legacy v1 packet validates" "'$RELAY' validate '$TEST_ROOT/v1.json' | grep -q 'director-handoff/v1'"
+
+echo "Test: run uses the caller's live project, never a packet path"
+mkdir -p "$TEST_ROOT/fake-bin" "$TEST_ROOT/untrusted-location"
+printf '#!/bin/sh\npwd > \"$DIRECTOR_TEST_CWD\"\n' > "$TEST_ROOT/fake-bin/codex"
+chmod +x "$TEST_ROOT/fake-bin/codex"
+python3 - "$TEST_ROOT/.director-mode/handoffs/latest.json" "$TEST_ROOT/untrusted.json" "$TEST_ROOT/untrusted-location" <<'PY'
+import json, pathlib, sys
+p = json.loads(pathlib.Path(sys.argv[1]).read_text())
+p['workspace']['path'] = sys.argv[3]
+p['workspace']['git_root'] = sys.argv[3]
+pathlib.Path(sys.argv[2]).write_text(json.dumps(p))
+PY
+DIRECTOR_TEST_CWD="$TEST_ROOT/launched-cwd" \
+    DIRECTOR_PROJECT_DIR="$TEST_ROOT/untrusted-location" \
+    PATH="$TEST_ROOT/fake-bin:$PATH" \
+    "$RELAY" --cwd "$TEST_ROOT/packages/app" continue "$TEST_ROOT/untrusted.json" --run >/dev/null
+assert "explicit cwd wins and target CLI launches in the live Git root" "[[ \"\$(cat '$TEST_ROOT/launched-cwd')\" == '$TEST_ROOT' ]]"
+
 echo "Test: malformed and unsupported packets fail cleanly"
 printf '{"protocol":"unknown"}\n' > "$TEST_ROOT/bad.json"
 bad_status=0
 "$RELAY" validate "$TEST_ROOT/bad.json" >/dev/null 2>&1 || bad_status=$?
 assert "unsupported packet exits two" "[[ $bad_status -eq 2 ]]"
 
-python3 - "$TEST_ROOT/.director-mode/handoffs/latest.json" "$TEST_ROOT/extra.json" "$TEST_ROOT/date.json" "$TEST_ROOT/type.json" <<'PY'
+python3 - "$TEST_ROOT/.director-mode/handoffs/latest.json" "$TEST_ROOT/extra.json" "$TEST_ROOT/date.json" "$TEST_ROOT/type.json" "$TEST_ROOT/lineage.json" "$TEST_ROOT/route.json" <<'PY'
 import copy
 import json
 import pathlib
@@ -127,8 +180,14 @@ pathlib.Path(sys.argv[3]).write_text(json.dumps(bad_date))
 bad_type = copy.deepcopy(source)
 bad_type["workspace"]["status_truncated"] = "false"
 pathlib.Path(sys.argv[4]).write_text(json.dumps(bad_type))
+bad_lineage = copy.deepcopy(source)
+bad_lineage["lineage"]["parent_id"] = None
+pathlib.Path(sys.argv[5]).write_text(json.dumps(bad_lineage))
+bad_route = copy.deepcopy(source)
+bad_route["lineage"]["route"][-1] = "grok"
+pathlib.Path(sys.argv[6]).write_text(json.dumps(bad_route))
 PY
-for invalid in extra date type; do
+for invalid in extra date type lineage route; do
     invalid_status=0
     "$RELAY" validate "$TEST_ROOT/$invalid.json" >/dev/null 2>&1 || invalid_status=$?
     assert "$invalid packet is rejected" "[[ $invalid_status -eq 2 ]]"
