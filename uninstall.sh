@@ -36,109 +36,37 @@ remove_owned_hook_files() {
     fi
 }
 
-# Surgically remove only the hooks/settings that install.sh injected,
-# preserving any user-defined settings in settings.local.json.
+# Surgically remove only registrations proven to reference Director-owned hook
+# assets. Generic legacy hook names require manifest ownership, so a user-owned
+# same-name hook is not claimed during uninstall.
 remove_injected_settings() {
     local settings_file="$TARGET_DIR/.claude/settings.local.json"
     local remove_plans_setting="${1:-0}"
-    [[ -f "$settings_file" ]] || return 0
 
-    if command -v python3 &>/dev/null; then
-        SETTINGS_FILE="$settings_file" REMOVE_PLANS_SETTING="$remove_plans_setting" python3 - << 'PYEOF'
-import json, os
-
-path = os.environ['SETTINGS_FILE']
-with open(path) as f:
-    settings = json.load(f)
-
-OUR_HOOK_PATHS = (
-    '.director-mode/hooks/advisory.sh',
-    '.claude/hooks/auto-loop-stop.sh',
-    '.claude/hooks/log-bash-event.sh',
-    '.claude/hooks/log-file-change.sh',
-    '.claude/hooks/pre-tool-validator.sh',
-    '.self-evolving-loop/hooks/continue-loop.sh',
-    '.self-evolving-loop/hooks/log-event.sh',
-    '.self-evolving-loop/hooks/phase-tracker.sh',
-)
-
-def is_ours(entry):
-    if not isinstance(entry, dict):
-        return False
-    return any(
-        path_fragment in hook.get('command', '')
-        for hook in entry.get('hooks', [])
-        if isinstance(hook, dict)
-        for path_fragment in OUR_HOOK_PATHS
-    )
-
-hooks = settings.get('hooks', {})
-for event in list(hooks.keys()):
-    hooks[event] = [e for e in hooks[event] if not is_ours(e)]
-    if not hooks[event]:
-        del hooks[event]
-if not hooks:
-    settings.pop('hooks', None)
-
-if os.environ.get('REMOVE_PLANS_SETTING') == '1' and settings.get('plansDirectory') == '.claude/plans':
-    del settings['plansDirectory']
-
-if settings:
-    with open(path, 'w') as f:
-        json.dump(settings, f, indent=2)
-    print('  Removed Director Mode hooks from settings.local.json (other settings kept)')
-else:
-    os.remove(path)
-    print('  Removed settings.local.json (contained only Director Mode settings)')
-PYEOF
-    else
+    if ! command -v python3 &>/dev/null; then
         echo "  Warning: python3 not found - please remove Director Mode hooks"
         echo "  from .claude/settings.local.json manually."
+        return 0
     fi
-}
 
-remove_portable_hook_adapters() {
-    local hook_file
-    for hook_file in \
-        "$TARGET_DIR/.codex/hooks.json" \
-        "$TARGET_DIR/.grok/hooks/director-mode.json"; do
-        [[ -f "$hook_file" ]] || continue
-        if ! command -v python3 &>/dev/null; then
-            echo "  Warning: python3 unavailable; remove advisory.sh from $hook_file manually."
-            continue
-        fi
-        SETTINGS_FILE="$hook_file" python3 - <<'PYEOF'
+    python3 "$SCRIPT_DIR/scripts/director-hooks.py" prune --target "$TARGET_DIR"
+    [[ "$remove_plans_setting" == "1" && -f "$settings_file" ]] || return 0
+
+    SETTINGS_FILE="$settings_file" python3 - <<'PYEOF'
 import json
 import os
+from pathlib import Path
 
-path = os.environ["SETTINGS_FILE"]
-with open(path) as handle:
-    data = json.load(handle)
-
-def is_director(entry):
-    return any(
-        ".director-mode/hooks/advisory.sh" in hook.get("command", "")
-        for hook in entry.get("hooks", [])
-        if isinstance(hook, dict)
-    ) if isinstance(entry, dict) else False
-
-hooks = data.get("hooks", {})
-for event in list(hooks):
-    hooks[event] = [entry for entry in hooks[event] if not is_director(entry)]
-    if not hooks[event]:
-        del hooks[event]
-if not hooks:
-    data.pop("hooks", None)
-
-if data:
-    with open(path, "w") as handle:
-        json.dump(data, handle, indent=2)
-        handle.write("\n")
+path = Path(os.environ["SETTINGS_FILE"])
+settings = json.loads(path.read_text(encoding="utf-8"))
+if settings.get("plansDirectory") != ".claude/plans":
+    raise SystemExit(0)
+del settings["plansDirectory"]
+if settings:
+    path.write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8")
 else:
-    os.remove(path)
+    path.unlink()
 PYEOF
-        echo "  Removed Director Mode advisory from ${hook_file#$TARGET_DIR/}"
-    done
 }
 
 remove_guidance_blocks() {
@@ -168,7 +96,6 @@ PYEOF
 
 remove_installed_assets() {
     remove_injected_settings 1
-    remove_portable_hook_adapters
     if [[ -f "$TARGET_DIR/.director-mode/install-ownership.json" ]]; then
         python3 "$SCRIPT_DIR/scripts/install-ownership.py" remove --target "$TARGET_DIR"
     else
@@ -197,7 +124,6 @@ case $choice in
     1)
         echo "Removing Director Mode hook registrations and owned hook files..."
         remove_injected_settings 0
-        remove_portable_hook_adapters
         remove_owned_hook_files
         echo ""
         echo "Removed:"

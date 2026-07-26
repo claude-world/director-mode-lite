@@ -230,14 +230,14 @@ generated config with the CLI's own hook inspection UI.
 Common choices:
 
 ```bash
-# Recommended: all adapters, no active hooks
-./install.sh --cli all /path/to/project
+# Recommended: all adapters; register no Director Mode hooks
+./install.sh --cli all --hooks none /path/to/project
 
 # Add non-blocking SessionStart context for Claude and Codex
 ./install.sh --cli all --hooks guide /path/to/project
 
-# Refresh files installed by Director Mode
-./install.sh --update --cli all /path/to/project
+# Refresh files and migrate to zero Director-owned hooks
+./install.sh --update --cli all --hooks none /path/to/project
 
 # Interactive setup
 ./install.sh --wizard /path/to/project
@@ -247,6 +247,11 @@ The installer backs up an existing `.claude/` directory, preserves an existing
 project guide, and updates only its marked guidance block. Existing Codex hook
 JSON is merged rather than replaced. Updates merge shipped skill files while
 preserving extra user files in the skill directories.
+
+Always choose the hook mode explicitly during an update. `--hooks none`
+removes Director-owned hook registrations and unmodified owned hook assets;
+`guide` and `automation` install or refresh those opt-in surfaces. Hooks owned
+by the project, user, or another plugin remain native CLI configuration.
 
 Before writing managed files, the installer rejects symlinked destination
 components and final files with multiple hard links. It stops with an error
@@ -290,6 +295,12 @@ Claude/Codex configs plus every discovered Grok `hooks/*.json` surface.
 Malformed or shape-invalid files appear under `hooks.invalid_surfaces`; they
 are never treated as evidence of a healthy zero-hook state.
 
+Doctor exit status only confirms that the read-only report was generated. A
+clean runtime requires empty `runtime.missing` and `runtime.issues`; a clean
+hook conclusion requires `hooks.known_registrations == 0` and an empty
+`hooks.invalid_surfaces`. Use `verify-install.sh` when a pass/fail gate is
+required.
+
 The regression suite covers installer modes, native adapters, advisory hook
 behavior, exact hook ownership, symlink/hardlink write protection, packet
 creation/validation, metadata-only Git capture, project/user/plugin diagnosis,
@@ -299,7 +310,7 @@ invalid hook surfaces, update behavior, and uninstall preservation.
 
 ```bash
 git pull
-./install.sh --update --cli all /path/to/project
+./install.sh --update --cli all --hooks none /path/to/project
 ```
 
 The important behavior change is the default: legacy automation is now opt-in.

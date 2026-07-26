@@ -46,8 +46,8 @@ Grok Build.
   hooks
 - Zero-hook verification now detects stale registrations and assets rather
   than treating the mode as an unchecked absence
-- Hook pruning uses exact product paths and ownership evidence, preserving
-  unowned same-name custom hooks instead of claiming them
+- Hook pruning and uninstall use exact product paths and ownership evidence,
+  preserving unowned same-name custom hooks instead of claiming them
 - Installer preflight rejects managed paths through symlinks and final files
   with multiple hard links before any write can reach the referenced target
 

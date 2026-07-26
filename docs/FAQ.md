@@ -16,7 +16,8 @@ No. It is an open-source community project from Claude World.
 
 No. Director Mode adds no deny rule, permission gate, forced approval, or
 mandatory workflow. Native CLI controls remain user-selected, including a
-trusted/full-access mode when desired. The default install registers no hooks.
+trusted/full-access mode when desired. The default install registers no
+Director Mode hooks; existing project, user, or plugin hooks remain active.
 
 ### How do I start the full-capability profile?
 
@@ -140,10 +141,11 @@ to Claude.
 ### What is the recommended command?
 
 ```bash
-./install.sh --cli all /path/to/project
+./install.sh --cli all --hooks none /path/to/project
 ```
 
-It installs all three adapters with no active hooks.
+It installs all three adapters without adding a Director Mode hook. Existing
+native hooks are not disabled.
 
 ### Does zero-hook mode remove every hook it finds?
 
@@ -151,7 +153,7 @@ No. It removes only exact Director registrations and unmodified assets proven
 by the ownership inventory. Generic legacy `.claude/hooks/...` names require
 that ownership evidence; an unowned same-name custom hook is preserved and
 is not treated as Director-owned. Other user or project hooks remain native
-CLI configuration.
+CLI configuration. Hooks-only uninstall uses the same ownership rule.
 
 ### Can I add the useful non-blocking context hook?
 
@@ -165,7 +167,7 @@ agents already work without it.
 ### How do I update an existing install?
 
 ```bash
-./install.sh --update --cli all /path/to/project
+./install.sh --update --cli all --hooks none /path/to/project
 ```
 
 The installer backs up the existing `.claude/` tree. Distributed skill and
@@ -173,10 +175,14 @@ agent files update, extra user files in skill directories remain, and project
 guides keep non-Director content. It aborts before writing through a symlinked
 managed path or a final file with multiple hard links.
 
+The example explicitly migrates to zero Director-owned hooks. Choose
+`--hooks guide` or `--hooks automation` when updating those opt-in surfaces;
+do not omit the hook mode when the distinction matters.
+
 ### What does the wizard do?
 
 `./install.sh --wizard` asks for project type, CLI adapters, and setup style.
-The recommended style is all three CLIs with no active hooks.
+The recommended style is all three CLIs with no Director Mode hooks.
 
 ### How do I enable the old automation?
 
@@ -202,6 +208,11 @@ bundled `plugin` runtime. It checks project/user Claude and Codex hook configs
 and all discovered Grok `hooks/*.json` files. Parse errors and invalid shapes
 appear in `hooks.invalid_surfaces`, so a broken config is not reported as a
 healthy zero-hook setup.
+
+Exit zero means the report was generated; it is not a health verdict. Require
+empty `runtime.missing`, `runtime.issues`, and `hooks.invalid_surfaces`, plus
+`hooks.known_registrations == 0`, for a clean result. Use
+`verify-install.sh` when automation needs a pass/fail gate.
 
 ### The target CLI does not see a skill
 

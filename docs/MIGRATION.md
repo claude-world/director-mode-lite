@@ -9,13 +9,18 @@ supports Claude Code, Codex CLI, and Grok Build from one installation.
 
 ```bash
 git pull
-./install.sh --update --cli all /path/to/project
+./install.sh --update --cli all --hooks none /path/to/project
 ./scripts/verify-install.sh /path/to/project
 ```
 
 The installer backs up the project's existing `.claude/` directory before
 updating distributed files. It merges shipped skill files in place and keeps
 unrelated user files already present in the skill directories.
+
+Choose the hook mode explicitly on every update. The command above
+intentionally migrates to zero Director-owned hooks. Use `--hooks guide` or
+`--hooks automation` when updating those opt-in surfaces instead. Existing
+non-Director project, user, or plugin hooks remain under their native CLI.
 
 Managed write paths are checked before installation. A symlinked destination
 component or a final file with multiple hard links stops the update; resolve
@@ -98,6 +103,10 @@ python3 scripts/director-doctor.py --cwd /path/to/project --json --no-probe
 bundled plugin runtime. It inspects project/user Claude and Codex hook configs
 and every discovered Grok `hooks/*.json` file. Malformed or shape-invalid hook
 files are listed under `hooks.invalid_surfaces`, not treated as zero-hook.
+Doctor exit zero means the report was generated, not that it is healthy:
+require empty `runtime.missing`, `runtime.issues`, and
+`hooks.invalid_surfaces`, plus `hooks.known_registrations == 0`, for that
+conclusion. Use `verify-install.sh` as the pass/fail installation gate.
 
 ### Session continuity
 

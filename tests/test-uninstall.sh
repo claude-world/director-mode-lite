@@ -22,6 +22,8 @@ mkdir -p "$TARGET"
 mkdir -p "$TARGET/.claude/hooks" "$TARGET/.grok/hooks"
 printf '#!/usr/bin/env bash\nexit 0\n' > "$TARGET/.claude/hooks/custom.sh"
 chmod +x "$TARGET/.claude/hooks/custom.sh"
+printf '#!/usr/bin/env bash\necho user-owned\n' > "$TARGET/.claude/hooks/log-file-change.sh"
+chmod +x "$TARGET/.claude/hooks/log-file-change.sh"
 printf '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bash custom-grok.sh"}]}]}}\n' > "$TARGET/.grok/hooks/custom.json"
 mkdir -p "$TARGET/.director-mode/handoffs"
 printf 'keep packet\n' > "$TARGET/.director-mode/handoffs/user-packet.md"
@@ -34,6 +36,7 @@ import sys
 root = pathlib.Path(sys.argv[1])
 for rel, command in (
     (".claude/settings.local.json", "bash .claude/hooks/custom.sh"),
+    (".claude/settings.local.json", "bash .claude/hooks/log-file-change.sh"),
     (".codex/hooks.json", "bash .codex/hooks/custom.sh"),
 ):
     path = root / rel
@@ -54,15 +57,27 @@ assert "Codex advisory registration removed" "! grep -q 'advisory.sh' '$TARGET/.
 assert "Grok Director hook removed" "[[ ! -f '$TARGET/.grok/hooks/director-mode.json' ]]"
 assert "advisory executable removed" "[[ ! -f '$TARGET/.director-mode/hooks/advisory.sh' ]]"
 assert "custom Claude registration preserved" "grep -q 'custom.sh' '$TARGET/.claude/settings.local.json'"
+assert "unowned same-name registration preserved" "grep -q 'log-file-change.sh' '$TARGET/.claude/settings.local.json'"
 assert "custom Codex registration preserved" "grep -q 'custom.sh' '$TARGET/.codex/hooks.json'"
 assert "custom Grok hook preserved" "[[ -f '$TARGET/.grok/hooks/custom.json' ]]"
 assert "custom hook executable preserved" "[[ -x '$TARGET/.claude/hooks/custom.sh' ]]"
+assert "unowned same-name executable preserved" "grep -q 'user-owned' '$TARGET/.claude/hooks/log-file-change.sh'"
 assert "shared guidance preserved" "[[ -f '$TARGET/.director-mode/GUIDANCE.md' ]]"
 assert "relay binary preserved" "[[ -x '$TARGET/.director-mode/bin/director-relay' ]]"
 assert "handoff packet preserved" "[[ -f '$TARGET/.director-mode/handoffs/user-packet.md' ]]"
 assert "skills preserved" "[[ -f '$TARGET/.claude/skills/session-relay/SKILL.md' ]]"
 assert "Codex agents preserved" "[[ -f '$TARGET/.codex/agents/code-reviewer.toml' ]]"
 assert "output reports adapter removal" "[[ '$output' == *'advisory adapters'* ]]"
+
+echo "Test: hooks-only uninstall removes manifest-owned legacy registrations"
+AUTOMATION="$TEST_ROOT/automation"
+mkdir -p "$AUTOMATION"
+"$PROJECT_ROOT/install.sh" --hooks automation "$AUTOMATION" >/dev/null
+status=0
+output="$(printf '1\n' | "$PROJECT_ROOT/uninstall.sh" "$AUTOMATION" 2>&1)" || status=$?
+assert "automation uninstall exits zero" "[[ $status -eq 0 ]]"
+assert "owned legacy registration removed" "! grep -q 'auto-loop-stop.sh' '$AUTOMATION/.claude/settings.local.json'"
+assert "owned legacy executable removed" "[[ ! -e '$AUTOMATION/.claude/hooks/auto-loop-stop.sh' ]]"
 
 echo "Test: complete uninstall removes only owned, unmodified assets"
 COMPLETE="$TEST_ROOT/complete"
