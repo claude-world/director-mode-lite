@@ -5,6 +5,45 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-07-26
+
+Director Mode Lite becomes a guidance-first toolkit for Claude Code, Codex CLI,
+and Grok Build. Native permissions, approvals, sandboxing, network access, and
+session storage remain owned by each CLI.
+
+### Added
+
+- Portable `director-handoff/v1` JSON + Markdown packet with goal, decisions,
+  Git evidence, verification, blockers, and next steps
+- `.director-mode/bin/director-relay` for creating, validating, showing, and
+  continuing a handoff in a new native Claude, Codex, or Grok session
+- `.director-mode/bin/director-open` for explicitly launching each CLI's native
+  full-capability mode in a trusted workspace without permission hooks
+- `director-mode`, `session-relay`, and `handoff-grok` skills
+- `--cli all|claude|codex|grok` and `--hooks guide|none|automation` installer
+  choices; `all` is the default, creates native Codex/Grok agent adapters, and
+  reuses Grok's Claude compatibility for the shared skill tree
+- Generated `.codex/agents/*.toml`, `.grok/agents/*.md`, `.agents/skills/`,
+  and a Codex plugin manifest
+- An ownership manifest that lets complete uninstall remove only unmodified
+  files created by Director Mode while preserving pre-existing assets
+
+### Changed
+
+- Default installation is guidance-first with zero active hooks. Optional
+  `--hooks guide` supplies Claude/Codex SessionStart context, always exits
+  successfully, and never denies an action; no inert Grok hook is installed.
+- Legacy Auto-Loop, changelog, validator, and evolving-loop hooks are copied
+  and registered only with the explicit `--hooks automation` choice.
+- Cross-CLI routing now returns suggestions only; it never auto-executes a CLI.
+- Permanent project guidance is shorter and points task procedures to skills.
+
+### Compatibility note
+
+Vendor session IDs are not portable. A relay starts a new target-native session;
+the source session ID is retained only as optional metadata. Grok's native
+Claude import remains available as a Claude→Grok shortcut.
+
 ## [1.9.0] - 2026-07-08
 
 Closes issue #13 (v1.9: guided setup wizard) as scoped in its own re-scoping

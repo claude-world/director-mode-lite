@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "director-mode-lite",
-  "version": "1.9.0",
-  "description": "Use Claude Code like a Director, not a Programmer",
+  "version": "2.0.0",
+  "description": "Guidance-first workflows shared by Claude Code, Codex CLI, and Grok Build",
   "owner": {
     "name": "Claude World",
     "email": "support@claude-world.com"
@@ -10,8 +10,8 @@
   "plugins": [
     {
       "name": "director-mode-lite",
-      "description": "Complete toolkit with 27 commands, 14 agents, 32 skills, and TDD-based Auto-Loop for autonomous development",
-      "version": "1.9.0",
+      "description": "31 commands, 14 agents, 35 skills, native three-CLI adapters, and portable session relay",
+      "version": "2.0.0",
       "author": {
         "name": "Lucas Wang",
         "email": "support@claude-world.com"

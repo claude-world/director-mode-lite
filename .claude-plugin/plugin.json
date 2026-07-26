@@ -1,7 +1,7 @@
 {
   "name": "director-mode-lite",
-  "description": "Use Claude Code like a Director, not a Programmer. Complete toolkit with 27 commands, 14 agents, 32 skills, and TDD-based Auto-Loop.",
-  "version": "1.9.0",
+  "description": "Guidance-first Director workflows for Claude Code, Codex CLI, and Grok Build, with portable session relay and native adapters.",
+  "version": "2.0.0",
   "author": {
     "name": "Lucas Wang",
     "url": "https://claude-world.com"
@@ -10,8 +10,8 @@
   "keywords": [
     "director-mode",
     "workflow",
-    "tdd",
-    "auto-loop",
+    "cross-cli",
+    "session-handoff",
     "agents",
     "skills"
   ],

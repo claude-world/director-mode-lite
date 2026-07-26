@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://claude-world.com/schemas/director-handoff-v1.json",
+  "title": "Director Mode portable handoff packet",
+  "type": "object",
+  "required": ["protocol", "id", "created_at", "privacy", "source", "target", "workspace", "task"],
+  "properties": {
+    "protocol": { "const": "director-handoff/v1" },
+    "id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "privacy": {
+      "type": "object",
+      "required": ["capture_mode", "raw_transcript_included", "file_contents_included", "review_status"],
+      "properties": {
+        "capture_mode": { "const": "git-metadata-only" },
+        "raw_transcript_included": { "const": false },
+        "file_contents_included": { "const": false },
+        "review_status": { "enum": ["unreviewed", "reviewed"] }
+      },
+      "additionalProperties": false
+    },
+    "source": { "$ref": "#/$defs/endpoint" },
+    "target": { "$ref": "#/$defs/endpoint" },
+    "workspace": {
+      "type": "object",
+      "required": ["path", "git_root", "branch", "head", "status", "diff_stat", "status_truncated"],
+      "properties": {
+        "path": { "type": "string" },
+        "git_root": { "type": ["string", "null"] },
+        "branch": { "type": ["string", "null"] },
+        "head": { "type": ["string", "null"] },
+        "status": { "type": "array", "items": { "type": "string" } },
+        "diff_stat": { "type": "array", "items": { "type": "string" } },
+        "status_truncated": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "task": {
+      "type": "object",
+      "required": ["goal", "summary", "in_scope", "out_of_scope", "constraints", "completed", "decisions", "next_steps", "verification", "blockers", "notes"],
+      "properties": {
+        "goal": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string", "minLength": 1 },
+        "in_scope": { "$ref": "#/$defs/stringList" },
+        "out_of_scope": { "$ref": "#/$defs/stringList" },
+        "constraints": { "$ref": "#/$defs/stringList" },
+        "completed": { "$ref": "#/$defs/stringList" },
+        "decisions": { "$ref": "#/$defs/stringList" },
+        "next_steps": { "$ref": "#/$defs/stringList" },
+        "verification": { "$ref": "#/$defs/stringList" },
+        "blockers": { "$ref": "#/$defs/stringList" },
+        "notes": { "$ref": "#/$defs/stringList" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "endpoint": {
+      "type": "object",
+      "required": ["cli", "session_id"],
+      "properties": {
+        "cli": { "enum": ["claude", "codex", "grok"] },
+        "session_id": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "stringList": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "additionalProperties": false
+}

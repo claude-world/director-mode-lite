@@ -1,345 +1,219 @@
-# Frequently Asked Questions
+# Director Mode Lite FAQ
 
-Common questions about Director Mode Lite.
+## Product and scope
 
----
+### What is Director Mode Lite?
 
-## General
+It is a guidance-first operating kit for Claude Code, Codex CLI, and Grok
+Build. It helps you define outcomes, provide context, coordinate agents, verify
+work, and leave portable state for another CLI.
 
-### What is Director Mode?
+### Is it an official Anthropic, OpenAI, or xAI product?
 
-Director Mode is a development methodology where you **direct** Claude Code to execute your vision autonomously, rather than writing code line by line. You become the Director, focusing on "what" and "why", while Claude handles the "how".
+No. It is an open-source community project from Claude World.
 
-### Is this an official Anthropic product?
+### Does it restrict permissions?
 
-No. Director Mode Lite is a community project from [Claude World](https://claude-world.com). It works with Claude Code but is not affiliated with Anthropic.
+No. Director Mode adds no deny rule, permission gate, forced approval, or
+mandatory workflow. Native CLI controls remain user-selected, including a
+trusted/full-access mode when desired. The default install registers no hooks.
 
-### What's the difference between Director Mode Lite and the full version?
+### How do I start the full-capability profile?
 
-| Feature | Lite (Free) | Full |
-|---------|-------------|------|
-| Commands | 27 | 85+ |
-| Agents | 14 | 35+ |
-| Skills | 32 | 60+ |
-| Auto-Loop | Yes | Yes |
-| Self-Evolving Loop | Yes | Yes |
-| Auto-Explore | No | Yes |
-| SpecKit | No | Yes |
-| Multi-CLI Support | Basic | Advanced |
-| Support | Community | Priority |
+In a trusted workspace, use the installed launcher:
 
----
+```bash
+.director-mode/bin/director-open claude
+.director-mode/bin/director-open codex
+.director-mode/bin/director-open grok
+```
+
+This selects the current CLI's native open mode. Managed organization policy
+can still override it, and native hooks still execute; the launcher does not
+pretend prompt text can grant authority.
+
+### Why guidance instead of a large policy file?
+
+Concise, specific instructions are easier for agents to apply consistently and
+consume less context. Director Mode keeps permanent guidance small and moves
+task procedures into on-demand skills.
+
+## Three-CLI support
+
+### Which CLIs are first-class?
+
+- Claude Code (`claude`)
+- OpenAI Codex CLI (`codex`)
+- xAI Grok Build (`grok`)
+
+### How are skills shared?
+
+Claude uses `.claude/skills/`; Codex receives the same skill directories under
+`.agents/skills/`; Grok reads the Claude-compatible skill tree directly. The
+installer avoids a duplicate `.grok/skills/` copy that could surface a skill
+twice.
+
+### How are agents shared?
+
+Markdown agents are canonical. Claude and Grok use those files through Claude
+compatibility where possible. To avoid silently dropping Claude-specific
+frontmatter, the installer also generates a minimal native `.grok/agents/*.md`
+adapter for each role. Every agent is converted to Codex TOML with a name,
+description, and developer instructions.
+
+The content is portable, but vendor-specific model names, tool APIs, and
+permission semantics are not assumed to be identical.
+
+### Are hooks really universal?
+
+No hook is required for portability. Claude and Codex can optionally add
+SessionStart stdout as context. Grok receives the actual guidance through
+`AGENTS.md`; because it ignores stdout from passive events, Director Mode does
+not install an inert Grok hook. Grok can also discover Claude hooks through its
+compatibility layer, so avoiding duplicate registration matters. The optional
+script never denies a tool call and always exits zero.
+
+### Why not convert every old Auto-Loop hook?
+
+Stop-hook continuation is a Claude-specific legacy automation feature. Treating
+it as a universal policy would be misleading and would conflict with the
+guidance-first product boundary. It remains an explicit Claude-only opt-in.
+
+## Session relay
+
+### Can Codex resume a Claude session ID, or Claude resume a Grok ID?
+
+No universal vendor session format exists. Each CLI can resume its own native
+sessions. A Director relay starts a new native target session and supplies a
+portable checkpoint.
+
+### What is in a handoff packet?
+
+- goal and concise progress summary;
+- completed work and decisions;
+- next steps, verification, blockers, and notes;
+- working directory, Git root, branch, HEAD, status, and diff statistics;
+- optional source session ID as metadata.
+
+### What is not automatically captured?
+
+Raw transcripts, file contents, environment variables, and the source CLI's
+approvals or sandbox state. User-supplied goal/summary text, absolute paths,
+session metadata, and Git filenames can still be sensitive. Review the packet
+before sharing it; `--reviewed` records that review without enforcing it.
+
+### How do I create one?
+
+Use the `session-relay` skill or run:
+
+```bash
+.director-mode/bin/director-relay create \
+  --from claude --to grok \
+  --goal "Finish the feature" \
+  --summary "Implementation is complete; review remains" \
+  --next "Review the diff" \
+  --verification "Unit tests pass"
+```
+
+### How does the next CLI continue?
+
+```bash
+.director-mode/bin/director-relay continue --to grok
+```
+
+This prints a copyable command. Add `--run` to launch it, or `--headless` for a
+one-shot receiver.
+
+### What about `grok import`?
+
+Grok Build can import Claude Code sessions. Use it when that native shortcut is
+helpful, but retain a Director packet when work may later move to Codex or back
+to Claude.
 
 ## Installation
 
-### How do I install Director Mode Lite?
-
-**Option A: Native Plugin**
-```bash
-# Register this third-party marketplace once per Claude profile
-claude plugin marketplace add claude-world/director-mode-lite
-
-# Install the marketplace-qualified plugin
-claude plugin install director-mode-lite@director-mode-lite
-
-# Inside Claude Code, load it without restarting
-/reload-plugins
-```
-
-The marketplace and plugin commands install the plugin, but they do not attach
-hooks to a project. Use the cloned project-integrated path below for hooks; do
-not depend on Claude Code's internal, versioned plugin-cache layout.
-
-**Option B: Clone and Install**
-```bash
-git clone https://github.com/claude-world/director-mode-lite.git
-cd director-mode-lite
-./install.sh /path/to/your/project --wizard
-./scripts/verify-install.sh /path/to/your/project
-```
-
-Omit `--wizard` only when you want the documented non-interactive defaults.
-
-### Can I install it globally?
-
-The plugin installs at user scope by default, so its namespaced skills and
-agents can be available across projects. Hook configuration remains
-project-local. Do not run `./install.sh ~/.claude`; the installer expects a
-project root and would create a nested `~/.claude/.claude/` tree.
-
-### How do I uninstall?
+### What is the recommended command?
 
 ```bash
-./uninstall.sh /path/to/project
+./install.sh --cli all /path/to/project
 ```
 
-Choose **hooks only** to remove Director Mode's five files from the shared
-`.claude/hooks/` directory and remove its hook registrations. This preserves
-other hook files, agents, skills, `.auto-loop/`, `.director-mode/`, and
-`.self-evolving-loop/` state. The complete-removal option is intentionally
-broader and removes shared agent/skill/hook directories, so commit or back up
-the project before selecting it. Do not replace this review with a blanket
-`rm -rf .claude/` command.
+It installs all three adapters with no active hooks.
 
-### Will it overwrite my existing CLAUDE.md?
-
-No. The install script:
-- Backs up existing `.claude/` directory
-- Preserves existing settings while adding Director Mode hook events when their event keys are available
-- Skips existing agent and skill files; Director Mode's five owned hook filenames are refreshed
-- Creates CLAUDE.md only if none exists
-
-If an existing `Stop`, `PreToolUse`, or `PostToolUse` event prevents a Director
-Mode registration, the verifier reports the missing hook instead of silently
-claiming the setup is ready.
-
----
-
-## Usage
-
-### How do I use Auto-Loop?
+### Can I add the useful non-blocking context hook?
 
 ```bash
-/auto-loop "Implement feature X
-
-Acceptance Criteria:
-- [ ] Requirement 1
-- [ ] Requirement 2
-- [ ] Tests"
+./install.sh --cli all --hooks guide /path/to/project
 ```
 
-Auto-Loop will iterate through TDD cycles until all criteria are met.
+This registers it for Claude and Codex only. The relay, guidance, skills, and
+agents already work without it.
 
-### How do I stop Auto-Loop?
+### How do I update an existing install?
 
 ```bash
-touch .auto-loop/stop
+./install.sh --update --cli all /path/to/project
 ```
 
-The loop stops after the current iteration completes.
+The installer backs up the existing `.claude/` tree. Distributed skill and
+agent files update; project guides keep non-Director content.
 
-### How do I resume Auto-Loop?
+### What does the wizard do?
+
+`./install.sh --wizard` asks for project type, CLI adapters, and setup style.
+The recommended style is all three CLIs with no active hooks.
+
+### How do I enable the old automation?
 
 ```bash
-rm -f .auto-loop/stop
-/auto-loop --resume
+./install.sh --hooks automation /path/to/project
 ```
 
-### What if I don't have acceptance criteria?
-
-Auto-Loop works best with clear acceptance criteria. Without them, it may:
-- Run indefinitely
-- Not know when to stop
-- Miss important requirements
-
-**Tip:** Even simple criteria like "unit tests pass" help Auto-Loop know when it's done.
-
-### Can I use Director Mode with other AI tools?
-
-Yes! Director Mode Lite includes:
-- `/handoff-codex` - Delegate to OpenAI's Codex CLI
-- `/handoff-gemini` - Delegate to Google's Gemini CLI
-- `/handoff-claude` - Delegate to another authorized Claude Code instance (separate account/quota via `CLAUDE_CONFIG_DIR` profiles)
-
-### Do hooks work with a plugin-only install?
-
-Not automatically. Registering the marketplace and installing
-`director-mode-lite@director-mode-lite` gives you the plugin's skills and
-agents, but Auto-Loop, changelog, and validation hooks are configured in the
-project's `.claude/settings.local.json` only by `install.sh`. Clone and inspect
-the repository, then run the project-local installer and verifier from that
-checkout.
-
----
+This installs the legacy Claude Auto-Loop, changelog, validator, and evolving
+loop scaffolding. Review the native hook configuration before using it.
 
 ## Troubleshooting
 
-### Commands not showing up
+### The target CLI does not see a skill
 
-1. Check installation:
-   ```bash
-   ls -la .claude/skills/
-   ls -la .claude/agents/
-   ```
-
-2. Verify Claude Code version:
-   ```bash
-   claude --version
-   ```
-
-3. Run install verification:
-   ```bash
-   # From the cloned checkout used for project integration
-   ./scripts/verify-install.sh /path/to/your/project
-
-   # If the wizard intentionally selected no hooks
-   ./scripts/verify-install.sh --allow-no-hooks /path/to/your/project
-   ```
-
-4. Restart Claude Code
-
-### Auto-Loop runs forever
-
-- Add clear acceptance criteria
-- Set max iterations: `/auto-loop "task" --max-iterations 10`
-- Create stop file: `touch .auto-loop/stop`
-
-### Tests fail but Auto-Loop continues
-
-This is expected. Auto-Loop uses TDD:
-1. RED: Write failing test
-2. GREEN: Make it pass
-3. REFACTOR: Clean up
-
-If tests fail in GREEN or REFACTOR phase, the debugger agent investigates.
-
-### Agent not triggered automatically
-
-Agents trigger on specific keywords:
-- `code-reviewer`: "review", "quality", before commits
-- `debugger`: "bug", "error", "debug", test failures
-- `doc-writer`: "document", new features
-
-Or invoke directly by name: "use code-reviewer to review this PR"
-
-### Hooks not firing (Auto-Loop does nothing)
-
-Hooks require `python3` and `jq`:
-
-1. Check dependencies:
-   ```bash
-   python3 --version
-   jq --version
-   ```
-
-2. Check hook configuration:
-   ```bash
-   cat .claude/settings.local.json | grep -A5 "Stop"
-   ```
-
-3. If `settings.local.json` is missing or has no hooks section, re-run the install script.
-
-4. Run `/check-environment` for a full diagnostic.
-
-### When should I use Evolving-Loop vs Auto-Loop?
-
-| Scenario | Use `/auto-loop` | Use `/evolving-loop` |
-|---|---|---|
-| Simple, well-defined tasks | Yes | No |
-| Standard TDD is sufficient | Yes | No |
-| Complex features with many parts | No | Yes |
-| Previous `/auto-loop` attempts failed | No | Yes |
-| Need dynamic strategy adaptation | No | Yes |
-
-**Rule of thumb:** Start with `/auto-loop`. If it fails 2+ times on the same task, switch to `/evolving-loop`.
-
-### Evolving-Loop stuck or not progressing
+Inspect the expected path:
 
 ```bash
-# Check status
-/evolving-status
-
-# View recent events
-cat .self-evolving-loop/history/events.jsonl | tail -5
-
-# Force restart
-/evolving-loop --force "your task"
-
-# Complete reset
-rm -rf .self-evolving-loop/state/* .self-evolving-loop/reports/*
+find .claude/skills -name SKILL.md       # Claude + Grok compatibility
+find .agents/skills -name SKILL.md       # Codex
 ```
 
-### First troubleshooting step
+Then use the CLI's native inspection command. For Grok, `grok inspect --json`
+shows discovered rules, skills, plugins, hooks, and MCP servers.
 
-Run the install verification script:
+### Codex does not see an agent
+
+Check `.codex/agents/*.toml`, then inspect the generated file for valid TOML.
+Re-run `./install.sh --update --cli codex` to regenerate adapters.
+
+### The optional advisory hook is not running
+
+Confirm the generated native config exists:
+
+```text
+.claude/settings.local.json
+.codex/hooks.json
+```
+
+Codex may require project trust. Grok has no Director passive-hook entry because
+it would not consume the output. The toolkit does not approve hooks on your
+behalf.
+
+### A packet no longer matches the worktree
+
+The receiver should trust the current repository over the snapshot, revise the
+next steps, and record the difference. Create a new packet after integrating
+concurrent work.
+
+### How do I validate the installation?
+
 ```bash
-./scripts/verify-install.sh /path/to/your/project
+./scripts/verify-install.sh /path/to/project
 ```
 
-This checks all components and reports PASS/FAIL for each.
-
-Specifically, it validates dependencies, the 27/14/32 shipped inventory, hook
-executability, settings JSON, and at least one registered Director Mode hook.
-It accepts an existing custom `CLAUDE.md`; it does not require the bundled
-template headings. For an intentionally hook-free wizard setup, use
-`--allow-no-hooks`; the inventory is still checked while hook-only requirements
-are skipped.
-
-The verifier does not launch Claude Code, invoke commands, run project tests,
-or prove that model-generated results are correct. Treat PASS as installation
-wiring proof, then run the relevant project tests and review the actual diff.
-
----
-
-## Configuration
-
-### How do I customize Claude's behavior?
-
-Edit `CLAUDE.md` in your project root. See [CLAUDE-TEMPLATE.md](CLAUDE-TEMPLATE.md) for options.
-
-### Can I add my own commands?
-
-Yes! Create `.claude/skills/my-command/SKILL.md`:
-
-```markdown
----
-description: What this command does
-user-invocable: true
----
-
-# My Command
-
-Instructions for Claude...
-```
-
-### Can I add my own agents?
-
-Yes! Create `.claude/agents/my-agent.md`:
-
-```markdown
----
-name: my-agent
-description: What this agent does
-model: sonnet
-color: cyan
-tools:
-  - Read
-  - Grep
-  - Glob
-  - Bash
----
-
-# My Agent
-
-You are a specialist in...
-```
-
----
-
-## Contributing
-
-### How do I report a bug?
-
-[Create an issue](https://github.com/claude-world/director-mode-lite/issues/new?template=bug_report.md) with:
-- Claude Code version
-- Steps to reproduce
-- Expected vs actual behavior
-
-### How do I suggest a feature?
-
-[Create a feature request](https://github.com/claude-world/director-mode-lite/issues/new?template=feature_request.md) with:
-- Use case
-- Proposed solution
-- Alternatives considered
-
-### Can I contribute code?
-
-Yes! See [CONTRIBUTING.md](../CONTRIBUTING.md).
-
----
-
-## More Questions?
-
-- [Discord](https://discord.com/invite/rBtHzSD288)
-- [GitHub Issues](https://github.com/claude-world/director-mode-lite/issues)
-- [Product page](https://claude-world.com/director-mode-lite/)
+For repository development, run `./tests/run-tests.sh` as well.

@@ -2,6 +2,13 @@
 
 > Reference documentation for hook implementation aligned with Claude Code v2.1.201.
 
+Director Mode Lite registers no hooks by default. A hook belongs in an active
+configuration only when its benefit is measurable and it is intentionally
+selected. Audit both exit status and stdout JSON: an outer wrapper can exit 0
+while an inner hook returns `decision: "block"` or a deny permission decision.
+Also inspect Grok with `grok inspect --json`, because Grok can discover enabled
+Claude hooks even when `~/.grok/hooks/` is empty.
+
 ---
 
 ## 1. Hook Events

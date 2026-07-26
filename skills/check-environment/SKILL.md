@@ -1,6 +1,6 @@
 ---
 name: check-environment
-description: "Verify the development environment is ready for Director Mode: claude CLI, git, python3, jq, project runtime, and installed skills/agents/hooks. Use after installation, when hooks or skills misbehave, or when the user runs /check-environment."
+description: "Verify Claude, Codex, and Grok availability plus Director guidance, relay, agents, and skills. Audit optional hooks only when selected. Use after installation or when a native surface misbehaves."
 user-invocable: true
 ---
 
@@ -17,13 +17,15 @@ Verify your development environment is ready for Director Mode.
 | Tool | Purpose | Check | Required |
 |------|---------|-------|----------|
 | git | Version control | `git --version` | Yes |
-| python3 | Hook config merging (install.sh) | `python3 --version` | Yes |
-| jq | JSON processing in hooks | `jq --version` | Yes |
+| python3 | Installer, adapters, and relay | `python3 --version` | Yes |
+| jq | Legacy automation hooks only | `jq --version` | No |
 
-### 2. Claude Code Version
+### 2. CLI versions
 
 ```bash
 claude --version
+codex --version
+grok --version
 ```
 Minimum: **2.0.0+**
 
@@ -42,10 +44,14 @@ Auto-detect project type and check relevant tools:
 ### 4. Director Mode Installation
 
 - [ ] `.claude/` directory exists
-- [ ] `.claude/skills/` populated (32 skills expected)
+- [ ] `.claude/skills/` populated (35 skills expected)
+- [ ] `.agents/skills/` populated when the Codex adapter is selected
+- [ ] `.director-mode/bin/director-relay` is executable
+- [ ] `.director-mode/bin/director-open` is executable
 - [ ] `.claude/agents/` populated (14 agents expected)
-- [ ] `.claude/hooks/` populated (5 hook scripts expected)
-- [ ] `.claude/settings.local.json` has hooks configured
+- [ ] `.codex/agents/` and `.grok/agents/` populated for selected adapters
+- [ ] no active hooks for the default install
+- [ ] optional hooks match the explicitly selected mode and contain no surprise deny/block response
 - [ ] `CLAUDE.md` exists
 
 ### 5. Git Status
@@ -74,10 +80,11 @@ Auto-detect project type and check relevant tools:
 
 ### Director Mode Installation
 - [x] .claude/ directory exists
-- [x] 32 skills installed
+- [x] 35 skills installed
+- [x] Cross-CLI guidance and relay installed
 - [x] 14 agents installed
-- [x] 5 hooks installed
-- [x] settings.local.json configured
+- [x] default hook mode: none
+- [x] native open launcher installed
 - [x] CLAUDE.md exists
 
 ### Git Status
@@ -95,10 +102,10 @@ Auto-detect project type and check relevant tools:
 | Issue | Action |
 |-------|--------|
 | Missing python3 | Install Python 3: `brew install python3` (macOS) or `apt install python3` (Linux) |
-| Missing jq | Install jq: `brew install jq` (macOS) or `apt install jq` (Linux) |
+| Missing jq | Ignore unless legacy `--hooks automation` was explicitly selected |
 | Missing git | Install git for your OS |
 | Missing node | Install Node.js LTS: https://nodejs.org |
 | Old Claude Code | Run `claude update` |
 | No .claude/ | Run install script: `./install.sh .` |
-| Hooks not configured | Re-run install or check `.claude/settings.local.json` |
+| Unexpected hooks active | Inspect Claude user settings and `grok inspect --json`; Grok may load Claude-compatible hooks |
 | No CLAUDE.md | Run `/project-init` or `/claude-md-template` |

@@ -22,7 +22,7 @@ echo ""
 echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║          Director Mode Lite - Interactive Demo             ║${NC}"
 echo -e "${CYAN}║                                                            ║${NC}"
-echo -e "${CYAN}║  Use Claude Code like a Director, not a Programmer         ║${NC}"
+echo -e "${CYAN}║  Direct Claude Code, Codex CLI, and Grok Build             ║${NC}"
 echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 

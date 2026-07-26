@@ -1,44 +1,87 @@
 #!/bin/bash
 # Director Mode Lite - Installation Script
-# Safe installation: backup existing config + merge hooks.json
+# Guidance-first installation with native Claude Code, Codex, and Grok adapters.
 #
-# Usage: ./install.sh [--update] [--wizard] [target-dir]
+# Usage: ./install.sh [--update] [--wizard] [--cli all|claude|codex|grok]
+#                     [--hooks guide|none|automation] [target-dir]
 #   --update   Overwrite distributed files (agents/skills/hooks + .self-evolving-loop
 #              scaffolding) instead of skipping existing ones. CLAUDE.md is never
 #              overwritten. target-dir defaults to the current directory.
-#   --wizard   Interactive setup: ask a few questions about the project and pick
-#              which Stop-hook automation (Auto-Loop / Evolving-Loop) and
-#              observability/safety hooks to wire into settings.local.json.
-#              Requires a TTY; falls back to defaults otherwise. Agents and
-#              skills are always installed in full either way — the wizard
-#              only chooses which *hooks* get activated. Run /project-init
-#              afterwards for deep language/framework-aware CLAUDE.md setup.
+#   --cli      Install native adapters for one CLI or all three (default: all).
+#   --hooks    none (zero-interference default), guide (non-blocking Claude /
+#              Codex context), or automation (legacy blocking Claude hooks,
+#              explicit opt-in). Default: none.
+#   --no-hooks Alias for --hooks none.
+#   --wizard   Interactive CLI and guidance setup. Requires a TTY; otherwise
+#              falls back to the guidance-first defaults.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Parse args: optional --update/--wizard flags (anywhere) + optional target dir (first non-flag arg)
+# Parse flags + optional target dir.
 UPDATE_MODE=0
 WIZARD_MODE=0
+CLI_TARGETS="all"
+HOOK_MODE="none"
 TARGET_DIR="."
 _target_set=0
-for arg in "$@"; do
-    case "$arg" in
+while [[ $# -gt 0 ]]; do
+    case "$1" in
         --update)
             UPDATE_MODE=1
             ;;
         --wizard)
             WIZARD_MODE=1
             ;;
+        --cli)
+            [[ $# -ge 2 ]] || { echo "Error: --cli requires a value" >&2; exit 2; }
+            CLI_TARGETS="$2"
+            shift
+            ;;
+        --cli=*)
+            CLI_TARGETS="${1#*=}"
+            ;;
+        --hooks)
+            [[ $# -ge 2 ]] || { echo "Error: --hooks requires a value" >&2; exit 2; }
+            HOOK_MODE="$2"
+            shift
+            ;;
+        --hooks=*)
+            HOOK_MODE="${1#*=}"
+            ;;
+        --no-hooks)
+            HOOK_MODE="none"
+            ;;
+        -h|--help)
+            sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        --*)
+            echo "Error: unknown option: $1" >&2
+            exit 2
+            ;;
         *)
             if [[ $_target_set -eq 0 ]]; then
-                TARGET_DIR="$arg"
+                TARGET_DIR="$1"
                 _target_set=1
+            else
+                echo "Error: only one target directory may be provided" >&2
+                exit 2
             fi
             ;;
     esac
+    shift
 done
+
+case "$CLI_TARGETS" in
+    all|claude|codex|grok) ;;
+    *) echo "Error: --cli must be all, claude, codex, or grok" >&2; exit 2 ;;
+esac
+case "$HOOK_MODE" in
+    guide|none|automation) ;;
+    *) echo "Error: --hooks must be guide, none, or automation" >&2; exit 2 ;;
+esac
 
 BACKUP_DIR="$TARGET_DIR/.claude-backup-$(date +%Y%m%d-%H%M%S)"
 
@@ -49,16 +92,23 @@ if [[ $UPDATE_MODE -eq 1 ]]; then
 else
     echo "Mode: install (skip existing files)"
 fi
+echo "CLIs: $CLI_TARGETS"
+echo "Hooks: $HOOK_MODE"
 echo ""
 
-# Hook activation flags. Defaults match the plugin's historical behavior
-# (Auto-Loop + changelog + validator on, Evolving-Loop off/opt-in) so a plain
-# `./install.sh` is unaffected. --wizard lets the user override them.
-ENABLE_STOP_AUTOLOOP=1
+# Shared files are the default; active hooks are not. Legacy Stop-hook
+# automation remains available only through an explicit choice.
+ENABLE_STOP_AUTOLOOP=0
 ENABLE_EVOLVING_LOOP=0
-ENABLE_CHANGELOG=1
-ENABLE_VALIDATOR=1
+ENABLE_CHANGELOG=0
+ENABLE_VALIDATOR=0
 PROJECT_TYPE="unspecified"
+
+if [[ "$HOOK_MODE" == "automation" ]]; then
+    ENABLE_STOP_AUTOLOOP=1
+    ENABLE_CHANGELOG=1
+    ENABLE_VALIDATOR=1
+fi
 
 run_setup_wizard() {
     echo "Setup Wizard"
@@ -70,32 +120,49 @@ run_setup_wizard() {
     echo "  3) Exploring or prototyping"
     echo "  4) Dogfooding Director Mode itself"
     read -r -p "Choice [1-4, default 1]: " proj_choice
-    local recommended_auto
     case "$proj_choice" in
-        2) PROJECT_TYPE="cli-or-library"; recommended_auto=1 ;;
-        3) PROJECT_TYPE="exploring"; recommended_auto=0 ;;
-        4) PROJECT_TYPE="dogfooding"; recommended_auto=2 ;;
-        *) PROJECT_TYPE="web-or-api"; recommended_auto=1 ;;
+        2) PROJECT_TYPE="cli-or-library" ;;
+        3) PROJECT_TYPE="exploring" ;;
+        4) PROJECT_TYPE="dogfooding" ;;
+        *) PROJECT_TYPE="web-or-api" ;;
     esac
     echo ""
 
-    echo "Automation level (Stop-hook driven continuation):"
-    echo "  0) None       - commands/agents/skills only, no autonomous loop"
-    echo "  1) Auto-Loop  - TDD red-green-refactor continuation on Stop"
-    echo "  2) Auto-Loop + Evolving-Loop - also self-evolve skills across sessions"
-    read -r -p "Choice [0-2, default $recommended_auto]: " auto_choice
-    auto_choice="${auto_choice:-$recommended_auto}"
-    case "$auto_choice" in
-        0) ENABLE_STOP_AUTOLOOP=0; ENABLE_EVOLVING_LOOP=0 ;;
-        2) ENABLE_STOP_AUTOLOOP=1; ENABLE_EVOLVING_LOOP=1 ;;
-        *) ENABLE_STOP_AUTOLOOP=1; ENABLE_EVOLVING_LOOP=0 ;;
+    echo "Which CLI adapters should be installed?"
+    echo "  1) Claude Code + Codex CLI + Grok Build (recommended)"
+    echo "  2) Claude Code"
+    echo "  3) Codex CLI"
+    echo "  4) Grok Build"
+    read -r -p "Choice [1-4, default 1]: " cli_choice
+    case "$cli_choice" in
+        2) CLI_TARGETS="claude" ;;
+        3) CLI_TARGETS="codex" ;;
+        4) CLI_TARGETS="grok" ;;
+        *) CLI_TARGETS="all" ;;
     esac
     echo ""
 
-    read -r -p "Enable changelog + pre-write safety hooks? [Y/n]: " obs_choice
-    case "$obs_choice" in
-        [Nn]*) ENABLE_CHANGELOG=0; ENABLE_VALIDATOR=0 ;;
-        *) ENABLE_CHANGELOG=1; ENABLE_VALIDATOR=1 ;;
+    echo "Setup style:"
+    echo "  1) Guidance only, no active hooks (recommended; zero interference)"
+    echo "  2) Add a non-blocking SessionStart context hook for Claude/Codex"
+    echo "  3) Legacy Claude automation (blocking Stop hook; explicit opt-in)"
+    read -r -p "Choice [1-3, default 1]: " mode_choice
+    case "$mode_choice" in
+        2)
+            HOOK_MODE="guide"
+            ;;
+        3)
+            HOOK_MODE="automation"
+            ENABLE_STOP_AUTOLOOP=1
+            ENABLE_CHANGELOG=1
+            ENABLE_VALIDATOR=1
+            ;;
+        *)
+            HOOK_MODE="none"
+            ENABLE_STOP_AUTOLOOP=0
+            ENABLE_CHANGELOG=0
+            ENABLE_VALIDATOR=0
+            ;;
     esac
     echo ""
 }
@@ -107,7 +174,7 @@ if [[ $WIZARD_MODE -eq 1 ]]; then
         run_setup_wizard
     else
         echo "Warning: --wizard requires an interactive terminal (no TTY on stdin)."
-        echo "  Falling back to defaults (Auto-Loop + changelog + validator enabled)."
+        echo "  Falling back to zero-hook guidance for all three CLIs."
         echo ""
     fi
 fi
@@ -115,11 +182,11 @@ fi
 # Check dependencies
 MISSING_DEPS=0
 if ! command -v python3 &>/dev/null; then
-    echo "Warning: python3 not found. Hook configuration will be skipped."
+    echo "Error: python3 is required for native adapters and the session relay."
     echo "  Install: brew install python3 (macOS) or apt install python3 (Linux)"
-    MISSING_DEPS=1
+    exit 1
 fi
-if ! command -v jq &>/dev/null; then
+if [[ "$HOOK_MODE" == "automation" ]] && ! command -v jq &>/dev/null; then
     echo "Warning: jq not found. Some hooks may not work correctly."
     echo "  Install: brew install jq (macOS) or apt install jq (Linux)"
     MISSING_DEPS=1
@@ -133,6 +200,14 @@ if [[ ! -d "$TARGET_DIR" ]]; then
     echo "Error: Target directory does not exist: $TARGET_DIR"
     exit 1
 fi
+
+# Snapshot which package paths already exist. Complete uninstall later removes
+# only files this installation actually created and that remain unmodified.
+python3 "$SCRIPT_DIR/scripts/install-ownership.py" begin \
+    --source "$SCRIPT_DIR" \
+    --target "$TARGET_DIR" \
+    --cli "$CLI_TARGETS" \
+    --hooks "$HOOK_MODE"
 
 # Backup existing .claude directory
 if [[ -d "$TARGET_DIR/.claude" ]]; then
@@ -186,8 +261,10 @@ for dir in "$SCRIPT_DIR/skills/"*/; do
     fi
 done
 
-# Install hooks
-echo "Installing hooks..."
+# Legacy hook automation is intentionally absent from a guidance-first install.
+# The portable installer below owns the optional advisory hook.
+if [[ "$HOOK_MODE" == "automation" ]]; then
+echo "Installing legacy Claude automation hooks..."
 mkdir -p "$TARGET_DIR/.claude/hooks"
 
 # List of all hook scripts to install
@@ -337,12 +414,30 @@ if [[ -d "$SEL_SRC" ]]; then
         done
     done
 fi
+else
+    echo "Skipping legacy Auto-Loop, changelog, validator, and evolving-loop hooks."
+fi
 
 # Copy CLAUDE.md template (if target doesn't have one)
 if [[ ! -f "$TARGET_DIR/CLAUDE.md" ]] && [[ -f "$SCRIPT_DIR/docs/CLAUDE-TEMPLATE.md" ]]; then
     echo "Copying CLAUDE.md template..."
     cp "$SCRIPT_DIR/docs/CLAUDE-TEMPLATE.md" "$TARGET_DIR/CLAUDE.md"
 fi
+
+# Install the shared guidance, portable relay, and native adapters. Optional
+# guide hooks are registered only for CLIs that can consume their context.
+PORTABLE_ARGS=(
+    --source "$SCRIPT_DIR"
+    --target "$TARGET_DIR"
+    --cli "$CLI_TARGETS"
+    --hooks "$HOOK_MODE"
+)
+if [[ $UPDATE_MODE -eq 1 ]]; then
+    PORTABLE_ARGS+=(--update)
+fi
+echo "Installing cross-CLI guidance and adapters..."
+python3 "$SCRIPT_DIR/scripts/install-portable.py" "${PORTABLE_ARGS[@]}"
+python3 "$SCRIPT_DIR/scripts/install-ownership.py" finalize --target "$TARGET_DIR"
 
 echo ""
 if [[ $UPDATE_MODE -eq 1 ]]; then
@@ -352,16 +447,28 @@ else
 fi
 echo ""
 echo "Installed:"
-echo "  - .claude/skills/       (27 slash commands + 5 internal skills = 32 total)"
+echo "  - .director-mode/       (shared guidance + portable session relay)"
+echo "  - director-open         (native full-capability launcher)"
+echo "  - .claude/skills/       (Claude Code + Grok-compatible skills)"
 echo "  - .claude/agents/       (14 specialized agents)"
-echo "  - .claude/hooks/        (5 hooks: Auto-Loop, Changelog, Validator)"
-echo "  - .self-evolving-loop/  (evolving-loop scaffolding: hooks + templates, opt-in)"
+if [[ "$CLI_TARGETS" == "all" || "$CLI_TARGETS" == "codex" ]]; then
+    echo "  - .agents/skills/       (Codex-compatible shared skills)"
+    echo "  - .codex/agents/        (14 generated Codex agent adapters)"
+fi
+if [[ "$CLI_TARGETS" == "all" || "$CLI_TARGETS" == "grok" ]]; then
+    echo "  - .grok/agents/         (14 generated Grok agent adapters)"
+fi
 echo ""
-echo "Automation active in settings.local.json:"
+echo "Guidance and automation:"
+if [[ "$HOOK_MODE" == "guide" ]]; then
+    echo "  - Claude/Codex context hook ON  (never denies; no Grok inert hook)"
+elif [[ "$HOOK_MODE" == "none" ]]; then
+    echo "  - Active hooks              off (zero-interference default)"
+fi
 if [[ $ENABLE_STOP_AUTOLOOP -eq 1 ]]; then
-    echo "  - Auto-Loop Stop hook       ON  (TDD continuation)"
+    echo "  - Legacy Auto-Loop hook     ON  (explicit opt-in)"
 else
-    echo "  - Auto-Loop Stop hook       off"
+    echo "  - Legacy Auto-Loop hook     off"
 fi
 if [[ $ENABLE_EVOLVING_LOOP -eq 1 ]]; then
     echo "  - Evolving-Loop Stop hook   ON  (self-evolution continuation)"
@@ -388,10 +495,8 @@ if [[ -d "$BACKUP_DIR" ]]; then
 fi
 echo "Get started:"
 echo "  cd $TARGET_DIR"
-echo "  claude"
-echo "  /getting-started    # Guided 5-minute onboarding"
-echo ""
-echo "Or jump right in:"
-echo "  /project-init       # Auto-detect project and configure"
-echo "  /workflow            # Start developing with 5-step flow"
+echo "  claude | codex | grok"
+echo "  .director-mode/bin/director-open claude|codex|grok  # trusted full access"
+echo "  Read .director-mode/GUIDANCE.md"
+echo "  Use the director-mode or session-relay skill"
 echo ""

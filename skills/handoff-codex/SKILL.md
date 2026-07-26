@@ -1,84 +1,41 @@
 ---
 name: handoff-codex
-description: Delegate bulk mechanical tasks (mass refactors, template generation, simple batch edits) to OpenAI Codex CLI via non-interactive `codex exec`, preserving Claude context. Use when the user says 'use codex'/'hand off to codex' or a task is 10+ files of mechanical changes.
+description: Continue a task in OpenAI Codex CLI through a portable Director handoff packet. Use when the user asks Codex to take over, wants an independent Codex implementation or review, or needs to preserve decisions and verification while changing CLIs.
 user-invocable: true
+allowed-tools:
+  - Read
+  - Bash
+  - Grep
+  - Glob
 ---
 
 # Handoff to Codex CLI
 
-Delegate tasks to OpenAI Codex CLI to save Claude context.
-
----
-
-## When to Use Codex
-
-| Use Codex For | Keep in Claude |
-|---------------|----------------|
-| Simple file edits | Complex reasoning |
-| Bulk refactoring | Architecture decisions |
-| Code generation from specs | Problem analysis |
-| Documentation updates | Multi-step workflows |
-
----
-
-## Prerequisites
+Use the shared `session-relay` workflow. Codex starts its own native session and
+reads a packet containing the goal, current state, decisions, Git evidence,
+verification, and next steps.
 
 ```bash
-npm install -g @openai/codex
+ROOT="${CLAUDE_PROJECT_DIR:-${GROK_WORKSPACE_ROOT:-}}"
+[[ -n "$ROOT" ]] || ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+RELAY="$ROOT/.director-mode/bin/director-relay"
+[[ -x "$RELAY" ]] || RELAY="$HOME/.claude/bin/director-relay"
+
+"$RELAY" create \
+  --from <claude|grok> --to codex \
+  --goal "..." --summary "..." --next "..."
+
+"$RELAY" continue --to codex
 ```
 
----
+The second command prints the interactive `codex` invocation. Add `--run` only
+when the user wants it launched now. Use `--headless` when a one-shot `codex
+exec` continuation is appropriate.
 
-## Handoff Process
+Codex reads the repository's `AGENTS.md`, reusable skills from
+`.agents/skills/`, and generated agents from `.codex/agents/`. Confirm those
+surfaces with the installed CLI when debugging discovery.
 
-### 1. Prepare Context
-```markdown
-## Task for Codex
-**Goal**: [What needs to be done]
-**Files**: [Which files to modify]
-**Details**: [Specific requirements]
-```
-
-### 2. Generate Command
-
-Always use `codex exec`. Bare `codex` opens the interactive TUI; `codex exec "..."` runs the task non-interactively and exits, which is required when Claude delegates via Bash.
-
-```bash
-# Single file
-codex exec "Update login function in src/auth.ts to add rate limiting"
-
-# Multiple files
-codex exec "Refactor console.log to logger in src/**/*.ts"
-```
-
-### 3. Provide Instructions
-- Why Codex is suitable
-- Expected changes
-- After completion steps
-
----
-
-## Example
-
-```markdown
-## Task: Update All Import Statements
-
-**Command:**
-codex exec "Update all imports from 'lodash' to 'lodash-es' in src/**/*.ts"
-
-**Expected:**
-- ~15 files modified
-- Each import updated
-
-**After:**
-1. Run `npm test`
-2. Return if issues arise
-```
-
----
-
-## Benefits
-
-- **Token Savings**: Simple tasks don't consume Claude context
-- **Speed**: Fast for straightforward edits
-- **Context Preservation**: Keep Claude fresh for complex reasoning
+Do not add bypass, approval, sandbox, or network flags as part of the handoff.
+Those controls belong to the Codex session and remain at their current native
+settings.

@@ -1,7 +1,7 @@
 ---
 name: interop-router
-description: "Automatically routes tasks to external AI CLIs (Codex or Gemini) when more efficient; routing decisions are made automatically based on task type, with no manual commands needed. Use when a task is a large refactor, a batch operation, or needs 100K+ tokens of context better handled by an external CLI."
-user-invocable: false
+description: Suggest whether Claude Code, Codex CLI, or Grok Build is a useful next collaborator, without launching a CLI or changing controls. Use when comparing the three CLIs, planning a handoff, or deciding whether an independent implementation or review would help.
+user-invocable: true
 allowed-tools:
   - Read
   - Bash
@@ -9,112 +9,38 @@ allowed-tools:
   - Grep
 ---
 
-# Automatic Routing to External AI CLIs
+# Cross-CLI Routing Guide
 
-**Auto-trigger**: This skill evaluates tasks automatically and decides whether to delegate to an external CLI. No manual invocation needed.
+Offer a recommendation, its tradeoffs, and a copyable next step. Do not launch
+another CLI unless the user asks you to execute the handoff.
 
----
+## Decision prompts
 
-## Auto-Trigger Conditions
+- Continuity: would switching cost more context than it saves?
+- Fit: does another CLI have a native workflow or perspective useful here?
+- Independence: would a separate review reduce correlated mistakes?
+- Worktree: can the receiver safely inspect or edit the current repository?
+- Evidence: is the handoff packet specific enough to verify completion?
 
-Automatically evaluate when detecting:
-- Large refactoring (10+ files affected)
-- Batch file changes
-- Template generation tasks
-- Multi-model cross-validation needs
+## Practical mapping
 
----
+| Need | Useful option |
+| --- | --- |
+| Stay with the full current conversation | Keep the current CLI |
+| Independent implementation or review | Codex CLI or Grok Build |
+| Claude-native project workflow or existing Claude session | Claude Code |
+| Claude-compatible import plus xAI-native workflows | Grok Build |
+| Repository instructions and reusable cross-tool skills | Codex CLI |
 
-## Decision Scoring
+These are starting points, not rankings. Prefer the CLI the user already has
+authenticated and understands unless a switch brings a concrete benefit.
 
-Calculate delegation score using 3 factors:
+## Suggested response
 
-| Factor | Range | Description |
-|--------|-------|-------------|
-| Benefit | 0.0 - 0.6 | Can external CLI produce faster/more reliable results? |
-| Cost | -0.3 - 0.0 | Overhead of wrapping, normalizing, reviewing |
-| Risk | -0.3 - 0.0 | Permission/write/secret leakage risks |
+1. Name the recommended CLI and one reason.
+2. Name the switching cost or uncertainty.
+3. Offer to create a `session-relay` packet.
+4. If accepted, create it and print the receiving command.
 
-**Threshold**: Score >= 0.15 with auto-interop enabled -> auto-execute delegation
-
----
-
-## Routing Targets
-
-| Task Type | Target CLI | Reason |
-|-----------|------------|--------|
-| Large codebase exploration | Gemini | 1M token context |
-| Batch implementation | Codex | Fast bulk generation |
-| Complex architecture analysis | Gemini | Deep reasoning |
-| Template generation | Codex | Efficient structured output |
-| Parallel full-capability delegation (separate account quota) | claude-z-N profiles via /handoff-claude | full Claude Code toolset on another authorized account |
-
----
-
-## Process
-
-### 1. Check CLI Availability
-
-```bash
-# Works for both plugin install (CLAUDE_PLUGIN_ROOT) and local .claude install
-IR_DIR="${CLAUDE_PLUGIN_ROOT:-$CLAUDE_PROJECT_DIR/.claude}/skills/interop-router"
-bash "$IR_DIR/scripts/check_cli_available.sh" --json
-```
-
-Beyond Codex and Gemini, additional authorized `claude` profiles (separate accounts/config dirs — see [/handoff-claude](../handoff-claude/SKILL.md)) are also valid delegation targets when you need the full Claude Code toolset on another account's quota.
-
-### 2. Score the Decision
-
-```bash
-IR_DIR="${CLAUDE_PLUGIN_ROOT:-$CLAUDE_PROJECT_DIR/.claude}/skills/interop-router"
-python3 "$IR_DIR/scripts/score_decision.py" \
-  --task "task description" \
-  --files 15 \
-  --complexity high \
-  --json
-```
-
-### 3. Wrap Context (if delegating)
-
-```bash
-IR_DIR="${CLAUDE_PLUGIN_ROOT:-$CLAUDE_PROJECT_DIR/.claude}/skills/interop-router"
-python3 "$IR_DIR/scripts/wrap_context.py" \
-  --files src/*.py \
-  --diff \
-  --output /tmp/context.md
-```
-
-### 4. Execute with External CLI
-
-```bash
-# Codex (non-interactive)
-codex exec "Your task description" < /tmp/context.md
-
-# Gemini (context piped via stdin; -p carries the prompt)
-gemini -p "Your task description" < /tmp/context.md
-```
-
----
-
-## Safety Constraints
-
-- Default read-only mode
-- Automatic secret filtering (API keys, passwords, tokens, connection strings)
-- All results must be reviewed before landing
-- Sensitive files (.env, credentials, private keys) are always skipped
-
----
-
-## Configuration
-
-Enable auto-interop:
-
-```bash
-# Project-level (takes precedence)
-mkdir -p .claude/flags
-echo '{"enabled": true}' > .claude/flags/auto-interop.json
-
-# User-level
-mkdir -p ~/.claude/flags
-echo '{"enabled": true}' > ~/.claude/flags/auto-interop.json
-```
+Keep the result at suggestion level. Never add auto-approve, permission bypass,
+sandbox, network, or hook-trust flags to make a handoff easier.

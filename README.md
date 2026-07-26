@@ -1,898 +1,276 @@
 <h1 align="center">Director Mode Lite</h1>
 
 <p align="center">
-  <strong>Use Claude Code like a Director, not a Programmer</strong>
+  <strong>Direct work across Claude Code, Codex CLI, and Grok Build.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/claude-world/director-mode-lite/releases"><img src="https://img.shields.io/github/v/release/claude-world/director-mode-lite" alt="GitHub Release"></a>
-  <a href="https://github.com/claude-world/director-mode-lite/stargazers"><img src="https://img.shields.io/github/stars/claude-world/director-mode-lite?style=social" alt="GitHub Stars"></a>
-  <a href="https://claude.ai/code"><img src="https://img.shields.io/badge/Claude%20Code-Claude%205%20compatible-blueviolet?logo=anthropic" alt="Claude Code"></a>
-  <a href="https://discord.com/invite/rBtHzSD288"><img src="https://img.shields.io/discord/1459859959398531294?color=7289da&label=Discord&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://github.com/claude-world/director-mode-lite/releases"><img src="https://img.shields.io/github/v/release/claude-world/director-mode-lite" alt="GitHub release"></a>
+  <a href="https://github.com/claude-world/director-mode-lite/stargazers"><img src="https://img.shields.io/github/stars/claude-world/director-mode-lite?style=social" alt="GitHub stars"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT license"></a>
 </p>
 
-<p align="center">
-  <a href="https://claude-world.com/director-mode-lite/">Website</a> |
-  <a href="#quick-start">Quick Start</a> |
-  <a href="#whats-included">Features</a> |
-  <a href="examples/">Examples</a> |
-  <a href="https://discord.com/invite/rBtHzSD288">Discord</a>
-</p>
+Director Mode Lite is a guidance-first development toolkit. It gives three
+agentic CLIs a shared operating brief, reusable skills, adapted agents, and a
+portable way to hand unfinished work to one another.
 
----
+It adds no permission gates, deny rules, or forced workflow. Claude Code,
+Codex, and Grok keep their native controls, so users can choose their preferred
+trusted/full-access mode without Director Mode getting in the way.
 
-<p align="center">
-  <i>"Don't write code. Direct Claude to write code for you."</i>
-</p>
-
----
-
-## Start Here
-
-After installing, run these 3 commands:
-
-```bash
-/getting-started          # Guided 5-minute onboarding
-/project-init             # Auto-detect project and configure
-/workflow                 # Start your first feature
-```
-
-> **New to Director Mode?** Read [What is Director Mode?](#what-is-director-mode) below, or jump to [Quick Start](#quick-start).
-
-<details>
-<summary><strong>Compatibility</strong></summary>
-
-Director Mode Lite v1.9.0 is aligned with the Claude 5-era Claude Code specification, including support for:
-
-- **Claude 5 family** model selection in agent/skill frontmatter (`fable`, `opus`, `sonnet`, `haiku` aliases)
-- **Agent Teams** (experimental multi-agent collaboration)
-- **1M context window** models (`opus[1m]`, `sonnet[1m]`)
-- All 30 hook event types including `SessionStart`, `PreCompact`, and `PostCompact`
-- **Multi-account delegation** via `CLAUDE_CONFIG_DIR` profiles (`/handoff-claude`)
-
-> Last tested with Claude Code CLI v2.1.201 in July 2026. Newer CLI releases may work, but should be re-verified rather than assumed compatible.
-
-</details>
-
----
-
-## What is Director Mode?
-
-**Director Mode** is a paradigm shift in AI-assisted development. Instead of writing code line by line, you **direct** Claude to execute your vision autonomously.
-
-```
-  Traditional Coding                    Director Mode
-  ━━━━━━━━━━━━━━━━━━                    ━━━━━━━━━━━━━━
-
-  You: Write code                       You: Define the vision
-  AI:  Follow orders                    AI:  Execute autonomously
-       ↓                                     ↓
-  Micromanagement                       Strategic oversight
-  One task at a time                    Parallel agent execution
-  Manual intervention                   Continuous automation
-```
-
-### Core Principles
-
-| Principle | Description |
-|-----------|-------------|
-| **Efficiency First** | Direct execution, minimal interruption |
-| **Parallel Processing** | Multiple agents working simultaneously |
-| **Autonomous Execution** | AI handles implementation details |
-| **Strategic Oversight** | You focus on "what" and "why" |
-
----
-
-## Key Feature: TDD-Driven Auto-Loop
-
-<table>
-<tr>
-<td width="50%">
-
-### Test-Driven Development Automation
-
-Similar to [Ralph Wiggum](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum), **Auto-Loop** uses Stop hooks but focuses on TDD:
-
-- **Acceptance Criteria Tracking** - Parse `- [ ]` and auto-check completion
-- **TDD Methodology** - Red-Green-Refactor cycle guidance
-- **Checkpoint Recovery** - Resume from `.auto-loop/checkpoint.json`
-- **Agent Collaboration** - code-reviewer, test-runner integration
-
-**Stop anytime** with:
-```bash
-touch .auto-loop/stop
-```
-
-</td>
-<td width="50%">
-
-```
-/auto-loop "Create a calculator
-
-Acceptance Criteria:
-- [ ] add(a, b) function
-- [ ] subtract(a, b) function
-- [ ] Unit tests"
-
-[Iteration 1] RED    → Write test...
-[Iteration 2] GREEN  → Implement...
-[Iteration 3] REFACTOR → Clean...
-[Iteration 4] GREEN  → subtract()...
-[Iteration 5] All criteria complete!
-```
-
-</td>
-</tr>
-</table>
-
-<p align="center">
-  <img src="docs/assets/auto-loop-demo.gif" alt="Animated terminal demo of the Auto-Loop TDD cycle: acceptance criteria are parsed, a failing test is written (RED), a minimal implementation makes it pass (GREEN), code is refactored, and the loop finishes when all criteria are complete" width="748">
-</p>
-
----
-
-## Self-Evolving Loop
-
-<table>
-<tr>
-<td width="50%">
-
-### Beyond Auto-Loop: Strategy Evolution
-
-**Self-Evolving Loop** takes automation further by:
-
-- **Dynamic Skill Generation** - Creates custom skills for each task
-- **Learning from Failures** - Extracts patterns and root causes
-- **Strategy Evolution** - Improves its own execution approach
-- **8-Phase Workflow** - ANALYZE → GENERATE → EXECUTE → VALIDATE → DECIDE → LEARN → EVOLVE → SHIP
-
-**Key difference from auto-loop:**
-| Feature | auto-loop | evolving-loop |
-|---------|-----------|---------------|
-| Strategy | Fixed TDD | Dynamic |
-| Learning | None | Extracts patterns |
-| Adaptation | Low | High |
-
-</td>
-<td width="50%">
-
-```bash
-/evolving-loop "Build REST API
-
-Acceptance Criteria:
-- [ ] GET /users endpoint
-- [ ] POST /users endpoint
-- [ ] Input validation
-- [ ] Error handling
-"
-
-# The loop:
-# 1. Analyzes requirements deeply
-# 2. Generates custom executor skill
-# 3. Executes with TDD
-# 4. Validates results
-# 5. If fails: learns & evolves skills
-# 6. Repeats until all criteria pass
-# 7. Ships the final result
-```
-
-**Check status:**
-```bash
-/evolving-status
-/evolving-status --history
-/evolving-status --evolution
-```
-
-</td>
-</tr>
-</table>
-
-See [`docs/SELF-EVOLVING-LOOP.md`](docs/SELF-EVOLVING-LOOP.md) for complete documentation.
-
----
-
-## Quick Start
-
-### Option A: Native Plugin
-
-```bash
-# 1. Register the third-party marketplace (once per Claude profile)
-claude plugin marketplace add claude-world/director-mode-lite
-
-# 2. Install the marketplace-qualified plugin
-claude plugin install director-mode-lite@director-mode-lite
-
-# 3. Inside Claude Code, load the newly installed plugin without restarting
-/reload-plugins
-```
-
-This portable path exposes namespaced skills and agents. It does **not** attach
-Auto-Loop, changelog, or validation hooks to the current project. Choose the
-clone path below when you want project-local assets and opt-in hooks; do not
-script against Claude Code's internal, versioned plugin-cache layout.
-
-<details>
-<summary><strong>🔧 Plugin Management Commands</strong></summary>
-
-```bash
-# Update plugin to latest version
-claude plugin marketplace update director-mode-lite
-claude plugin uninstall director-mode-lite@director-mode-lite
-claude plugin install director-mode-lite@director-mode-lite
-
-# Load plugin changes in an active Claude Code session
-/reload-plugins
-```
-
-</details>
-
-### Option B: Project-Integrated Install
+## Quick start
 
 ```bash
 git clone https://github.com/claude-world/director-mode-lite.git
 cd director-mode-lite
-# Answer a few questions and pick the project's automation level:
-./install.sh /path/to/your/project --wizard
-# ...or accept the non-interactive defaults:
-./install.sh /path/to/your/project
-# Verify the project you configured:
-./scripts/verify-install.sh /path/to/your/project
+./install.sh --cli all /path/to/your-project
 ```
 
-### Option C: Try Demo First
+Then open the project with any supported CLI:
 
 ```bash
-git clone https://github.com/claude-world/director-mode-lite.git
-cd director-mode-lite
-./demo.sh ~/director-mode-demo
+claude
+codex
+grok
 ```
 
-`demo.sh` uses a throwaway directory, not an operating-system sandbox. If the
-target already exists, the script can offer to delete and recreate it; inspect
-the path carefully before confirming.
-
-## Verify Installation
-
-Run the verifier against the project where you installed Director Mode Lite:
+For the product's full-capability, no-prompt profile, use the installed launcher
+in a trusted workspace:
 
 ```bash
-# From the cloned checkout used for project integration
-./scripts/verify-install.sh /path/to/your/project
-
-# If the wizard intentionally selected no hooks
-./scripts/verify-install.sh --allow-no-hooks /path/to/your/project
+.director-mode/bin/director-open claude
+.director-mode/bin/director-open codex
+.director-mode/bin/director-open grok
 ```
 
-The script checks:
+It uses each CLI's native open flags—Claude `bypassPermissions`, Codex
+`danger-full-access` with approvals disabled, and Grok `always-approve` with
+its sandbox off. It does not emulate permissions with hooks. Native managed
+policy can still override the flags, and existing global hooks can still run.
 
-- `python3` and `jq` are available for settings and hook state handling
-- `CLAUDE.md` exists; an existing project's custom structure is accepted
-- The complete shipped inventory is present: 32 skills, including 27
-  user-invocable commands, and 14 agents (additional user assets are allowed)
-- Core and Evolving-Loop hook scripts exist and are executable
-- `.claude/settings.local.json` is valid JSON and contains at least one
-  registered Director Mode hook
+Start with the `director-mode` skill. When another CLI should continue, use
+`session-relay`.
 
-It prints colored `PASS` and `FAIL` lines, exits `0` when all checks pass, and exits `1` if any check fails.
+## What gets shared
 
-If you deliberately selected a completely hook-free wizard setup, pass
-`--allow-no-hooks`. It still verifies `CLAUDE.md` and the complete skill/agent
-inventory, while skipping hook files, hook dependencies, settings, and
-registration checks that do not apply to that mode.
+| Capability | Canonical source | Claude Code | Codex CLI | Grok Build |
+| --- | --- | --- | --- | --- |
+| Repository guidance | `portable/GUIDANCE.md` | `CLAUDE.md` + `.director-mode/` | `AGENTS.md` + `.director-mode/` | reads both |
+| Skills | `skills/*/SKILL.md` | `.claude/skills/` | `.agents/skills/` | reads Claude-compatible skills |
+| Agents | `agents/*.md` | `.claude/agents/*.md` | generated `.codex/agents/*.toml` | generated `.grok/agents/*.md` |
+| Optional context hook | `hooks/advisory.sh` | `settings.local.json` | `.codex/hooks.json` | none (passive stdout is ignored) |
+| Session continuity | `director-handoff/v1` | new native session | new native session | new native session |
+| Open launcher | `scripts/director-open.sh` | native bypass mode | native full-access mode | native always-approve / sandbox off |
 
-The verifier validates installation structure and configuration. It does not
-launch Claude Code, invoke a slash command, run your project tests, or prove
-that model-maintained acceptance criteria and outputs are correct.
+Grok's Claude compatibility is reused for skills, so the installer does not
+create a second, conflicting `.grok/skills/` tree. Agents receive minimal
+native adapters because Claude-specific model, tool, and memory frontmatter is
+not portable across every Grok release.
 
-<details>
-<summary><strong>✨ Installation Features</strong></summary>
+## The operating brief
 
-- **Setup Wizard** - `--wizard` asks about your project and lets you pick which Stop-hook automation (none / Auto-Loop / Auto-Loop + Evolving-Loop) and safety/observability hooks to enable, instead of the fixed defaults
-- **Automatic Backup** - Backups existing `.claude/` to `.claude-backup-TIMESTAMP/`
-- **Portable Path Hooks** - All hooks use `$CLAUDE_PROJECT_DIR` for portability (no more "file not found" errors)
-- **Settings Preservation** - Preserves existing settings; the verifier reports when no Director Mode hook was registered
-- **Skip Existing** - Won't overwrite already-installed commands/agents/skills
-- **In-Place Upgrade** - `--update` overwrites distributed files with the latest version
-- **Scoped Uninstall** - hooks-only removes Director Mode hook files and registrations while preserving custom hooks and runtime state; complete removal is intentionally broader
-- **Automated Tests** - `./tests/run-tests.sh` validates installation
+Before substantial work, keep five things visible:
 
-</details>
+- Outcome — what should be true at the end.
+- Context — the repository facts and prior decisions that matter.
+- Constraints — compatibility, scope, time, and user preferences.
+- Evidence — tests, build, diff, or inspection that will demonstrate success.
+- Next decision — where human judgment adds the most value.
 
----
+The full guide lives at `.director-mode/GUIDANCE.md` after installation. It is
+short by design: permanent instruction files are most useful when they contain
+only facts needed in every session; detailed procedures belong in skills.
 
-## What's Included
+## Cross-CLI session relay
 
-<table>
-<tr>
-<td valign="top" width="33%">
+Claude, Codex, and Grok each store their own native conversation history. A
+vendor session ID cannot generally resume in a different vendor's CLI.
 
-### Commands (27)
+Director Mode solves the portable part: it creates JSON and Markdown packets
+with the goal, current state, decisions, Git snapshot, verification, blockers,
+and next steps. The receiver starts a new native session and reads the packet.
 
-**Workflow:**
-| Command | Purpose |
-|---------|---------|
-| `/workflow` | 5-step dev flow |
-| `/focus-problem` | Problem analysis |
-| `/test-first` | TDD cycle |
-| `/smart-commit` | Auto commits |
-| `/plan` | Task breakdown |
-| `/auto-loop` | **TDD loop** |
-| `/evolving-loop` | **Self-evolving** |
-| `/evolving-status` | Loop status |
-
-**Setup & Health:**
-| Command | Purpose |
-|---------|---------|
-| `/getting-started` | **5-min onboarding** |
-| `/project-init` | Quick setup |
-| `/check-environment` | Env check |
-| `/project-health-check` | 7-point audit |
-
-**Validators:**
-| Command | Purpose |
-|---------|---------|
-| `/claude-md-check` | Validate CLAUDE.md |
-| `/mcp-check` | Validate MCP config |
-| `/agent-check` | Validate agent files |
-| `/skill-check` | Validate skill files |
-| `/hooks-check` | Validate hooks |
-
-**Generators:**
-| Command | Purpose |
-|---------|---------|
-| `/claude-md-template` | Generate CLAUDE.md |
-| `/agent-template` | Generate agents |
-| `/skill-template` | Generate skills |
-| `/hook-template` | Generate hooks |
-
-**Utilities:**
-| Command | Purpose |
-|---------|---------|
-| `/changelog` | Session events |
-| `/handoff-codex` | Delegate to Codex |
-| `/handoff-gemini` | Delegate to Gemini |
-| `/handoff-claude` | **Multi-account Claude** |
-| `/agents` | List agents |
-| `/skills` | List skills |
-
-</td>
-<td valign="top" width="33%">
-
-### Agents (14)
-
-**Core Agents:**
-| Agent | Purpose |
-|-------|---------|
-| `code-reviewer` | Quality, security |
-| `debugger` | Error analysis |
-| `doc-writer` | Documentation |
-
-**Expert Agents:**
-| Agent | Purpose |
-|-------|---------|
-| `claude-md-expert` | CLAUDE.md design |
-| `mcp-expert` | MCP configuration |
-| `agents-expert` | Custom agents |
-| `skills-expert` | Custom skills |
-| `hooks-expert` | Automation hooks |
-
-**Self-Evolving Agents:**
-| Agent | Purpose |
-|-------|---------|
-| `evolving-orchestrator` | Loop coordination |
-| `requirement-analyzer` | Deep analysis |
-| `skill-synthesizer` | Generate skills |
-| `completion-judge` | Decision making |
-| `experience-extractor` | Learn from failures |
-| `skill-evolver` | Evolve strategy |
-
-</td>
-<td valign="top" width="34%">
-
-### Skills (32)
-
-27 of the skills are the slash commands listed left. The other 5 are internal knowledge bases, auto-loaded by agents or triggered by Claude:
-
-| Internal Skill | Purpose |
-|-------|---------|
-| `code-reviewer` | Review checklists |
-| `debugger` | 5-step method |
-| `doc-writer` | Doc templates |
-| `test-runner` | Test commands |
-| `interop-router` | Auto CLI routing |
-
-**Plus:**
-- CLAUDE.md template
-- Starter hooks (Auto-Loop, changelog, validator)
-- 4 hands-on examples
-
-</td>
-</tr>
-</table>
-
----
-
-## The 5-Step Workflow
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                                                                 │
-│    Step 1                Step 2                Step 3           │
-│  ┌─────────┐           ┌─────────┐           ┌─────────┐        │
-│  │ FOCUS   │    ──►    │ PREVENT │    ──►    │  TEST   │        │
-│  │ PROBLEM │           │ OVERDEV │           │  FIRST  │        │
-│  └─────────┘           └─────────┘           └─────────┘        │
-│       │                     │                     │             │
-│  Understand             Only build            Red-Green-        │
-│  before coding          what's needed         Refactor          │
-│                                                                 │
-│                    Step 4                Step 5                 │
-│                  ┌─────────┐           ┌─────────┐              │
-│           ──►    │DOCUMENT │    ──►    │ COMMIT  │              │
-│                  └─────────┘           └─────────┘              │
-│                       │                     │                   │
-│                  Auto-generated         Conventional            │
-│                  documentation          Commits                 │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Parallel Agent Execution
-
-One of Director Mode's key advantages is **parallel processing**:
-
-<table>
-<tr>
-<td width="50%">
-
-### Traditional (Sequential)
-
-```
-Agent 1 ─────►
-              Agent 2 ─────►
-                            Agent 3 ─────►
-                                          Agent 4 ─────►
-
-Total time: 4 × single_agent_time
-```
-
-</td>
-<td width="50%">
-
-### Director Mode (Parallel)
-
-```
-Agent 1 ─────┐
-Agent 2 ─────┼────► Results
-Agent 3 ─────┤
-Agent 4 ─────┘
-
-Total time: max(single_agent_time)
-```
-
-</td>
-</tr>
-</table>
-
-### Example: Problem Analysis
+### Leave work for another CLI
 
 ```bash
-# Old way: Sequential manual searches
-grep -r "authentication" src/
-grep -r "login" src/
-cat src/auth/index.ts
-# ... slow, tedious
-
-# Director Mode: One command, 5 parallel agents
-/focus-problem "understand the authentication flow"
+.director-mode/bin/director-relay create \
+  --from claude \
+  --to codex \
+  --goal "Finish the authentication refresh" \
+  --summary "API behavior is implemented; UI wiring remains" \
+  --completed "Added refresh-token rotation" \
+  --decision "Kept cookies httpOnly to match the existing threat model" \
+  --next "Update the sign-in form" \
+  --verification "API unit tests pass"
 ```
 
-### Scale Out: Multi-Account Delegation
+The relay automatically captures only Git metadata and diff statistics; it
+does not read raw transcripts, file contents, credentials, or environment
+variables. The packet still contains user-supplied text, paths, and Git
+filenames. Review those before sharing it outside the workspace; add
+`--reviewed` when you want that review recorded in the packet.
 
-Parallelism doesn't stop at one account. `/handoff-claude` delegates tasks to **other authorized Claude Code instances** — each with its own login, quota, and session state via `CLAUDE_CONFIG_DIR` profiles:
+### Continue the latest packet
 
 ```bash
-# One-time setup per profile (isolated login, sessions, settings)
-CLAUDE_CONFIG_DIR=~/.claude-profiles/z-1 claude auth login
+# Print a copyable interactive command
+.director-mode/bin/director-relay continue --to codex
 
-# Fan out to two accounts in parallel, conflict-free via git worktrees
-(cd ../proj-task-a && claude-z-1 -p "Implement feature A" --permission-mode acceptEdits) &
-(cd ../proj-task-b && claude-z-2 -p "Implement feature B" --permission-mode acceptEdits) &
-wait
+# Launch only when that is what you want
+.director-mode/bin/director-relay continue --to codex --run
+
+# Use a one-shot receiving session
+.director-mode/bin/director-relay continue --to grok --headless --run
 ```
 
-Run `/handoff-claude` for the full setup guide (wrapper commands, auth, result collection).
-
----
-
-## Agents
-
-<table>
-<tr>
-<td width="33%">
-
-### `code-reviewer`
-
-Automatically reviews:
-- Code quality
-- Security vulnerabilities
-- Error handling
-- Performance
-- Test coverage
-
-**Triggers:** Code changes, commits, "review"
-
-</td>
-<td width="33%">
-
-### `debugger`
-
-5-step debugging:
-1. Capture error info
-2. Isolate problem
-3. Form hypotheses
-4. Investigate
-5. Fix & verify
-
-**Triggers:** Errors, test failures, "bug"
-
-</td>
-<td width="34%">
-
-### `doc-writer`
-
-Creates and maintains:
-- README files
-- API documentation
-- Code comments
-- Architecture docs
-
-**Triggers:** New features, structure changes
-
-</td>
-</tr>
-</table>
-
----
-
-## Expert Agents
-
-Director Mode Lite includes **5 Expert Agents** that deeply understand Claude Code's official features:
-
-<table>
-<tr>
-<td width="20%">
-
-### `claude-md-expert`
-
-Your guide for:
-- CLAUDE.md design patterns
-- Project configuration
-- Best practices
-
-**Ask:** "How should I structure my CLAUDE.md?"
-
-</td>
-<td width="20%">
-
-### `mcp-expert`
-
-Your guide for:
-- MCP server setup
-- Available MCPs
-- Troubleshooting
-
-**Ask:** "How do I add a Notion MCP?"
-
-</td>
-<td width="20%">
-
-### `agents-expert`
-
-Your guide for:
-- Custom agent creation
-- Tool permissions
-- Agent patterns
-
-**Ask:** "Create a security-reviewer agent"
-
-</td>
-<td width="20%">
-
-### `skills-expert`
-
-Your guide for:
-- Slash command creation
-- Skill frontmatter
-- Workflow design
-
-**Ask:** "Make a /deploy command"
-
-</td>
-<td width="20%">
-
-### `hooks-expert`
-
-Your guide for:
-- Stop hooks (Auto-Loop)
-- PreToolUse/PostToolUse
-- Automation patterns
-
-**Ask:** "How do I protect .env files?"
-
-</td>
-</tr>
-</table>
-
-> **Why?** Anthropic provides documentation, but no specialized helpers. These experts know the official docs and help you implement correctly.
-
----
-
-## Validators & Generators
-
-Pair with Expert Agents for **validate-then-fix** or **template-then-customize** workflows:
-
-<table>
-<tr>
-<td width="50%">
-
-### Validators (5)
-
-Validate your configurations and get actionable fix suggestions:
+Other relay commands:
 
 ```bash
-/claude-md-check              # Check CLAUDE.md structure
-/mcp-check                    # Check MCP settings.json
-/agent-check [file.md]        # Check agent file format
-/skill-check [file.md]        # Check skill file format
-/hooks-check                  # Check hooks config + scripts
+.director-mode/bin/director-relay validate
+.director-mode/bin/director-relay show
+.director-mode/bin/director-relay list
 ```
 
-**Output format:**
-```markdown
-## Validation Report
+Grok Build also provides `grok import` for Claude Code sessions. That is a
+helpful Claude→Grok shortcut; the portable packet remains the three-way format.
 
-### Status: ✅ PASS / ⚠️ WARNINGS / ❌ FAIL
+## Agents, skills, and hooks
 
-| Check | Status | Notes |
-|-------|--------|-------|
-| ...   | ✅/❌  | ...   |
+### Agents
 
-### Issues Found
-1. [Issue and recommendation]
+The 14 Markdown agents are the source representation. During installation,
+Director Mode:
 
-### Auto-Fix Available
-- Run command X to fix...
+- installs Markdown agents for Claude Code;
+- converts each agent to Codex TOML with `name`, `description`, and
+  `developer_instructions`;
+- generates a minimal Grok Markdown adapter with the shared description and
+  role body, leaving Claude-only runtime controls behind.
+
+This adapts the interface without claiming that tool names, models, or runtime
+permissions are identical across vendors.
+
+### Skills
+
+The repository ships 35 skills, including 31 user-invocable workflows. The
+cross-CLI entry points are:
+
+- `director-mode` — create a concise brief and verification contract;
+- `session-relay` — leave or receive portable task state;
+- `handoff-claude`, `handoff-codex`, `handoff-grok` — target-specific guidance;
+- `interop-router` — suggest a useful next CLI without auto-executing it.
+
+The established workflow, planning, testing, review, debugging, documentation,
+and project-health skills remain available. CLI-specific surfaces are described
+inside the relevant skill instead of being hidden behind a universal claim.
+
+### Hooks
+
+The default is `none`: session relay, skills, agents, and guidance need no
+hook. Optional `--hooks guide` adds useful SessionStart context only for Claude
+Code and Codex. Grok loads guidance through `AGENTS.md`; current Grok releases
+ignore passive SessionStart stdout, so installing that adapter would add work
+without adding context. The optional shared executable:
+
+- consumes the native hook input;
+- always exits successfully;
+- never returns `deny`, `block`, or a permission decision;
+- never launches another CLI.
+
+Hooks are independent of permission mode. In particular, Claude hooks may also
+surface in Grok through its compatibility layer. Audit existing user-level
+hooks before calling an environment zero-interference.
+
+Project hooks may require native trust or approval in Codex and Grok. Review the
+generated config with the CLI's own hook inspection UI.
+
+## Installer
+
+```text
+./install.sh [--update] [--wizard]
+             [--cli all|claude|codex|grok]
+             [--hooks guide|none|automation]
+             [target-directory]
 ```
 
-</td>
-<td width="50%">
-
-### Generators (4)
-
-Generate properly-formatted files from templates:
+Common choices:
 
 ```bash
-/claude-md-template           # Generate CLAUDE.md
-/agent-template [name] [purpose]  # Generate agent
-/skill-template [name] [purpose]  # Generate skill
-/hook-template [type] [purpose]   # Generate hook
+# Recommended: all adapters, no active hooks
+./install.sh --cli all /path/to/project
+
+# Add non-blocking SessionStart context for Claude and Codex
+./install.sh --cli all --hooks guide /path/to/project
+
+# Refresh files installed by Director Mode
+./install.sh --update --cli all /path/to/project
+
+# Interactive setup
+./install.sh --wizard /path/to/project
 ```
 
-**Example:**
+The installer backs up an existing `.claude/` directory, preserves an existing
+project guide, and updates only its marked guidance block. Existing Codex hook
+JSON is merged rather than replaced.
+
+### Optional legacy automation
+
+Version 2 defaults to zero-hook guidance. The previous Claude-only Auto-Loop, changelog,
+validator, and evolving-loop hook files are not installed or registered unless
+you explicitly choose:
+
 ```bash
-/agent-template security-scanner "scan for vulnerabilities"
-
-# Creates: .claude/agents/security-scanner.md
-# with proper frontmatter, activation triggers,
-# output format, and guidelines
+./install.sh --hooks automation /path/to/project
 ```
 
-**Hook types:**
-- `PreToolUse` - Block/validate before tool runs
-- `PostToolUse` - Log/react after tool runs
-- `Stop` - Continue automation loops
-- `Notification` - External alerts (Slack, etc.)
+This legacy mode is separate from the portable three-CLI layer. Its Stop-hook
+continuation behavior is Claude-specific and is not presented as a universal
+control mechanism.
 
-</td>
-</tr>
-</table>
+## Plugin installs
 
----
+The repository retains a Claude Code marketplace manifest and adds a Codex
+plugin manifest. Plugin managers can expose the shared skills, while the shell
+installer remains the complete project-local setup because it also generates
+agents, guidance, relay binaries, and optional hook adapters.
 
-## CLAUDE.md Configuration
+## Verify
 
-The `CLAUDE.md` file configures Claude's behavior in your project:
-
-```markdown
-# Project: My App
-Tech: TypeScript, React, PostgreSQL
-
-# Policies
-- Always write tests first
-- Use conventional commits
-- Document public APIs
-
-# Workflow
-- Parallel agents: enabled
-- Auto-commit: disabled
-- Review before merge: required
+```bash
+./tests/run-tests.sh
+./scripts/verify-install.sh /path/to/project
+python3 scripts/director-relay.py --help
 ```
 
-See [`docs/CLAUDE-TEMPLATE.md`](docs/CLAUDE-TEMPLATE.md) for a complete template.
+The regression suite covers installer modes, native adapters, advisory hook
+behavior, packet creation/validation, metadata-only Git capture, update
+behavior, and uninstall preservation.
 
----
+## Upgrade from 1.x
 
-## Comparison
+```bash
+git pull
+./install.sh --update --cli all /path/to/project
+```
 
-<table>
-<tr>
-<th></th>
-<th>Traditional AI Coding</th>
-<th>Director Mode Lite</th>
-</tr>
-<tr>
-<td><strong>Workflow</strong></td>
-<td>Ask → Wait → Copy → Test → Repeat</td>
-<td>Direct → Auto-execute → Review</td>
-</tr>
-<tr>
-<td><strong>Parallelism</strong></td>
-<td>One task at a time</td>
-<td>Multiple agents simultaneously</td>
-</tr>
-<tr>
-<td><strong>Automation</strong></td>
-<td>Manual intervention needed</td>
-<td>Auto-Loop runs until done</td>
-</tr>
-<tr>
-<td><strong>Testing</strong></td>
-<td>Often forgotten</td>
-<td>TDD built into workflow</td>
-</tr>
-<tr>
-<td><strong>Documentation</strong></td>
-<td>Afterthought</td>
-<td>Auto-generated</td>
-</tr>
-</table>
+The important behavior change is the default: legacy automation is now opt-in.
+Existing hook registrations are preserved until you remove them or use the
+uninstaller, so review `.claude/settings.local.json` when migrating an already
+automated project.
 
----
+See [MIGRATION.md](docs/MIGRATION.md) and [FAQ.md](docs/FAQ.md) for details.
 
-## Examples
+## Learn
 
-Learn by doing with hands-on tutorials:
+- [Claude World Director Mode guide](https://claude-world.com/director-mode-lite/)
+- [Director Mode for Codex CLI](https://openai.claude-world.com/director-mode-lite/)
+- [Director Mode for Grok Build](https://grok.claude-world.com/director-mode-lite/)
+- [Examples](examples/)
+- [Changelog](CHANGELOG.md)
 
-| Example | Description | Time |
-|---------|-------------|------|
-| [Calculator](examples/01-calculator/) | Auto-Loop TDD demo | 5 min |
-| [REST API](examples/02-rest-api/) | Building an API with TDD | 15 min |
-| [CLI Tool](examples/03-cli-tool/) | Command-line tool | 10 min |
-| [TypeScript Library](examples/04-library/) | Publishable npm library | 20 min |
-
-See [examples/](examples/) for full tutorials.
-
----
-
-## Community
-
-<table>
-<tr>
-<td align="center" width="25%">
-  <a href="https://claude-world.com/director-mode-lite/">
-<strong>🌐 Website</strong><br>
-claude-world.com
-</a>
-</td>
-<td align="center" width="25%">
-<a href="https://discord.com/invite/rBtHzSD288">
-<strong>💬 Discord</strong><br>
-Join the community
-</a>
-</td>
-<td align="center" width="25%">
-<a href="https://claude-world.com/stats">
-<strong>📊 Live Stats</strong><br>
-Traffic & community growth
-</a>
-</td>
-<td align="center" width="25%">
-<a href="https://github.com/claude-world/director-mode-lite/issues">
-<strong>🐛 Issues</strong><br>
-Report bugs, request features
-</a>
-</td>
-</tr>
-</table>
-
----
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [FAQ](docs/FAQ.md) | Common questions answered |
-| [Concepts](docs/DIRECTOR-MODE-CONCEPTS.md) | Deep dive into methodology |
-| [CLAUDE.md Template](docs/CLAUDE-TEMPLATE.md) | Project configuration guide |
-| [Hooks Guide](docs/HOOKS-GUIDE.md) | Hook implementation reference (30 event types) |
-| [Self-Evolving Loop](docs/SELF-EVOLVING-LOOP.md) | Dynamic skill evolution system |
-| [Development Patterns](docs/DEVELOPMENT-PATTERNS.md) | Learned best practices |
-
----
-
-## Related Projects
-
-Other open-source tools from the Claude World community:
-
-| Project | Description | Link |
-|---------|-------------|------|
-| **cf-browser** | Cloudflare Browser MCP server for headless browsing, screenshots, and web scraping within Claude Code | [github.com/anthropic-community/cf-browser](https://github.com/anthropic-community/cf-browser) |
-| **trend-pulse** | Real-time trend aggregation MCP server -- monitors 8+ sources (GitHub, Hacker News, Reddit, etc.) for content ideas | [github.com/anthropic-community/trend-pulse](https://github.com/anthropic-community/trend-pulse) |
-
-> These tools work great alongside Director Mode Lite. Use `cf-browser` for web research agents and `trend-pulse` for staying on top of developer trends.
-
----
-
-## Author
-
-**Lucas Wang** ([@lukashanren1](https://x.com/lukashanren1))
-
-- GitHub: [@gn00295120](https://github.com/gn00295120)
-- Product page: [claude-world.com/director-mode-lite](https://claude-world.com/director-mode-lite/)
-
----
+Director Mode Lite is a community project from Claude World. It is not an
+official Anthropic, OpenAI, or xAI product.
 
 ## License
 
-MIT License - Free for personal and commercial use.
-
-See [LICENSE](LICENSE) for details.
-
----
-
-## About Director Mode Lite
-
-This is a **free, open-source toolkit** (v1.9.0) from the [Claude World](https://claude-world.com) community, last tested with Claude Code CLI v2.1.201.
-
-<table>
-<tr>
-<td width="50%">
-
-**What's included (FREE):**
-- 27 Commands (incl. validators & generators)
-- 14 Agents (3 Core + 5 Experts + 6 Self-Evolving)
-- 32 Skills
-- Auto-Loop with TDD
-- Expert-guided project setup
-- Validation & template generation
-- Complete documentation
-
-</td>
-<td width="50%">
-
-**Want more?**
-
-Visit [claude-world.com](https://claude-world.com) for:
-- Advanced methodologies
-- Enterprise support
-- Full Director Mode experience
-
-</td>
-</tr>
-</table>
-
----
-
-<p align="center">
-  <a href="https://claude-world.com">Website</a> |
-  <a href="https://discord.com/invite/rBtHzSD288">Discord</a> |
-  <a href="https://x.com/lukashanren1">Twitter</a>
-</p>
-
-<p align="center">
-  <sub>Made with direction by Claude World Taiwan</sub>
-</p>
+[MIT](LICENSE)

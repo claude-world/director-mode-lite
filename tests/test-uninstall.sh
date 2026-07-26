@@ -1,124 +1,99 @@
-#!/bin/bash
-# Test: uninstall.sh hooks-only safety
-# Verifies that option 1 removes only Director Mode hook files/configuration
-# while preserving user hooks, project assets, and runtime state.
+#!/usr/bin/env bash
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/director-mode-uninstall.XXXXXX")"
-TEST_DIR="$TEST_ROOT/project"
+TARGET="$TEST_ROOT/project"
 FAILURES=0
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-NC='\033[0m'
-
-# shellcheck disable=SC2329  # Invoked indirectly by the EXIT trap.
-cleanup() {
-    rm -rf "$TEST_ROOT"
-}
-
+cleanup() { rm -rf "$TEST_ROOT"; }
 trap cleanup EXIT
 
 assert() {
-    local description="$1"
-    local condition="$2"
-
-    if eval "$condition"; then
-        echo -e "  ${GREEN}PASS${NC} $description"
-    else
-        echo -e "  ${RED}FAIL${NC} $description"
-        FAILURES=$((FAILURES + 1))
-    fi
+    if eval "$2"; then printf '  PASS %s\n' "$1"; else printf '  FAIL %s\n' "$1"; FAILURES=$((FAILURES + 1)); fi
 }
 
-echo "Test: hooks-only uninstall preserves user files and state"
-mkdir -p "$TEST_DIR"
+mkdir -p "$TARGET"
+"$PROJECT_ROOT/install.sh" --hooks guide "$TARGET" >/dev/null
 
-# Install every hook family so the uninstall path also exercises the optional
-# Evolving-Loop registrations. DML_WIZARD_FORCE lets the test feed answers
-# without an interactive TTY.
-printf '4\n2\nY\n' | DML_WIZARD_FORCE=1 \
-    "$PROJECT_ROOT/install.sh" --wizard "$TEST_DIR" > /dev/null 2>&1
+# Add user-owned hook assets and registrations beside Director Mode entries.
+mkdir -p "$TARGET/.claude/hooks" "$TARGET/.grok/hooks"
+printf '#!/usr/bin/env bash\nexit 0\n' > "$TARGET/.claude/hooks/custom.sh"
+chmod +x "$TARGET/.claude/hooks/custom.sh"
+printf '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"bash custom-grok.sh"}]}]}}\n' > "$TARGET/.grok/hooks/custom.json"
+mkdir -p "$TARGET/.director-mode/handoffs"
+printf 'keep packet\n' > "$TARGET/.director-mode/handoffs/user-packet.md"
 
-# Add a user-owned hook file and registration after installation.
-printf '#!/bin/bash\nexit 0\n' > "$TEST_DIR/.claude/hooks/custom-project-hook.sh"
-chmod +x "$TEST_DIR/.claude/hooks/custom-project-hook.sh"
-
-SETTINGS_FILE="$TEST_DIR/.claude/settings.local.json" python3 - <<'PYEOF'
+python3 - "$TARGET" <<'PY'
 import json
-import os
+import pathlib
+import sys
 
-path = os.environ["SETTINGS_FILE"]
-with open(path) as handle:
-    settings = json.load(handle)
+root = pathlib.Path(sys.argv[1])
+for rel, command in (
+    (".claude/settings.local.json", "bash .claude/hooks/custom.sh"),
+    (".codex/hooks.json", "bash .codex/hooks/custom.sh"),
+):
+    path = root / rel
+    data = json.loads(path.read_text())
+    data.setdefault("hooks", {}).setdefault("SessionStart", []).append({
+        "hooks": [{"type": "command", "command": command}],
+    })
+    data["customSetting"] = "keep"
+    path.write_text(json.dumps(data, indent=2) + "\n")
+PY
 
-settings["customProjectSetting"] = "keep-me"
-settings.setdefault("hooks", {}).setdefault("PostToolUse", []).append({
-    "matcher": "Write",
-    "hooks": [{
-        "type": "command",
-        "command": '"$CLAUDE_PROJECT_DIR"/.claude/hooks/custom-project-hook.sh',
-    }],
-})
+echo "Test: hooks-only uninstall removes Director adapters and preserves user state"
+status=0
+output="$(printf '1\n' | "$PROJECT_ROOT/uninstall.sh" "$TARGET" 2>&1)" || status=$?
+assert "uninstall exits zero" "[[ $status -eq 0 ]]"
+assert "Claude advisory registration removed" "! grep -q 'advisory.sh' '$TARGET/.claude/settings.local.json'"
+assert "Codex advisory registration removed" "! grep -q 'advisory.sh' '$TARGET/.codex/hooks.json'"
+assert "Grok Director hook removed" "[[ ! -f '$TARGET/.grok/hooks/director-mode.json' ]]"
+assert "advisory executable removed" "[[ ! -f '$TARGET/.director-mode/hooks/advisory.sh' ]]"
+assert "custom Claude registration preserved" "grep -q 'custom.sh' '$TARGET/.claude/settings.local.json'"
+assert "custom Codex registration preserved" "grep -q 'custom.sh' '$TARGET/.codex/hooks.json'"
+assert "custom Grok hook preserved" "[[ -f '$TARGET/.grok/hooks/custom.json' ]]"
+assert "custom hook executable preserved" "[[ -x '$TARGET/.claude/hooks/custom.sh' ]]"
+assert "shared guidance preserved" "[[ -f '$TARGET/.director-mode/GUIDANCE.md' ]]"
+assert "relay binary preserved" "[[ -x '$TARGET/.director-mode/bin/director-relay' ]]"
+assert "handoff packet preserved" "[[ -f '$TARGET/.director-mode/handoffs/user-packet.md' ]]"
+assert "skills preserved" "[[ -f '$TARGET/.claude/skills/session-relay/SKILL.md' ]]"
+assert "Codex agents preserved" "[[ -f '$TARGET/.codex/agents/code-reviewer.toml' ]]"
+assert "output reports adapter removal" "[[ '$output' == *'advisory adapters'* ]]"
 
-with open(path, "w") as handle:
-    json.dump(settings, handle, indent=2)
-PYEOF
-
-# Runtime state can contain checkpoints, changelog history, and learned data.
-# A hooks-only uninstall must disable hooks without deleting that state.
+echo "Test: complete uninstall removes only owned, unmodified assets"
+COMPLETE="$TEST_ROOT/complete"
 mkdir -p \
-    "$TEST_DIR/.auto-loop" \
-    "$TEST_DIR/.director-mode" \
-    "$TEST_DIR/.self-evolving-loop/memory"
-printf '{"status":"in_progress"}\n' > "$TEST_DIR/.auto-loop/checkpoint.json"
-printf '{"event":"keep"}\n' > "$TEST_DIR/.director-mode/changelog.jsonl"
-printf 'keep learned state\n' > "$TEST_DIR/.self-evolving-loop/memory/user-note.md"
+    "$COMPLETE/.claude/agents" \
+    "$COMPLETE/.claude/skills/director-mode" \
+    "$COMPLETE/.codex/agents"
+printf 'user agent\n' > "$COMPLETE/.claude/agents/code-reviewer.md"
+printf 'user skill\n' > "$COMPLETE/.claude/skills/director-mode/SKILL.md"
+printf 'user codex agent\n' > "$COMPLETE/.codex/agents/code-reviewer.toml"
+"$PROJECT_ROOT/install.sh" "$COMPLETE" >/dev/null
+printf '\nuser modification\n' >> "$COMPLETE/.claude/skills/session-relay/SKILL.md"
+printf 'private packet\n' > "$COMPLETE/.director-mode/handoffs/user-packet.md"
 
-uninstall_status=0
-if uninstall_output="$(printf '1\n' | "$PROJECT_ROOT/uninstall.sh" "$TEST_DIR" 2>&1)"; then
-    :
-else
-    uninstall_status=$?
-fi
-
-assert "hooks-only uninstall exits successfully" "[[ $uninstall_status -eq 0 ]]"
-
-for hook in \
-    _lib-changelog.sh \
-    auto-loop-stop.sh \
-    log-bash-event.sh \
-    log-file-change.sh \
-    pre-tool-validator.sh; do
-    assert "DML hook removed: $hook" "[[ ! -e '$TEST_DIR/.claude/hooks/$hook' ]]"
-done
-
-assert "user hook file is preserved" "[[ -x '$TEST_DIR/.claude/hooks/custom-project-hook.sh' ]]"
-assert "shared hooks directory is preserved" "[[ -d '$TEST_DIR/.claude/hooks' ]]"
-assert "agents are preserved" "[[ -f '$TEST_DIR/.claude/agents/code-reviewer.md' ]]"
-assert "skills are preserved" "[[ -f '$TEST_DIR/.claude/skills/workflow/SKILL.md' ]]"
-
-assert "Auto-Loop checkpoint is preserved" "[[ -f '$TEST_DIR/.auto-loop/checkpoint.json' ]]"
-assert "changelog state is preserved" "[[ -f '$TEST_DIR/.director-mode/changelog.jsonl' ]]"
-assert "Evolving-Loop state is preserved" "[[ -f '$TEST_DIR/.self-evolving-loop/memory/user-note.md' ]]"
-assert "Evolving-Loop hook scripts are preserved for later re-enable" "[[ -x '$TEST_DIR/.self-evolving-loop/hooks/continue-loop.sh' ]]"
-
-assert "settings remain valid JSON" "python3 -m json.tool '$TEST_DIR/.claude/settings.local.json' > /dev/null 2>&1"
-assert "custom setting is preserved" "python3 -c 'import json; assert json.load(open(\"$TEST_DIR/.claude/settings.local.json\"))[\"customProjectSetting\"] == \"keep-me\"'"
-assert "non-hook plansDirectory setting is preserved" "python3 -c 'import json; assert json.load(open(\"$TEST_DIR/.claude/settings.local.json\"))[\"plansDirectory\"] == \".claude/plans\"'"
-assert "custom hook registration is preserved" "grep -q 'custom-project-hook.sh' '$TEST_DIR/.claude/settings.local.json'"
-assert "core DML hook registrations are removed" "! grep -Eq 'auto-loop-stop|log-bash-event|log-file-change|pre-tool-validator' '$TEST_DIR/.claude/settings.local.json'"
-assert "Evolving-Loop hook registrations are removed" "! grep -Eq 'continue-loop|log-event|phase-tracker' '$TEST_DIR/.claude/settings.local.json'"
-assert "output reports preserved state" "[[ '$uninstall_output' == *'Runtime state'* ]]"
-echo ""
+status=0
+output="$(printf '2\n' | "$PROJECT_ROOT/uninstall.sh" "$COMPLETE" 2>&1)" || status=$?
+assert "complete uninstall exits zero" "[[ $status -eq 0 ]]"
+assert "pre-existing Claude agent preserved" "grep -q 'user agent' '$COMPLETE/.claude/agents/code-reviewer.md'"
+assert "pre-existing Claude skill preserved" "grep -q 'user skill' '$COMPLETE/.claude/skills/director-mode/SKILL.md'"
+assert "pre-existing Codex agent preserved" "grep -q 'user codex agent' '$COMPLETE/.codex/agents/code-reviewer.toml'"
+assert "modified installed skill preserved" "grep -q 'user modification' '$COMPLETE/.claude/skills/session-relay/SKILL.md'"
+assert "unmodified Claude asset removed" "[[ ! -e '$COMPLETE/.claude/agents/debugger.md' ]]"
+assert "unmodified Grok adapter removed" "[[ ! -e '$COMPLETE/.grok/agents/debugger.md' ]]"
+assert "unmodified runtime guide removed" "[[ ! -e '$COMPLETE/.director-mode/GUIDANCE.md' ]]"
+assert "unmodified open launcher removed" "[[ ! -e '$COMPLETE/.director-mode/bin/director-open' ]]"
+assert "handoff packets explicitly removed" "[[ ! -e '$COMPLETE/.director-mode/handoffs' ]]"
+assert "ownership manifest removed" "[[ ! -e '$COMPLETE/.director-mode/install-ownership.json' ]]"
+assert "output reports modified preservation" "[[ '$output' == *'Preserved modified'* ]]"
 
 if [[ $FAILURES -gt 0 ]]; then
-    echo -e "${RED}$FAILURES assertion(s) failed${NC}"
+    printf '%d assertion(s) failed\n' "$FAILURES"
     exit 1
 fi
-
-echo -e "${GREEN}All assertions passed${NC}"
-exit 0
+echo "All assertions passed"

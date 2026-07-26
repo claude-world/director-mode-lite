@@ -77,7 +77,10 @@ Slash-prefixed names (`/name`) are user-invocable commands. Bare names are inter
 |-------|----------|
 | `/handoff-claude` | Delegate to another authorized Claude Code account/profile via `claude -p` |
 | `/handoff-codex` | Delegate bulk mechanical tasks to OpenAI Codex CLI (`codex exec`) |
+| `/handoff-grok` | Prepare or explicitly launch work with xAI Grok Build CLI |
 | `/handoff-gemini` | Delegate long-context analysis to Google Gemini CLI (`gemini -p`) |
+| `/session-relay` | Continue unfinished work in a new Claude, Codex, or Grok native session |
+| `/director-mode` | Define a concise outcome, context, constraints, and evidence brief |
 
 ---
 
@@ -91,7 +94,7 @@ Not slash commands — Claude activates these automatically when it judges them 
 | `debugger` | Root-cause analysis and problem resolution |
 | `doc-writer` | Writes README, API docs, and code comments |
 | `test-runner` | Runs tests and ensures coverage |
-| `interop-router` | Auto-routes eligible tasks to an external CLI (Codex/Gemini) |
+| `interop-router` | Suggests Claude, Codex, or Grok when another CLI may fit; never executes it |
 
 ---
 

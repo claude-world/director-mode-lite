@@ -22,7 +22,7 @@ except ImportError:
 ROOT = Path(__file__).resolve().parent.parent
 
 # Skills that are knowledge bases / auto-triggered, not slash commands
-INTERNAL_SKILLS = {"code-reviewer", "debugger", "doc-writer", "test-runner", "interop-router"}
+INTERNAL_SKILLS = {"code-reviewer", "debugger", "doc-writer", "test-runner"}
 
 VALID_MODELS = {"inherit", "default", "best", "fable", "opus", "sonnet", "haiku",
                 "opus[1m]", "sonnet[1m]"}

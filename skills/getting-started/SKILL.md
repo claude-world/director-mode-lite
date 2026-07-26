@@ -1,102 +1,61 @@
 ---
 name: getting-started
-description: Guided 5-minute onboarding for Director Mode Lite. Use immediately after installing Director Mode Lite, or when unsure which command to run next.
+description: Guided five-minute onboarding for Director Mode Lite across Claude Code, Codex CLI, and Grok Build. Use after installation or when choosing a first workflow.
 user-invocable: true
 ---
 
-# Getting Started with Director Mode
+# Getting started
 
-Welcome! This guide walks you through your first 5 minutes with Director Mode Lite.
+Director Mode is a set of adaptable workflows, not a permission or policy
+layer. Keep the user's preferred CLI controls and choose only the skills useful
+for the current task.
 
----
-
-## Step 1: Verify Installation
-
-Run a quick check:
+## 1. Verify the portable surfaces
 
 ```bash
-ls .claude/skills/ | wc -l    # Should show 32
-ls .claude/agents/ | wc -l    # Should show 14
-ls .claude/hooks/ | wc -l     # Should show 5+
+./scripts/verify-install.sh /path/to/project
 ```
 
-If any are missing, re-run the install script.
+A full three-CLI install currently provides 35 skills, 14 canonical Claude
+agents, 14 Codex adapters, 14 Grok adapters, shared guidance, and the session
+relay. Python 3 is required for installation and relay packets. `jq` is only a
+legacy automation dependency; a normal zero-hook install does not need it.
 
-Want a different automation level (none / Auto-Loop / Auto-Loop + Evolving-Loop) than what was installed? Re-run `install.sh --update --wizard` from the plugin directory to pick interactively instead of editing `.claude/settings.local.json` by hand.
+Active hooks are optional. The default install deliberately registers none.
+Use `--hooks guide` only when a short non-blocking Claude/Codex SessionStart
+context is useful. Grok reads the same guidance from `AGENTS.md` without an
+inert passive hook.
 
-Also check dependencies:
+## 2. Choose a starting point
+
+- `director-mode`: define outcome, context, constraints, evidence, and the next
+  decision for substantial work.
+- `workflow`: use the full research → plan → implement → verify → review flow.
+- `focus-problem`: understand an unfamiliar bug or codebase area.
+- `session-relay`: leave portable state for Claude, Codex, or Grok to continue.
+- `smart-commit`: review and prepare a conventional commit when requested.
+
+Testing and TDD skills are available when they fit the repository or the user
+asks for them; they are not imposed on every task.
+
+## 3. Let another CLI continue
+
 ```bash
-python3 --version   # Required for hook configuration
-jq --version        # Required for hook scripts
+.director-mode/bin/director-relay create \
+  --from claude --to codex \
+  --goal "Finish the current feature" \
+  --summary "Implementation is partly complete" \
+  --next "Inspect the worktree and continue"
+
+.director-mode/bin/director-relay continue --to codex
 ```
 
----
+The second command prints a copyable native command. It launches nothing until
+the user explicitly adds `--run`.
 
-## Step 2: Initialize Your Project
+## Help
 
-Run `/project-init` to auto-detect your project and generate a CLAUDE.md:
-
-```
-/project-init
-```
-
-This will:
-1. Detect your language and framework
-2. Create a CLAUDE.md with your project config
-3. Verify hooks are configured
-4. List available expert agents
-
----
-
-## Step 3: Your First Workflow
-
-Try the 5-step development workflow:
-
-```
-/workflow
-```
-
-Or jump straight to autonomous TDD:
-
-```
-/auto-loop "Implement [your feature]
-
-Acceptance Criteria:
-- [ ] First requirement
-- [ ] Second requirement
-- [ ] Tests pass"
-```
-
----
-
-## Quick Reference: Start Here
-
-| Command | When to Use |
-|---------|-------------|
-| `/project-init` | First time in a new project |
-| `/workflow` | Starting a new feature (guided) |
-| `/auto-loop "task"` | Autonomous TDD development |
-| `/focus-problem "issue"` | Understanding a bug or codebase area |
-| `/smart-commit` | Ready to commit changes |
-
----
-
-## When You're Ready for More
-
-| Level | Commands |
-|-------|----------|
-| **Beginner** | `/workflow`, `/auto-loop`, `/focus-problem`, `/smart-commit`, `/plan` |
-| **Intermediate** | `/test-first`, `/check-environment`, `/project-health-check`, `/changelog` |
-| **Advanced** | `/evolving-loop`, `/evolving-status`, `/handoff-claude`, `/handoff-codex`, `/handoff-gemini` |
-| **Customization** | `/agent-template`, `/skill-template`, `/hook-template` |
-| **Validation** | `/claude-md-check`, `/agent-check`, `/skill-check`, `/hooks-check`, `/mcp-check` |
-
----
-
-## Need Help?
-
-- `/agents` - List all available agents
-- `/skills` - List all available skills
-- FAQ (`docs/FAQ.md`) - Common questions
-- [Discord](https://discord.com/invite/rBtHzSD288) - Community support
-- [claude-world.com](https://claude-world.com) - Website
+- `agents`: list available agent roles.
+- `skills`: browse the skill catalog.
+- `docs/FAQ.md`: installation and relay questions.
+- <https://claude-world.com>: tutorials and updates.

@@ -1,162 +1,73 @@
-#!/bin/bash
-# Test: scripts/verify-install.sh
-# Covers valid installs, shared-project compatibility, JSON/config validation,
-# complete shipped inventory, executable hook requirements, and hook-free mode.
+#!/usr/bin/env bash
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-VERIFY_SCRIPT="$PROJECT_ROOT/scripts/verify-install.sh"
-TEST_DIR="$(mktemp -d "${TMPDIR:-/tmp}/director-mode-verify.XXXXXX")"
+VERIFY="$PROJECT_ROOT/scripts/verify-install.sh"
+TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/director-mode-verify.XXXXXX")"
 FAILURES=0
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-NC='\033[0m'
-
-# shellcheck disable=SC2329  # Invoked indirectly by the EXIT trap.
-cleanup() {
-    rm -rf "$TEST_DIR"
-}
-
+cleanup() { rm -rf "$TEST_ROOT"; }
 trap cleanup EXIT
 
 assert() {
-    local description="$1"
-    local condition="$2"
-
-    if eval "$condition"; then
-        echo -e "  ${GREEN}PASS${NC} $description"
-    else
-        echo -e "  ${RED}FAIL${NC} $description"
-        FAILURES=$((FAILURES + 1))
-    fi
-}
-
-reset_target() {
-    rm -rf "$TEST_DIR"
-    mkdir -p "$TEST_DIR"
-}
-
-install_target() {
-    reset_target
-    "$PROJECT_ROOT/install.sh" "$TEST_DIR" > /dev/null 2>&1
+    if eval "$2"; then printf '  PASS %s\n' "$1"; else printf '  FAIL %s\n' "$1"; FAILURES=$((FAILURES + 1)); fi
 }
 
 run_verify() {
     verify_status=0
-    if verify_output="$("$VERIFY_SCRIPT" "$TEST_DIR" 2>&1)"; then
-        :
-    else
-        verify_status=$?
-    fi
+    verify_output="$("$VERIFY" "$@" 2>&1)" || verify_status=$?
 }
 
-echo "Test: verify-install.sh is executable"
-assert "verify-install.sh is executable" "[[ -x '$VERIFY_SCRIPT' ]]"
-echo ""
+echo "Test: complete default install verifies"
+mkdir -p "$TEST_ROOT/default"
+"$PROJECT_ROOT/install.sh" "$TEST_ROOT/default" >/dev/null
+run_verify "$TEST_ROOT/default"
+assert "default verifier exits zero" "[[ $verify_status -eq 0 ]]"
+assert "verifier reports 35 skills" "[[ '$verify_output' == *'all 35 shipped skills'* ]]"
+assert "verifier reports 14 generated agents" "[[ '$verify_output' == *'14 generated agents'* ]]"
+assert "success summary printed" "[[ '$verify_output' == *'Installation verification passed'* ]]"
 
-echo "Test: verifier passes a complete installation"
-install_target
-run_verify
-assert "valid install exits 0" "[[ $verify_status -eq 0 ]]"
-assert "success summary is printed" "[[ '$verify_output' == *'Installation verification passed'* ]]"
-assert "32-skill inventory is reported" "[[ '$verify_output' == *'32 shipped skills'* ]]"
-assert "27-command inventory is reported" "[[ '$verify_output' == *'27 user-invocable commands'* ]]"
-assert "14-agent inventory is reported" "[[ '$verify_output' == *'14 shipped agents'* ]]"
-echo ""
+echo "Test: hook-free install verifies with explicit mode"
+mkdir -p "$TEST_ROOT/none"
+"$PROJECT_ROOT/install.sh" --hooks none "$TEST_ROOT/none" >/dev/null
+run_verify --hooks none "$TEST_ROOT/none"
+assert "hook-free verifier exits zero" "[[ $verify_status -eq 0 ]]"
+assert "hook-free skip is reported" "[[ '$verify_output' == *'Active hook verification skipped'* ]]"
 
-echo "Test: custom CLAUDE.md is accepted and preserved"
-reset_target
-printf '# Existing project instructions\n\nKeep this custom structure.\n' > "$TEST_DIR/CLAUDE.md"
-cp "$TEST_DIR/CLAUDE.md" "$TEST_DIR/custom-claude.snapshot"
-"$PROJECT_ROOT/install.sh" "$TEST_DIR" > /dev/null 2>&1
-run_verify
-assert "custom CLAUDE.md install exits 0" "[[ $verify_status -eq 0 ]]"
-assert "custom CLAUDE.md is unchanged" "diff -q '$TEST_DIR/custom-claude.snapshot' '$TEST_DIR/CLAUDE.md' > /dev/null 2>&1"
-echo ""
+echo "Test: selected Codex install verifies"
+mkdir -p "$TEST_ROOT/codex"
+"$PROJECT_ROOT/install.sh" --cli codex "$TEST_ROOT/codex" >/dev/null
+run_verify --cli codex "$TEST_ROOT/codex"
+assert "Codex-only verifier exits zero" "[[ $verify_status -eq 0 ]]"
 
-echo "Test: additional user agents and skills do not break inventory verification"
-install_target
-mkdir -p "$TEST_DIR/.claude/skills/custom-user-skill"
-printf '%s\n' '---' 'name: custom-user-skill' 'user-invocable: true' '---' > "$TEST_DIR/.claude/skills/custom-user-skill/SKILL.md"
-printf '%s\n' '---' 'name: custom-user-agent' '---' > "$TEST_DIR/.claude/agents/custom-user-agent.md"
-run_verify
-assert "valid install with user extensions exits 0" "[[ $verify_status -eq 0 ]]"
-echo ""
+echo "Test: missing portable asset fails"
+mkdir -p "$TEST_ROOT/missing"
+"$PROJECT_ROOT/install.sh" "$TEST_ROOT/missing" >/dev/null
+rm -f "$TEST_ROOT/missing/.director-mode/handoff.schema.json"
+run_verify "$TEST_ROOT/missing"
+assert "missing schema exits one" "[[ $verify_status -eq 1 ]]"
+assert "missing schema is named" "[[ '$verify_output' == *'handoff schema'* ]]"
 
-echo "Test: malformed settings JSON fails validation"
-install_target
-printf '{invalid json\n' > "$TEST_DIR/.claude/settings.local.json"
-run_verify
-assert "malformed settings exits 1" "[[ $verify_status -eq 1 ]]"
-assert "malformed settings reports JSON failure" "[[ '$verify_output' == *'valid JSON'* ]]"
-echo ""
+echo "Test: malformed native hook config fails"
+mkdir -p "$TEST_ROOT/malformed"
+"$PROJECT_ROOT/install.sh" --hooks guide "$TEST_ROOT/malformed" >/dev/null
+printf '{bad json\n' > "$TEST_ROOT/malformed/.codex/hooks.json"
+run_verify --hooks guide "$TEST_ROOT/malformed"
+assert "malformed config exits one" "[[ $verify_status -eq 1 ]]"
+assert "Codex JSON failure is named" "[[ '$verify_output' == *'Codex hooks are valid JSON'* ]]"
 
-echo "Test: missing shipped inventory fails validation"
-install_target
-rm -rf "$TEST_DIR/.claude/skills/handoff-claude"
-rm -f "$TEST_DIR/.claude/agents/completion-judge.md"
-run_verify
-assert "missing shipped inventory exits 1" "[[ $verify_status -eq 1 ]]"
-assert "missing skill is named" "[[ '$verify_output' == *'handoff-claude'* ]]"
-assert "missing agent is named" "[[ '$verify_output' == *'completion-judge.md'* ]]"
-echo ""
-
-echo "Test: non-executable hook fails validation"
-install_target
-chmod -x "$TEST_DIR/.claude/hooks/log-file-change.sh"
-run_verify
-assert "non-executable hook exits 1" "[[ $verify_status -eq 1 ]]"
-assert "non-executable hook is named" "[[ '$verify_output' == *'log-file-change.sh is executable'* ]]"
-echo ""
-
-echo "Test: valid settings without a registered DML hook fail validation"
-install_target
-SETTINGS_FILE="$TEST_DIR/.claude/settings.local.json" python3 - <<'PYEOF'
-import json
-import os
-
-path = os.environ["SETTINGS_FILE"]
-with open(path) as handle:
-    settings = json.load(handle)
-
-settings["hooks"] = {
-    "PostToolUse": [{
-        "matcher": "Write",
-        "hooks": [{"type": "command", "command": "./custom-hook.sh"}],
-    }],
-}
-
-with open(path, "w") as handle:
-    json.dump(settings, handle, indent=2)
-PYEOF
-run_verify
-assert "missing DML registration exits 1" "[[ $verify_status -eq 1 ]]"
-assert "missing registration is explained" "[[ '$verify_output' == *'registered DML hook'* ]]"
-echo ""
-
-echo "Test: explicit hook-free mode skips hook files, settings, and dependencies"
-install_target
-rm -rf "$TEST_DIR/.claude/hooks" "$TEST_DIR/.self-evolving-loop/hooks"
-rm -f "$TEST_DIR/.claude/settings.local.json"
-verify_status=0
-if verify_output="$("$VERIFY_SCRIPT" --allow-no-hooks "$TEST_DIR" 2>&1)"; then
-    :
-else
-    verify_status=$?
-fi
-assert "explicit hook-free verification exits 0" "[[ $verify_status -eq 0 ]]"
-assert "hook-free skipped checks are reported" "[[ '$verify_output' == *'Hook files, dependencies, settings, and registrations skipped (--allow-no-hooks)'* ]]"
-assert "hook-free mode does not check jq" "[[ '$verify_output' != *'jq hook dependency'* ]]"
-assert "hook-free mode does not check python3" "[[ '$verify_output' != *'python3 hook dependency'* ]]"
-echo ""
+echo "Test: missing generated agent fails"
+mkdir -p "$TEST_ROOT/agent"
+"$PROJECT_ROOT/install.sh" "$TEST_ROOT/agent" >/dev/null
+rm -f "$TEST_ROOT/agent/.codex/agents/code-reviewer.toml"
+run_verify "$TEST_ROOT/agent"
+assert "missing agent exits one" "[[ $verify_status -eq 1 ]]"
+assert "agent count failure is reported" "[[ '$verify_output' == *'.codex/agents count'* ]]"
 
 if [[ $FAILURES -gt 0 ]]; then
-    echo -e "${RED}$FAILURES assertion(s) failed${NC}"
+    printf '%d assertion(s) failed\n' "$FAILURES"
     exit 1
 fi
-
-echo -e "${GREEN}All assertions passed${NC}"
-exit 0
+echo "All assertions passed"

@@ -1,238 +1,117 @@
 #!/usr/bin/env python3
-"""
-score_decision.py - Calculate routing decision score for external AI CLIs
+"""Score whether another CLI may help, without executing or changing policy."""
 
-Usage:
-    python score_decision.py --task "task description" [--files N] [--complexity high|medium|low] [--json]
-"""
+from __future__ import annotations
 
 import argparse
 import json
-import os
-from pathlib import Path
 
 
-def check_auto_interop_flag():
-    """Check if auto-interop is enabled."""
-    paths = [
-        Path(".claude/flags/auto-interop.json"),
-        Path(os.path.expanduser("~/.claude/flags/auto-interop.json"))
-    ]
-
-    for path in paths:
-        if path.exists():
-            try:
-                with open(path) as f:
-                    data = json.load(f)
-                    return data.get("enabled", False)
-            except Exception:
-                pass
-
-    return False
-
-
-def calculate_benefit_score(task, file_count, complexity, timed_out):
-    """Calculate benefit score (0.0 - 1.0)."""
+def benefit_score(task: str, file_count: int, complexity: str, timed_out: bool) -> float:
     score = 0.0
-
-    # File count factor
-    if file_count >= 10:
-        score += 0.35
-    elif file_count >= 5:
-        score += 0.25
-    elif file_count >= 3:
-        score += 0.15
-    elif file_count >= 1:
-        score += 0.05
-
-    # Complexity factor
-    complexity_scores = {"high": 0.25, "medium": 0.15, "low": 0.1}
-    score += complexity_scores.get(complexity, 0.15)
-
-    # Task type detection
-    task_lower = task.lower()
-
-    batch_keywords = [
-        "batch", "bulk", "multiple", "all files", "refactor", "rename", "replace",
-    ]
-    if any(kw in task_lower for kw in batch_keywords):
+    score += 0.35 if file_count >= 10 else 0.25 if file_count >= 5 else 0.15 if file_count >= 3 else 0.05
+    score += {"high": 0.25, "medium": 0.15, "low": 0.1}[complexity]
+    lowered = task.lower()
+    if any(word in lowered for word in ("batch", "bulk", "multiple", "all files", "refactor", "rename")):
         score += 0.2
-
-    template_keywords = [
-        "template", "generate", "scaffold", "boilerplate",
-    ]
-    if any(kw in task_lower for kw in template_keywords):
+    if any(word in lowered for word in ("template", "generate", "scaffold", "boilerplate")):
         score += 0.15
-
-    impl_keywords = [
-        "implement", "add", "create", "build", "write", "fix", "update",
-    ]
-    if any(kw in task_lower for kw in impl_keywords):
+    if any(word in lowered for word in ("implement", "create", "build", "fix", "update")):
         score += 0.15
-
-    # Previous timeout is a benefit for external CLI
     if timed_out:
         score += 0.2
-
     return min(score, 1.0)
 
 
-def calculate_cost_score(file_count, has_secrets):
-    """Calculate cost score (-0.3 - 0.0)."""
-    score = 0.0
-
-    if file_count >= 20:
-        score -= 0.15
-    elif file_count >= 10:
-        score -= 0.1
-    elif file_count >= 5:
-        score -= 0.05
-
+def cost_score(file_count: int, has_secrets: bool) -> float:
+    score = -0.15 if file_count >= 20 else -0.1 if file_count >= 10 else -0.05 if file_count >= 5 else 0.0
     if has_secrets:
         score -= 0.1
+    return max(score - 0.05, -0.3)
 
-    # Review overhead
-    score -= 0.05
 
+def risk_score(task: str, write_required: bool, has_secrets: bool) -> float:
+    score = -0.1 if write_required else 0.0
+    if has_secrets:
+        score -= 0.1
+    if any(word in task.lower() for word in ("delete", "remove", "drop", "destroy", "force")):
+        score -= 0.15
     return max(score, -0.3)
 
 
-def calculate_risk_score(task, write_required, has_secrets):
-    """Calculate risk score (-0.3 - 0.0)."""
-    score = 0.0
-
-    task_lower = task.lower()
-
-    if write_required:
-        score -= 0.1
-
-    if has_secrets:
-        score -= 0.1
-
-    destructive_keywords = ["delete", "remove", "drop", "destroy", "force"]
-    if any(kw in task_lower for kw in destructive_keywords):
-        score -= 0.15
-
-    return max(score, -0.3)
+def recommend_cli(task: str) -> str:
+    lowered = task.lower()
+    scores = {
+        "claude": sum(word in lowered for word in ("architecture", "coordinate", "review", "research", "plan")),
+        "codex": sum(word in lowered for word in ("edit", "code", "implement", "fix", "debug", "refactor", "test")),
+        "grok": sum(word in lowered for word in ("grok", "xai", "search", "explore", "realtime", "parallel")),
+    }
+    return max(scores, key=scores.get)
 
 
-def recommend_cli(task):
-    """Recommend which CLI to use based on task.
-
-    claude-profile wins for full-toolset delegation (independent end-to-end
-    tasks, parallel work on a second account's quota — see /handoff-claude);
-    gemini for long-context analysis; codex for mechanical bulk edits.
-    """
-    task_lower = task.lower()
-
-    codex_keywords = ["edit", "code", "implement", "fix", "debug", "refactor"]
-    codex_score = sum(1 for kw in codex_keywords if kw in task_lower)
-
-    gemini_keywords = ["explain", "analyze", "document", "review", "plan", "long"]
-    gemini_score = sum(1 for kw in gemini_keywords if kw in task_lower)
-
-    claude_keywords = [
-        "parallel", "independent", "end-to-end", "full workflow", "worktree",
-        "another account", "second account", "background task",
-    ]
-    claude_score = sum(1 for kw in claude_keywords if kw in task_lower)
-
-    if claude_score > max(codex_score, gemini_score):
-        return "claude-profile"
-    if gemini_score > codex_score:
-        return "gemini"
-    return "codex"
-
-
-def calculate_decision(task, file_count=1, complexity="medium",
-                       timed_out=False, write_required=True, has_secrets=False):
-    """Calculate full routing decision."""
-    benefit = calculate_benefit_score(task, file_count, complexity, timed_out)
-    cost = calculate_cost_score(file_count, has_secrets)
-    risk = calculate_risk_score(task, write_required, has_secrets)
-
-    total_score = benefit + cost + risk
-    auto_interop = check_auto_interop_flag()
-
-    decision = {
+def calculate_decision(
+    task: str,
+    file_count: int = 1,
+    complexity: str = "medium",
+    timed_out: bool = False,
+    write_required: bool = True,
+    has_secrets: bool = False,
+) -> dict[str, object]:
+    benefit = benefit_score(task, file_count, complexity, timed_out)
+    cost = cost_score(file_count, has_secrets)
+    risk = risk_score(task, write_required, has_secrets)
+    total = benefit + cost + risk
+    suggested = total >= 0.15
+    cli = recommend_cli(task) if suggested else None
+    return {
         "scores": {
             "benefit": round(benefit, 2),
             "cost": round(cost, 2),
             "risk": round(risk, 2),
-            "total": round(total_score, 2)
+            "total": round(total, 2),
         },
-        "auto_interop_enabled": auto_interop,
         "recommendation": {
-            "action": "local",
-            "cli": None,
-            "reason": ""
-        }
+            "action": "suggest" if suggested else "stay",
+            "cli": cli,
+            "reason": (
+                f"Score {total:.2f} suggests offering {cli} as an option"
+                if suggested
+                else f"Score {total:.2f} suggests continuing in the current CLI"
+            ),
+            "user_choice_required": True,
+        },
     }
 
-    if total_score >= 0.15 and auto_interop:
-        decision["recommendation"]["action"] = "auto_execute"
-        decision["recommendation"]["cli"] = recommend_cli(task)
-        decision["recommendation"]["reason"] = (
-            f"Score {total_score:.2f} >= 0.15, auto-routing to external CLI"
-        )
-    else:
-        decision["recommendation"]["action"] = "local"
-        if not auto_interop:
-            decision["recommendation"]["reason"] = "auto-interop disabled, handle locally"
-        else:
-            decision["recommendation"]["reason"] = (
-                f"Score {total_score:.2f} < 0.15, handle locally"
-            )
 
-    return decision
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Calculate routing decision score")
-    parser.add_argument("--task", required=True, help="Task description")
-    parser.add_argument("--files", type=int, default=1, help="Number of files")
-    parser.add_argument("--complexity", choices=["high", "medium", "low"], default="medium")
-    parser.add_argument("--timeout", action="store_true", help="Previous attempt timed out")
-    parser.add_argument("--write", action="store_true", default=True, help="Write required")
-    parser.add_argument("--secrets", action="store_true", help="Has secrets to filter")
-    parser.add_argument("--json", action="store_true", help="JSON output")
-
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--task", required=True)
+    parser.add_argument("--files", type=int, default=1)
+    parser.add_argument("--complexity", choices=("high", "medium", "low"), default="medium")
+    parser.add_argument("--timeout", action="store_true")
+    parser.add_argument("--read-only", action="store_true", help="the proposed work does not write files")
+    parser.add_argument("--secrets", action="store_true")
+    parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
-
     decision = calculate_decision(
-        task=args.task,
-        file_count=args.files,
-        complexity=args.complexity,
-        timed_out=args.timeout,
-        write_required=args.write,
-        has_secrets=args.secrets
+        args.task,
+        args.files,
+        args.complexity,
+        args.timeout,
+        not args.read_only,
+        args.secrets,
     )
-
     if args.json:
         print(json.dumps(decision, indent=2))
+        return
+    scores = decision["scores"]
+    recommendation = decision["recommendation"]
+    print(f"Routing score: {scores['total']:+.2f}")
+    if recommendation["action"] == "suggest":
+        print(f"Suggestion: offer {recommendation['cli']} as an option; do not launch it automatically.")
     else:
-        print("=" * 50)
-        print("Routing Decision Analysis")
-        print("=" * 50)
-        print(f"\nTask: {args.task}")
-        print(f"Files: {args.files}, Complexity: {args.complexity}")
-        print()
-        print("Scores:")
-        scores = decision["scores"]
-        print(f"  Benefit:  {scores['benefit']:+.2f} (0.0 to 0.6)")
-        print(f"  Cost:     {scores['cost']:+.2f} (-0.3 to 0.0)")
-        print(f"  Risk:     {scores['risk']:+.2f} (-0.3 to 0.0)")
-        print(f"  Total:    {scores['total']:+.2f}")
-        print()
-        auto = decision["auto_interop_enabled"]
-        print(f"Auto-interop: {'enabled' if auto else 'disabled'}")
-        print()
-        rec = decision["recommendation"]
-        if rec["action"] == "auto_execute":
-            print(f"  [AUTO] Execute with {rec['cli']}")
-        else:
-            print(f"  [LOCAL] Handle with Claude Code")
-        print(f"  Reason: {rec['reason']}")
+        print("Suggestion: continue in the current CLI.")
+    print(f"Reason: {recommendation['reason']}")
 
 
 if __name__ == "__main__":

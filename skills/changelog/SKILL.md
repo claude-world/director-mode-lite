@@ -160,7 +160,9 @@ Only one auto-loop session runs per project. Starting `/auto-loop` while a sessi
 
 ## Installation
 
-Hooks ship with Director Mode Lite. After install, verify:
+These legacy observability hooks ship as an explicit automation option. They
+are absent from the default zero-hook install. After intentionally running
+`./install.sh --hooks automation`, verify:
 
 ```bash
 ls .claude/hooks/

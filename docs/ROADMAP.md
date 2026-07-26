@@ -2,14 +2,24 @@
 
 ## Future Vision and Development Plan
 
-> This document outlines the future evolution roadmap for Director Mode Lite, including short-term, mid-term, and long-term goals.
+> Historical v1 planning archive. For shipped v2 behavior and current counts,
+> use the [README](../README.md), [changelog](../CHANGELOG.md), and executable
+> verifier. Items below are retained as history, not current commitments.
+
+## Current v2 direction
+
+Version 2 ships first-class Claude Code, Codex CLI, and Grok Build adapters,
+35 skills, 14 canonical agents with native Codex/Grok adapters, and portable
+new-session continuity through `director-handoff/v1`. Routing is suggestion
+only and the default installation has no active hooks. Future work should
+improve adapter fidelity and relay ergonomics without adding policy gates.
 
 ---
 
 ## Table of Contents
 
 1. [Vision Statement](#vision-statement)
-2. [Current State (v1.x)](#current-state-v1x)
+2. [Historical State (v1.x)](#historical-state-v1x)
 3. [Short-Term Goals (Q1-Q2 2026)](#short-term-goals-q1-q2-2026)
 4. [Mid-Term Goals (Q3-Q4 2026)](#mid-term-goals-q3-q4-2026)
 5. [Long-Term Vision (2027+)](#long-term-vision-2027)
@@ -32,7 +42,7 @@ Our ultimate goal is to **democratize access to advanced AI development patterns
 
 ---
 
-## Current State (v1.x)
+## Historical State (v1.x)
 
 ### What We Have (v1.8.0)
 
