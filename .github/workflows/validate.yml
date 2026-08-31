@@ -11,7 +11,7 @@ jobs:
     name: Validate SKILL.md Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Validate Skills Format
         run: |
@@ -96,7 +96,7 @@ jobs:
     name: Validate Agent Files
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Validate Agent Format
         run: |
@@ -207,7 +207,7 @@ jobs:
     name: Validate Frontmatter (deep)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install PyYAML
         run: python3 -c "import yaml" 2>/dev/null || python3 -m pip install --quiet pyyaml
@@ -219,7 +219,7 @@ jobs:
     name: Check Links
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Check Internal Links
         run: |
@@ -260,7 +260,7 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Scan for Sensitive Data
         run: |
@@ -301,7 +301,7 @@ jobs:
     name: Test Installation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Run Installation Regression Suite
         run: ./tests/run-tests.sh
