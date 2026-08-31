@@ -16,8 +16,7 @@ tools:
   - Glob
   - Bash
 model: haiku
-memory:
-  - user
+memory: user
 maxTurns: 15
 ---
 
@@ -152,16 +151,20 @@ Each evolved skill tracks its merge history:
 
 ### 3. Generate New Version
 
-Template for evolved skill:
+Template for evolved skill. Preserve the source skill's narrow permission
+contract; do not introduce broad `allowed-tools`. Runtime mutation remains a
+separate caller authorization.
 
 ```markdown
 ---
-description: [Auto-generated] Executor for: [TASK_NAME] (v[N+1])
+description: "[Auto-generated] Executor for: [TASK_NAME] (v[N+1])"
 context: fork
-allowed-tools: [Read, Write, Edit, Bash, Grep, Glob]
 ---
 
 # Executor: [TASK_NAME] (v[N+1])
+
+Runtime mutation and command permissions require explicit caller authorization;
+this evolved skill does not pre-approve tools.
 
 ## Evolution Notes
 - **Previous Version**: v[N]

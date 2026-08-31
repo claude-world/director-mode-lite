@@ -173,6 +173,12 @@ Director Mode:
 This adapts the interface without claiming that tool names, models, or runtime
 permissions are identical across vendors.
 
+The release gate validates the canonical Claude Markdown catalog and performs
+a real portable install. It also fails if a generated Codex agent omits the
+required `name`, `description`, or `developer_instructions` contract, or if the
+installed `.agents/skills` inventory is incomplete. Verification is scoped to
+the 14 DML-owned adapters, so unrelated user agents remain supported.
+
 ### Skills
 
 The repository ships 35 skills, including 31 user-invocable workflows. The

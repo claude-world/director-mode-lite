@@ -41,11 +41,19 @@ mkdir -p "$TEST_ROOT/.claude"
 printf '%s\n' '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"true"}]}]}}' \
     > "$TEST_ROOT/.claude/settings.local.json"
 
-before="$(find "$TEST_ROOT" -type f -exec shasum -a 256 {} \; | sort | shasum -a 256)"
+project_digest() {
+    # TEST_HOME lives under the temporary repository only for fixture cleanup.
+    # macOS Python may populate $HOME/Library/Caches while starting, which is a
+    # user-cache side effect rather than a project mutation by the doctor.
+    find "$TEST_ROOT" -path "$TEST_HOME" -prune -o \
+        -type f -exec shasum -a 256 {} \; | sort | shasum -a 256
+}
+
+before="$(project_digest)"
 report="$(HOME="$TEST_HOME" CLAUDE_CONFIG_DIR="$TEST_HOME/.claude" \
     CODEX_HOME="$TEST_HOME/.codex" GROK_HOME="$TEST_HOME/.grok" \
     "$DOCTOR" --cwd "$TEST_ROOT" --json --no-probe)"
-after="$(find "$TEST_ROOT" -type f -exec shasum -a 256 {} \; | sort | shasum -a 256)"
+after="$(project_digest)"
 
 assert "doctor emits valid JSON" "REPORT='$report' python3 -c 'import json,os; json.loads(os.environ[\"REPORT\"])'"
 assert "doctor is explicitly read-only" "REPORT='$report' python3 -c 'import json,os; assert json.loads(os.environ[\"REPORT\"])[\"mode\"] == \"read-only\"'"

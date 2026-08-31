@@ -2,11 +2,6 @@
 name: test-runner
 description: "Test execution reference: framework detection (pytest/jest/vitest/go/cargo/junit) and correct run/coverage commands, plus failure-analysis steps. Use when running tests, analyzing test failures, or verifying coverage after code changes."
 user-invocable: false
-allowed-tools:
-  - Read
-  - Bash
-  - Grep
-  - Glob
 ---
 
 # Test Runner Skill

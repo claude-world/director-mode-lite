@@ -103,7 +103,7 @@ jobs:
           echo "Validating agent files..."
 
           ERRORS=0
-          VALID_COLORS="yellow red green blue magenta cyan"
+          VALID_COLORS="red blue green yellow purple orange pink cyan"
           VALID_MODELS="inherit haiku sonnet opus fable default best"
 
           for agent_file in agents/*.md; do

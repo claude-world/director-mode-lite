@@ -2,12 +2,6 @@
 name: doc-writer
 description: "Documentation templates and standards: README structure, API reference format, changelog (Keep a Changelog), and comment guidelines. Use when creating or updating documentation. Loaded automatically by the doc-writer agent."
 user-invocable: false
-allowed-tools:
-  - Read
-  - Write
-  - Edit
-  - Grep
-  - Glob
 ---
 
 # Doc Writer Skill

@@ -58,7 +58,7 @@ Skill, WebFetch, WebSearch, TodoWrite, NotebookEdit, AskUserQuestion
 
 ### Valid Colors
 ```
-yellow, red, green, blue, magenta, cyan
+red, blue, green, yellow, purple, orange, pink, cyan
 ```
 
 ### Valid Models

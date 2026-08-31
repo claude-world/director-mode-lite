@@ -7,7 +7,7 @@ description: |
   user: "My /deploy skill never auto-triggers when I describe deploying — why?"
   assistant: "I'll use the skills-expert agent to tune the skill's description and when_to_use so it triggers reliably."
   </example>
-color: magenta
+color: pink
 tools:
   - Read
   - Write
@@ -93,14 +93,18 @@ name: my-skill                          # SKILL.md: must match the skill's direc
 when_to_use: When Claude should auto-trigger this skill
 user-invocable: true                    # Show in the / menu
 disable-model-invocation: false         # true = manual-only, never auto-triggered
-allowed-tools: Read, Write, Edit, Bash  # CSV — or a YAML list — to restrict tools
+allowed-tools: Read, Grep, Glob         # CSV — or a YAML list — for narrow read-only preapproval
 model: sonnet                           # inherit | haiku | sonnet | opus | fable | default | best
 argument-hint: <path>                   # Hint shown after the command name
 arguments: file mode                    # Space-separated argument names
 ---
 ```
 
-These are the most-used of Claude Code's ~16 official skill/command frontmatter fields — see the official skills reference for the complete list. `allowed-tools` accepts either a CSV string (`Read, Write`) or a YAML list (`[Read, Write]`).
+These are the most-used official skill/command frontmatter fields. See the
+official skills reference for the complete list. `allowed-tools` accepts either
+a CSV string (`Read, Grep`) or a YAML list (`[Read, Grep]`). Do not preapprove
+bare `Bash`, `Edit`, `Write`, `Agent`, `Task`, or `Skill` rules; omit the field
+when a workflow should use the normal runtime permission flow.
 
 ### Best Practices
 

@@ -87,7 +87,7 @@ Read the actual placeholder names from each template (they use `{{handlebars}}`)
 - `{{STRATEGY_APPROACH}}`, `{{#each STRATEGY_ORDER}}`, `{{#each RISKS}}` (`{{risk}}`, `{{mitigation}}`), `{{#each CONSTRAINTS}}`
 - Validator also: `{{LINT_COMMAND}}`, `{{#if HAS_SECURITY_CRITERIA}}` / `{{#each SECURITY_CRITERIA}}`
 
-The templates already carry `lifecycle: task-scoped` in frontmatter; when writing the filled skill also add `generated_at: {{TIMESTAMP}}` and `pattern_matched: {{TASK_TYPE}}`. Fold `recommended_agents` / `recommended_skills` / `template_improvements` from patterns.json into the executor's guidance.
+The templates already carry `lifecycle: task-scoped` in frontmatter; when writing the filled skill also add `generated_at: {{TIMESTAMP}}` and `pattern_matched: {{TASK_TYPE}}`. Fold `recommended_agents` / `recommended_skills` / `template_improvements` from patterns.json into the executor's guidance. Do not add broad `allowed-tools`: runtime permissions remain owned by the active CLI and require the caller's explicit authorization.
 
 **Fallback (older installs)**: if a template file is missing, generate from the compact inline scaffold for that type below. The scaffolds use the **same `{{...}}` vocabulary** as the templates, so nothing else changes.
 
@@ -99,13 +99,15 @@ Fallback inline scaffold (used only if `executor-template.md` is missing):
 ---
 description: "[Auto-generated] Executor for: {{TASK_NAME}}"
 context: fork
-allowed-tools: [Read, Write, Edit, Bash, Grep, Glob]
 lifecycle: task-scoped
 generated_at: {{TIMESTAMP}}
 pattern_matched: {{TASK_TYPE}}
 ---
 
 # Executor: {{TASK_NAME}}
+
+Runtime mutation and command permissions require explicit caller authorization;
+this generated skill does not pre-approve tools.
 
 ## Context
 {{PARSED_GOAL}}
@@ -147,13 +149,15 @@ Fallback inline scaffold (used only if `validator-template.md` is missing):
 ---
 description: "[Auto-generated] Validator for: {{TASK_NAME}}"
 context: fork
-allowed-tools: [Read, Bash, Grep, Glob]
 lifecycle: task-scoped
 generated_at: {{TIMESTAMP}}
 pattern_matched: {{TASK_TYPE}}
 ---
 
 # Validator: {{TASK_NAME}}
+
+Runtime command permissions require explicit caller authorization; this
+generated skill does not pre-approve tools.
 
 ## Validation Dimensions
 
@@ -214,13 +218,15 @@ Fallback inline scaffold (used only if `fixer-template.md` is missing):
 ---
 description: "[Auto-generated] Fixer for: {{TASK_NAME}}"
 context: fork
-allowed-tools: [Read, Write, Edit, Bash, Grep, Glob]
 lifecycle: task-scoped
 generated_at: {{TIMESTAMP}}
 pattern_matched: {{TASK_TYPE}}
 ---
 
 # Fixer: {{TASK_NAME}}
+
+Runtime mutation and command permissions require explicit caller authorization;
+this generated skill does not pre-approve tools.
 
 ## Purpose
 Auto-correct issues identified by the Validator.

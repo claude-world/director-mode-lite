@@ -7,7 +7,7 @@ description: |
   user: "I want a subagent that only reviews SQL migrations — how should I set its tools and model?"
   assistant: "I'll use the agents-expert agent to design the migration-reviewer's frontmatter, tool allowlist, and model choice."
   </example>
-color: magenta
+color: pink
 tools:
   - Read
   - Write
@@ -64,8 +64,7 @@ disallowedTools:            # Optional: explicitly block tools
   - NotebookEdit
 skills:                     # Optional: link skills
   - linked-skill
-memory:                     # Optional: CLAUDE.md access — user | project | local
-  - project
+memory: project             # Optional: CLAUDE.md access — user | project | local
 effort: medium              # Optional: reasoning effort
 maxTurns: 20                # Optional: cap on agentic turns
 background: false           # Optional: run in the background
@@ -133,9 +132,9 @@ model: inherit     # Inherit the parent context's model
 - **Experts and personas** → `sonnet` (reasoning quality matters).
 - **Mechanical coordinators / dispatchers** → `haiku` (cheap, fast, low reasoning).
 - **Analytical loop phases** (analysis, judgment, learning) → `sonnet` or `inherit`.
-- **`memory`** → add only where cross-session learning genuinely helps (agents that accumulate patterns). Most task-scoped agents need none. In this repo: `memory: [user]` on the 6 self-evolving loop agents and the 3 personas (code-reviewer, debugger, doc-writer); the 5 stateless expert advisors get none.
+- **`memory`** → add only where cross-session learning genuinely helps (agents that accumulate patterns). The value is one scalar scope: `user`, `project`, or `local`; most task-scoped agents need none.
 - **`maxTurns`** → cap agentic turns to match the job: personas ~20, analytical loop phases 10–15 (completion-judge 10; requirement-analyzer / experience-extractor / skill-evolver 15), debugger 25, the orchestrator 50; experts set none (advisory and short).
-- **`color`** is a Director Mode convention used across this repo; the validator requires one of: yellow, red, green, blue, magenta, cyan.
+- **`color`** is a Director Mode convention used across this repo; the current palette is: red, blue, green, yellow, purple, orange, pink, or cyan.
 
 ### Best Practices
 
@@ -279,7 +278,10 @@ You fix linting errors automatically.
 
 ```markdown
 # Via the Agent tool (programmatic; Task was renamed to Agent)
-Agent(subagent_type="security-reviewer", prompt="Review auth module")
+tool: Agent
+input:
+  subagent_type: security-reviewer
+  prompt: Review auth module
 
 # Via conversation (natural)
 "Please have the security-reviewer check the login code"

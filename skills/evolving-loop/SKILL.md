@@ -137,6 +137,17 @@ fi
 
 **CRITICAL**: Use context isolation - orchestrator runs in fork context.
 
+Before dispatch, preserve the request and checkpoint preimage. If Claude's
+Agent tool is unavailable or withheld, or Codex's `spawn_agent` interface is
+unavailable or withheld, the maximum depth is reached, or a concurrency limit
+rejects the call, do not retry or execute the loop inline. Return an incomplete
+`dispatch_request` and do not advance or mutate loop state.
+
+Choose exactly one provider-native form:
+
+- Claude Code: `Agent(subagent_type="evolving-orchestrator", prompt="<bounded prompt>")`
+- Codex CLI: `spawn_agent(agent_type="evolving-orchestrator", task_name="evolving_loop", message="<bounded prompt>")`
+
 ```markdown
 Agent(subagent_type="evolving-orchestrator", prompt="""
 Request: $ARGUMENTS
@@ -156,6 +167,9 @@ Return format:
 ➡️ DECIDE: [SHIP/FIX/EVOLVE]
 """)
 ```
+
+In Codex, pass the same bounded request and return contract through
+`spawn_agent(...)`; do not invoke the Claude example as a second dispatch.
 
 ---
 

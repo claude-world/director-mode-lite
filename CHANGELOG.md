@@ -5,6 +5,45 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-08-31
+
+This release hardens Director Mode Lite's native Claude Code and Codex CLI
+catalogs against their current provider contracts while preserving the
+guidance-first, zero-hook default and Grok compatibility.
+
+### Added
+
+- Installed Codex agent validation for every generated `.codex/agents/*.toml`
+  adapter, requiring non-empty `name`, `description`, and
+  `developer_instructions` fields
+- Provider-native dispatch mappings for Claude `Agent` and Codex `spawn_agent`
+  in every delegating portable agent and skill
+- Regression coverage for malformed Codex adapters, complete portable
+  inventories, coexistence with user-owned Codex agents, version parity across
+  both plugin manifests, and the Lite overlay's self-contained agent catalog
+
+### Changed
+
+- All 14 canonical agents now use current Claude-compatible color and scalar
+  memory frontmatter while generating portable, self-contained Codex adapters
+- Internal review, debugging, documentation, and test skills no longer
+  pre-authorize broad mutation or delegation capabilities
+- Generated executor, validator, fixer, and evolution templates leave runtime
+  mutation and command authorization to the active CLI and caller
+- Delegating agents and orchestration skills now fail closed when dispatch is
+  unavailable, withheld, over depth, or blocked by concurrency limits
+- Deep validation and CI now reject stale frontmatter values, unavailable
+  skill preloads, broad skill permissions, and incomplete dispatch contracts
+
+### Fixed
+
+- Portable agents no longer depend on skills omitted by the Lite installer,
+  preventing missing-reference failures in both Claude and Codex catalogs
+- Agent examples no longer describe unavailable delegation tools as though
+  they were directly callable
+- `director-doctor` installation tests no longer mistake macOS Python cache
+  files created under the isolated test home for runtime changes
+
 ## [2.1.0] - 2026-07-27
 
 This release deepens the two core skills while keeping the product

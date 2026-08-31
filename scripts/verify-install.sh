@@ -77,6 +77,70 @@ check_json() {
     fi
 }
 
+check_codex_agent_contract() {
+    local source_dir="$1" agents_dir="$2"
+    python3 - "$source_dir" "$agents_dir" <<'PY'
+import json
+import re
+import sys
+from pathlib import Path
+
+source_dir = Path(sys.argv[1])
+agents_dir = Path(sys.argv[2])
+required = ("name", "description", "developer_instructions")
+errors = []
+expected = sorted(path.stem for path in source_dir.glob("*.md"))
+
+if not expected:
+    errors.append("source catalog contains no agents")
+
+for stem in expected:
+    path = agents_dir / f"{stem}.toml"
+    if not path.is_file():
+        errors.append(f"{path.name}: missing expected DML adapter")
+        continue
+    values = {}
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        match = re.fullmatch(r"([A-Za-z0-9_.-]+)\s*=\s*(.+)", stripped)
+        if not match:
+            errors.append(f"{path.name}:{line_number}: invalid generated TOML assignment")
+            continue
+        key, raw_value = match.groups()
+        if key in values:
+            errors.append(f"{path.name}:{line_number}: duplicate {key} field")
+            continue
+        try:
+            values[key] = json.loads(raw_value)
+        except json.JSONDecodeError:
+            errors.append(f"{path.name}:{line_number}: invalid generated TOML string")
+
+    for key in required:
+        value = values.get(key)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"{path.name}: missing or empty required {key} field")
+
+    instructions = values.get("developer_instructions")
+    if isinstance(instructions, str):
+        has_claude_dispatch = re.search(
+            r"\b(?:Agent|Task)\s*\(\s*(?:subagent_type|prompt|description)\s*=",
+            instructions,
+        )
+        has_codex_dispatch = re.search(
+            r"\bspawn_agent\s*\(\s*(?:agent_type|task_name|message)\s*=",
+            instructions,
+        )
+        if has_claude_dispatch and not has_codex_dispatch:
+            errors.append(f"{path.name}: Claude dispatch has no Codex spawn_agent mapping")
+
+if errors:
+    print("; ".join(errors), file=sys.stderr)
+    raise SystemExit(1)
+PY
+}
+
 selected() {
     [[ "$CLI_TARGETS" == "all" || "$CLI_TARGETS" == "$1" ]]
 }
@@ -162,9 +226,13 @@ if selected codex; then
     check_dir "$TARGET_DIR/.agents/skills" ".agents/skills exists"
     check_dir "$TARGET_DIR/.codex/agents" ".codex/agents exists"
     check_inventory_copy "$PROJECT_ROOT/skills" "$TARGET_DIR/.agents/skills" ".agents/skills" skills
-    codex_count="$(find "$TARGET_DIR/.codex/agents" -mindepth 1 -maxdepth 1 -name '*.toml' -type f | wc -l | tr -d ' ')"
     source_count="$(find "$PROJECT_ROOT/agents" -mindepth 1 -maxdepth 1 -name '*.md' -type f | wc -l | tr -d ' ')"
-    [[ "$codex_count" == "$source_count" ]] && pass ".codex/agents has $source_count generated agents" || fail ".codex/agents count ($codex_count, expected $source_count)"
+    codex_contract_output=""
+    if codex_contract_output="$(check_codex_agent_contract "$PROJECT_ROOT/agents" "$TARGET_DIR/.codex/agents" 2>&1)"; then
+        pass ".codex/agents has all $source_count generated agents satisfying the Codex custom-agent contract"
+    else
+        fail ".codex/agents has all DML agents satisfying the Codex custom-agent contract ($codex_contract_output)"
+    fi
 fi
 
 if selected grok; then

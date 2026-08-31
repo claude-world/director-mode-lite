@@ -7,7 +7,7 @@ description: |
   user: "Our CLAUDE.md is 600 lines and Claude still ignores half of it — can you review it?"
   assistant: "I'll use the claude-md-expert agent to review the file and recommend what to keep, tighten, or drop."
   </example>
-color: magenta
+color: pink
 tools:
   - Read
   - Write

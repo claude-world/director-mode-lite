@@ -35,7 +35,19 @@ Step 5: Smart Commit     → Conventional Commits
 
 ### Use Explore Agent
 
-(Claude invokes this tool; shown here as pseudo-code.)
+(Use the active provider's native dispatcher; Claude pseudo-code is shown
+below.)
+
+Before dispatch, preserve the bounded exploration request and expected result.
+If Claude's Agent tool is unavailable or withheld, or Codex's `spawn_agent`
+interface is unavailable or withheld, the maximum depth is reached, or a
+concurrency limit rejects the call, do not retry or substitute assumptions.
+Return an incomplete `dispatch_request` and do not advance the workflow.
+
+Choose exactly one provider-native form:
+
+- Claude Code: `Agent(subagent_type="Explore", model="haiku", prompt="<bounded prompt>")`
+- Codex CLI: `spawn_agent(agent_type="explorer", task_name="workflow_explore", message="<bounded prompt>")`
 
 ```markdown
 Agent(subagent_type="Explore", model="haiku", prompt="""
@@ -43,6 +55,9 @@ Explore the codebase for: [feature name] (thoroughness: medium)
 Find related files, similar implementations, and test patterns.
 """)
 ```
+
+In Codex, send the same exploration request through `spawn_agent(...)`; do not
+invoke the Claude example as a second dispatch.
 
 ---
 

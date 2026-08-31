@@ -34,8 +34,8 @@ model: sonnet                 # Optional: fable, opus, sonnet, haiku, inherit, d
 effort: medium                # Optional: low, medium, high, xhigh, max
 allowed-tools:                # Optional: pre-approved tools. Accepts a comma-separated string
   - Read                      #   OR a YAML list — BOTH are official (list shown here as house style)
-  - Write
-  - Bash
+  - Grep
+  - Glob
 disallowed-tools:             # Optional: explicitly blocked tools (string or YAML list)
   - WebFetch
 context: fork                 # Optional: run the skill in a subagent
@@ -85,6 +85,7 @@ once                         # Valid ONLY inside a hooks[] entry, never at skill
 ### Optional Field Validation
 - [ ] `allowed-tools` / `disallowed-tools` are valid tool names
 - [ ] `allowed-tools` / `disallowed-tools` are a comma-separated string OR a YAML list (both valid)
+- [ ] `allowed-tools` does not broadly preapprove bare `Bash`, `Edit`, `Write`, `Agent`, `Task`, or `Skill`; omit it when normal runtime approval is required
 - [ ] `model` is a valid value: fable, opus, sonnet, haiku, inherit, default, best, sonnet[1m], opus[1m], or a full model ID (NOT opusplan)
 - [ ] `effort` is one of: low, medium, high, xhigh, max
 - [ ] `context` is `fork` (if specified)

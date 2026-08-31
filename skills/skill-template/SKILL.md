@@ -60,8 +60,8 @@ model: sonnet                 # Optional: fable, opus, sonnet, haiku, inherit, d
 effort: medium                # Optional: low, medium, high, xhigh, max
 allowed-tools:                # Optional: pre-approved tools. Accepts a comma-separated string
   - Read                      #   OR a YAML list — BOTH are official (list shown here as house style)
-  - Write
-  - Bash
+  - Grep
+  - Glob
 disallowed-tools:             # Optional: explicitly blocked tools (string or YAML list)
   - WebFetch
 context: fork                 # Optional: run the skill in a subagent
@@ -91,6 +91,10 @@ hooks:                        # Optional: skill-scoped lifecycle hooks (same sch
 Non-official fields to avoid: `metadata`, `license`, `version` (not part of the
 spec). `once` is valid only inside a `hooks[]` entry, never at the top level.
 
+Do not emit bare `Bash`, `Edit`, `Write`, `Agent`, `Task`, or `Skill` entries in
+`allowed-tools`; those rules preapprove broad mutation or delegation. Omit the
+field when the workflow should use the runtime's normal permission flow.
+
 ---
 
 ## Workflow Template Structure
@@ -100,12 +104,6 @@ spec). `once` is valid only inside a `hooks[]` entry, never at the top level.
 name: [name]
 description: [What it does. Include when to use it.]
 user-invocable: true
-allowed-tools:
-  - Read
-  - Write
-  - Bash
-  - Grep
-  - Glob
 context: fork
 argument-hint: "<task-description>"
 # when_to_use: Use when the user asks about X or mentions Y.  # Optional trigger hint

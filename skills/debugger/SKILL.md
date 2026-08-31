@@ -2,12 +2,6 @@
 name: debugger
 description: "Systematic debugging method: 5-step root-cause analysis (capture, isolate, hypothesize, investigate, fix & verify) plus common bug-pattern reference. Use when errors, exceptions, test failures, or unexpected behavior appear. Loaded automatically by the debugger agent."
 user-invocable: false
-allowed-tools:
-  - Read
-  - Grep
-  - Glob
-  - Bash
-  - Edit
 ---
 
 # Debugger Skill

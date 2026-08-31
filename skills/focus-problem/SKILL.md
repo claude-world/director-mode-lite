@@ -12,6 +12,17 @@ Analyze: $ARGUMENTS
 
 Before diving in, use the Explore agent to understand the context:
 
+Before dispatch, preserve the bounded exploration question and expected result.
+If Claude's Agent tool is unavailable or withheld, or Codex's `spawn_agent`
+interface is unavailable or withheld, the maximum depth is reached, or a
+concurrency limit rejects the call, do not retry or invent exploration
+findings. Return an incomplete `dispatch_request` and do not advance the plan.
+
+Choose exactly one provider-native form:
+
+- Claude Code: `Agent(subagent_type="Explore", model="haiku", prompt="<bounded prompt>")`
+- Codex CLI: `spawn_agent(agent_type="explorer", task_name="focus_problem", message="<bounded prompt>")`
+
 ```markdown
 Agent(subagent_type="Explore", model="haiku", prompt="""
 Explore the codebase for: $ARGUMENTS (thoroughness: medium)
@@ -22,6 +33,9 @@ Focus on:
 4. Architecture patterns
 """)
 ```
+
+In Codex, send the same exploration request through `spawn_agent(...)`; do not
+invoke the Claude example as a second dispatch.
 
 ## Analysis Framework
 

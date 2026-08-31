@@ -14,8 +14,7 @@ tools:
   - Grep
   - Write
 model: haiku
-memory:
-  - user
+memory: user
 maxTurns: 10
 ---
 

@@ -15,8 +15,7 @@ tools:
   - Glob
   - Bash
 model: sonnet
-memory:
-  - user
+memory: user
 maxTurns: 15
 ---
 

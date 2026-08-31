@@ -27,6 +27,8 @@ run_verify "$TEST_ROOT/default"
 assert "default verifier exits zero" "[[ $verify_status -eq 0 ]]"
 assert "verifier reports 35 skills" "[[ '$verify_output' == *'all 35 shipped skills'* ]]"
 assert "verifier reports 14 generated agents" "[[ '$verify_output' == *'14 generated agents'* ]]"
+assert "verifier checks the Codex custom-agent contract" "[[ '$verify_output' == *'Codex custom-agent contract'* ]]"
+assert "Codex orchestrator retains native dispatch" "grep -q 'spawn_agent' '$TEST_ROOT/default/.codex/agents/evolving-orchestrator.toml'"
 assert "success summary printed" "[[ '$verify_output' == *'Installation verification passed'* ]]"
 assert "verifier checks the doctor" "[[ '$verify_output' == *'director-doctor is executable'* ]]"
 
@@ -86,7 +88,25 @@ mkdir -p "$TEST_ROOT/agent"
 rm -f "$TEST_ROOT/agent/.codex/agents/code-reviewer.toml"
 run_verify "$TEST_ROOT/agent"
 assert "missing agent exits one" "[[ $verify_status -eq 1 ]]"
-assert "agent count failure is reported" "[[ '$verify_output' == *'.codex/agents count'* ]]"
+assert "missing DML adapter is reported" "[[ '$verify_output' == *'code-reviewer.toml: missing expected DML adapter'* ]]"
+
+echo "Test: malformed generated Codex agent fails"
+mkdir -p "$TEST_ROOT/codex-contract"
+"$PROJECT_ROOT/install.sh" --cli codex "$TEST_ROOT/codex-contract" >/dev/null
+printf 'name = "code-reviewer"\ndescription = "Review code safely"\n' \
+    > "$TEST_ROOT/codex-contract/.codex/agents/code-reviewer.toml"
+run_verify --cli codex "$TEST_ROOT/codex-contract"
+assert "invalid Codex contract exits one" "[[ $verify_status -eq 1 ]]"
+assert "missing developer instructions are named" "[[ '$verify_output' == *'missing or empty required developer_instructions field'* ]]"
+
+echo "Test: unrelated user Codex agents are preserved and ignored"
+mkdir -p "$TEST_ROOT/codex-custom"
+"$PROJECT_ROOT/install.sh" --cli codex "$TEST_ROOT/codex-custom" >/dev/null
+printf "name = 'custom-helper'\ndescription = 'User-owned helper'\ndeveloper_instructions = 'Keep this custom agent.'\n" \
+    > "$TEST_ROOT/codex-custom/.codex/agents/custom-helper.toml"
+run_verify --cli codex "$TEST_ROOT/codex-custom"
+assert "custom Codex agent does not fail verification" "[[ $verify_status -eq 0 ]]"
+assert "verifier still reports 14 owned agents" "[[ '$verify_output' == *'all 14 generated agents'* ]]"
 
 if [[ $FAILURES -gt 0 ]]; then
     printf '%d assertion(s) failed\n' "$FAILURES"

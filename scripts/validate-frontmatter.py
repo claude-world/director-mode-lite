@@ -26,9 +26,20 @@ INTERNAL_SKILLS = {"code-reviewer", "debugger", "doc-writer", "test-runner"}
 
 VALID_MODELS = {"inherit", "default", "best", "fable", "opus", "sonnet", "haiku",
                 "opus[1m]", "sonnet[1m]"}
-VALID_COLORS = {"yellow", "red", "green", "blue", "magenta", "cyan"}
+VALID_COLORS = {"red", "blue", "green", "yellow", "purple", "orange", "pink", "cyan"}
 VALID_MEMORY = {"user", "project", "local"}
 AGENT_UNSUPPORTED = {"hooks", "mcpServers", "permissionMode", "forkContext"}
+CLAUDE_DISPATCH_TOOLS = {"Agent", "Task"}
+AGENT_DISPATCH_PATTERN = re.compile(
+    r"\b(?P<tool>Agent|Task|spawn_agent)\s*\(\s*"
+    r"(?:subagent_type|prompt|description|agent_type|task_name|message)\s*="
+)
+BROAD_SKILL_PREAPPROVAL = re.compile(
+    r"^(?:Agent|Task|Bash|Edit|Skill|Write)(?:\(\*\))?$"
+)
+BROAD_GENERATED_PREAPPROVAL = re.compile(
+    r"(?m)^\s*allowed-tools:\s*[^\n]*(?:Agent|Task|Bash|Edit|Skill|Write)\b"
+)
 
 errors, warnings = [], []
 
@@ -52,6 +63,82 @@ def frontmatter(path: Path):
         err(f"{path}: frontmatter is not a mapping")
         return None
     return fm
+
+
+def body(path: Path):
+    text = path.read_text(encoding="utf-8")
+    match = re.match(r"^---\n.*?\n---\n(?P<body>.*)$", text, re.DOTALL)
+    return match.group("body") if match else ""
+
+
+def check_dispatch_contract(path: Path, document_body: str, tools=None):
+    dispatch_tools = {
+        match.group("tool") for match in AGENT_DISPATCH_PATTERN.finditer(document_body)
+    }
+    if not dispatch_tools:
+        return
+
+    if tools is not None:
+        configured = set(tools) if isinstance(tools, list) else set()
+        for dispatch_tool in sorted(dispatch_tools & CLAUDE_DISPATCH_TOOLS):
+            if dispatch_tool not in configured:
+                err(f"{path}: calls {dispatch_tool} but tools does not include it")
+
+    claude_dispatch = dispatch_tools & CLAUDE_DISPATCH_TOOLS
+    if claude_dispatch and "spawn_agent" not in dispatch_tools:
+        err(f"{path}: Claude dispatch has no Codex spawn_agent mapping")
+    if "spawn_agent" in dispatch_tools and not claude_dispatch:
+        err(f"{path}: Codex spawn_agent dispatch has no Claude Agent/Task mapping")
+
+    normalized = re.sub(r"\s+", " ", document_body.lower())
+    checks = {
+        "provider dispatch unavailable/withheld handling": any(
+            marker in normalized
+            for marker in (
+                "agent tool is unavailable",
+                "agent tool is not available",
+                "agent is unavailable",
+                "agent is withheld",
+                "dispatch interface is unavailable",
+                "spawn_agent is unavailable",
+                "tool unavailable",
+            )
+        ),
+        "nesting-depth handling": "depth" in normalized and any(
+            marker in normalized
+            for marker in ("depth limit", "depth is reached", "maximum depth")
+        ),
+        "concurrency-limit no-retry handling": "concurr" in normalized and any(
+            marker in normalized
+            for marker in ("do not retry", "must not retry", "without retry", "no retry")
+        ),
+        "an incomplete dispatch_request/dispatch_plan result": any(
+            marker in normalized
+            for marker in ("dispatch_request", "dispatch request", "dispatch_plan")
+        ) and any(
+            marker in normalized
+            for marker in ("incomplete", "not complete", "do not advance", "must not advance")
+        ),
+    }
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        err(f"{path}: dispatch contract missing: {'; '.join(missing)}")
+
+
+def check_generated_skill_policy():
+    paths = [
+        ROOT / ".self-evolving-loop" / "templates" / "executor-template.md",
+        ROOT / ".self-evolving-loop" / "templates" / "validator-template.md",
+        ROOT / ".self-evolving-loop" / "templates" / "fixer-template.md",
+        ROOT / "agents" / "skill-synthesizer.md",
+        ROOT / "agents" / "skill-evolver.md",
+    ]
+    for path in paths:
+        if not path.is_file():
+            err(f"{path}: generated-skill policy source is missing")
+            continue
+        if BROAD_GENERATED_PREAPPROVAL.search(path.read_text(encoding="utf-8")):
+            err(f"{path}: generated skill template broadly pre-approves mutation or delegation")
 
 
 def check_skills():
@@ -95,6 +182,15 @@ def check_skills():
             or (isinstance(tools, list) and all(isinstance(t, str) for t in tools))
         ):
             err(f"{f}: allowed-tools must be a string or list of strings")
+        tool_items = (
+            tools
+            if isinstance(tools, list)
+            else re.split(r"[\s,]+", tools.strip()) if isinstance(tools, str) else []
+        )
+        broad = sorted(item for item in tool_items if BROAD_SKILL_PREAPPROVAL.fullmatch(item))
+        if broad:
+            err(f"{f}: allowed-tools broadly pre-approves: {', '.join(broad)}")
+        check_dispatch_contract(f, body(f))
         model = fm.get("model")
         if model is not None and str(model) not in VALID_MODELS:
             err(f"{f}: invalid model '{model}'")
@@ -129,18 +225,23 @@ def check_agents(skill_names):
             err(f"{f}: tools must be a YAML list of strings (house convention)")
         mem = fm.get("memory")
         if mem is not None and not (
-            isinstance(mem, list) and set(mem) <= VALID_MEMORY
+            isinstance(mem, str) and mem in VALID_MEMORY
         ):
-            err(f"{f}: memory must be a list from {sorted(VALID_MEMORY)}")
+            err(f"{f}: memory must be one scalar from {sorted(VALID_MEMORY)}")
         mt = fm.get("maxTurns")
         if mt is not None and not (isinstance(mt, int) and mt > 0):
             err(f"{f}: maxTurns must be a positive integer")
-        for s in fm.get("skills") or []:
+        preloaded_skills = fm.get("skills") or []
+        if preloaded_skills:
+            err(f"{f}: portable agents must be self-contained; provider adapters "
+                "do not preserve Claude-only skills preloading")
+        for s in preloaded_skills:
             if s not in skill_names:
                 err(f"{f}: skills references '{s}' but skills/{s}/ does not exist")
         for bad in AGENT_UNSUPPORTED & fm.keys():
             warn(f"{f}: '{bad}' is not supported in filesystem/plugin agent "
                  f"frontmatter — remove it")
+        check_dispatch_contract(f, body(f), fm.get("tools"))
     return count
 
 
@@ -165,6 +266,7 @@ def check_advertised_counts(n_commands, n_agents, n_skills):
 def main():
     skill_names, invocable = check_skills()
     n_agents = check_agents(skill_names)
+    check_generated_skill_policy()
     n_skills = len(skill_names)
     n_commands = len(invocable)
     n_internal = n_skills - n_commands

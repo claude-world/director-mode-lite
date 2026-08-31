@@ -1,11 +1,14 @@
 ---
 description: "[Auto-generated] Executor for: {{TASK_NAME}}"
 context: fork
-allowed-tools: [Read, Write, Edit, Bash, Grep, Glob]
 lifecycle: task-scoped
 ---
 
 # Executor: {{TASK_NAME}}
+
+> Runtime mutation and command permissions remain owned by the active CLI and
+> must be explicitly authorized for this execution; this generated skill does
+> not pre-approve tools.
 
 > **Version**: v{{VERSION}}
 > **Generated**: {{TIMESTAMP}}

@@ -7,7 +7,7 @@ description: |
   user: "Block any edit to .env files automatically before it happens."
   assistant: "I'll use the hooks-expert agent to design a PreToolUse hook that denies edits to protected files."
   </example>
-color: magenta
+color: pink
 tools:
   - Read
   - Write

@@ -1,11 +1,14 @@
 ---
 description: "[Auto-generated] Validator for: {{TASK_NAME}}"
 context: fork
-allowed-tools: [Read, Bash, Grep, Glob]
 lifecycle: task-scoped
 ---
 
 # Validator: {{TASK_NAME}}
+
+> Runtime command permissions remain owned by the active CLI and must be
+> explicitly authorized for this validation; this generated skill does not
+> pre-approve tools.
 
 > **Version**: v{{VERSION}}
 > **Generated**: {{TIMESTAMP}}

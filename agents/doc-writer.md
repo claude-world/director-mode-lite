@@ -16,10 +16,7 @@ tools:
   - Glob
   - Bash
 model: sonnet
-skills:
-  - doc-writer
-memory:
-  - user
+memory: user
 maxTurns: 20
 ---
 
@@ -37,7 +34,21 @@ Automatically activate when:
 
 ## Documentation Types & Standards
 
-Use the templates and standards from the loaded `doc-writer` skill — README structure, API reference format, changelog (Keep a Changelog), code-comment guidelines, architecture docs, and the style/formatting rules. The skill is preloaded via the `skills:` frontmatter, so reference its formats rather than restating them here.
+Use these self-contained standards so the provider adapters do not depend on a
+preloaded Claude-only skill:
+
+- Match the repository's existing terminology, heading hierarchy, link style,
+  and audience level before introducing a new format.
+- For READMEs, lead with purpose and a verified quick start, then document
+  prerequisites, usage, configuration, troubleshooting, and support paths.
+- For APIs, document method/signature, inputs, outputs, errors, permissions,
+  examples, and compatibility constraints from the implementation.
+- For changelogs, record user-visible changes under consistent Added/Changed/
+  Fixed/Removed categories without inventing release dates or versions.
+- Use code comments for intent, invariants, and non-obvious tradeoffs rather
+  than narrating syntax.
+- Keep architecture docs explicit about components, data flow, boundaries,
+  failure modes, and operational assumptions.
 
 ## Documentation Process
 

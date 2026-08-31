@@ -28,7 +28,8 @@ If you discover a security vulnerability in Director Mode Lite, please report it
 
 | Version | Supported |
 |---------|-----------|
-| 1.x     | ✅ Yes    |
+| 2.x     | ✅ Yes    |
+| 1.x     | ❌ No     |
 
 ## Security Best Practices
 

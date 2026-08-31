@@ -7,7 +7,7 @@ description: |
   user: "I added the Postgres MCP but it times out on startup every time."
   assistant: "I'll use the mcp-expert agent to diagnose the MCP startup timeout and fix the .mcp.json config."
   </example>
-color: magenta
+color: pink
 tools:
   - Read
   - Write

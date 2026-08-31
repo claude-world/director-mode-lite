@@ -14,10 +14,7 @@ tools:
   - Glob
   - Bash
 model: sonnet
-skills:
-  - code-reviewer
-memory:
-  - user
+memory: user
 maxTurns: 20
 ---
 
@@ -62,7 +59,23 @@ When invoked:
 
 ## Review Checklist
 
-Apply the canonical checklists from the loaded `code-reviewer` skill (quality, security, error handling, performance, testing). The skill is preloaded via the `skills:` frontmatter, so its checklists are already in context — do not duplicate them here. Report findings using the Output Format below.
+Apply these self-contained checks so the agent behaves identically when a
+provider adapter does not preload Claude skills:
+
+- **Correctness**: trace changed paths, boundary conditions, error paths, and
+  compatibility assumptions.
+- **Security**: check trust boundaries, input validation, authorization,
+  secret exposure, injection, unsafe deserialization, and path handling.
+- **Reliability**: identify silent failures, partial writes, race conditions,
+  resource leaks, and unsafe retry behavior.
+- **Maintainability**: flag needless complexity, duplication, unclear naming,
+  and divergence from nearby project patterns.
+- **Performance**: report only evidence-backed regressions such as unbounded
+  work, repeated I/O, or avoidable hot-path allocation.
+- **Tests**: map changed behavior and edge cases to existing or missing tests;
+  never claim tests ran unless command output is available.
+
+Report findings using the Output Format below.
 
 ## Output Format
 

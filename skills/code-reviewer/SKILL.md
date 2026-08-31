@@ -2,11 +2,6 @@
 name: code-reviewer
 description: "Code review knowledge base: quality, security (OWASP Top 10), error-handling, performance, and test-coverage checklists with severity-ranked output format. Use when reviewing code changes, PRs, or before commits. Loaded automatically by the code-reviewer agent."
 user-invocable: false
-allowed-tools:
-  - Read
-  - Grep
-  - Glob
-  - Bash
 ---
 
 # Code Reviewer Skill

@@ -15,8 +15,7 @@ tools:
   - Bash
   - Write
 model: sonnet
-memory:
-  - user
+memory: user
 maxTurns: 15
 ---
 
