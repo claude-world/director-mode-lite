@@ -132,9 +132,11 @@ the launched CLI uses the receiver's live project root.
 
 ### What about `grok import`?
 
-Grok Build can import Claude Code sessions. Use it when that native shortcut is
-helpful, but retain a Director packet when work may later move to Codex or back
-to Claude.
+Grok Build 1.0.62 has no `grok import` command. Its `/import-claude`
+command (Ctrl+I in the TUI) brings over `~/.claude` settings, such as
+permissions, environment variables, MCP servers, hooks, and paths, but not
+conversations. Claude session resume in Grok is staged but not yet active, so
+use a Director packet to continue Claude work in Grok.
 
 ## Installation
 

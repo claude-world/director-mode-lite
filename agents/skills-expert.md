@@ -94,9 +94,10 @@ when_to_use: When Claude should auto-trigger this skill
 user-invocable: true                    # Show in the / menu
 disable-model-invocation: false         # true = manual-only, never auto-triggered
 allowed-tools: Read, Grep, Glob         # CSV — or a YAML list — for narrow read-only preapproval
-model: sonnet                           # inherit | haiku | sonnet | opus | fable | default | best
+model: sonnet                           # inherit or any /model value (haiku, sonnet, opus, fable, ...)
 argument-hint: <path>                   # Hint shown after the command name
 arguments: file mode                    # Space-separated argument names
+context: fork                           # Run in a forked subagent (background by default; background: false waits)
 ---
 ```
 
@@ -312,4 +313,4 @@ allowed-tools:
 ## Reference
 
 Official skills & slash-command documentation (the complete frontmatter field list):
-- https://docs.claude.com/en/docs/claude-code/skills
+- https://code.claude.com/docs/en/skills

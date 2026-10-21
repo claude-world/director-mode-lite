@@ -50,7 +50,7 @@ Agents are specialized Claude instances with focused expertise. They're defined 
 name: agent-name
 description: Trigger conditions + what it does — the delegation router reads ONLY this field. Aim for 200-400 chars.
 color: cyan                 # Director Mode convention (this repo's validator requires it)
-model: sonnet               # inherit | haiku | sonnet | opus | fable | default | best
+model: sonnet               # inherit | haiku | sonnet | opus | fable | full ID (claude-opus-5-5)
 tools:                      # Allowed tools (YAML list). Omit the field to inherit all tools.
   - Read
   - Write
@@ -62,13 +62,15 @@ tools:                      # Allowed tools (YAML list). Omit the field to inher
   - WebFetch
 disallowedTools:            # Optional: explicitly block tools
   - NotebookEdit
-skills:                     # Optional: link skills
+skills:                     # Optional: preload full skill content (at most 32)
   - linked-skill
-memory: project             # Optional: CLAUDE.md access — user | project | local
-effort: medium              # Optional: reasoning effort
-maxTurns: 20                # Optional: cap on agentic turns
-background: false           # Optional: run in the background
+memory: project             # Optional: persistent cross-session memory — user | project | local
+effort: medium              # Optional: low | medium | high | xhigh | max
+maxTurns: 20                # Optional: cap on agentic turns (partial result when reached)
+background: false           # Optional: true keeps it in the background even when Claude waits
 isolation: worktree         # Optional: run in an isolated git worktree
+omitClaudeMd: false         # Optional (2.1.271+): true starts it without CLAUDE.md files
+autoCompactWindow: 200000   # Optional (2.1.296+): earlier auto-compact, 100000-1000000
 ---
 
 # Agent Name
@@ -98,7 +100,7 @@ When invoked:
 - [Guideline 2]
 ```
 
-> **Filesystem / plugin agents do not support** `hooks`, `mcpServers`, or `permissionMode` in frontmatter, and `forkContext` is not an official field — omit them. Configure hooks in `.claude/settings.json` and MCP servers in `.mcp.json` instead.
+> **Plugin subagents ignore** `hooks`, `mcpServers`, `permissionMode`, and `initialPrompt`. Those fields work in `.claude/agents/` and `~/.claude/agents/`, but Director Mode also ships its agents as a plugin, so its catalog omits them. `forkContext` is not an official field. Names may not contain `:` (reserved for plugin namespaces) or exceed 256 characters, and Claude Code silently ignores unknown frontmatter fields.
 
 ### Available Tools for Agents
 
@@ -113,18 +115,17 @@ When invoked:
 | Agent | Spawn subagents (formerly Task) |
 | WebFetch | Fetch web content |
 | WebSearch | Search the web |
-| TodoWrite | Manage task lists |
+| TodoWrite | Manage task lists (only offered on older models unless `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`) |
 
 ### Model Selection
 
 ```markdown
-model: haiku       # Fast, cost-effective (simple/mechanical tasks)
-model: sonnet      # Balanced (most tasks; experts & personas)
-model: opus        # High capability (complex reasoning)
-model: fable       # Highest capability (Mythos-class; hardest tasks)
-model: best        # Auto-select the best available model
-model: default     # Use the session's default model
-model: inherit     # Inherit the parent context's model
+model: haiku            # Fast and efficient Haiku model (simple/mechanical tasks)
+model: sonnet           # Latest Sonnet (daily coding; experts & personas)
+model: opus             # Latest Opus (complex reasoning)
+model: fable            # The Fable model for your provider (hardest, longest-running tasks)
+model: claude-opus-5-5  # A full model ID pins one version
+model: inherit          # Inherit the parent context's model
 ```
 
 ### Model & Memory Conventions

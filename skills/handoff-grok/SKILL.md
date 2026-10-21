@@ -26,9 +26,10 @@ RELAY="$ROOT/.director-mode/bin/director-relay"
 The second command prints an interactive Grok command. Add `--run` only when
 the user wants it launched immediately, or `--headless` for `grok -p`.
 
-Grok also supports `grok import` for Claude Code sessions and automatically
-reads Claude-compatible project assets. Treat those as a Claude→Grok shortcut,
-not as a universal session format; keep the portable packet for three-way work.
+Grok automatically reads Claude-compatible project assets (skills, rules,
+`CLAUDE.md`, MCP servers, and hooks), and its `/import-claude` command copies
+`~/.claude` settings. Neither carries a conversation: Grok Build 1.0.62 has no
+`grok import` command, so the portable packet is the session format.
 
 Grok's approvals, permission rules, sandbox, network access, and hook trust stay
 under Grok's native configuration. This skill does not change them.

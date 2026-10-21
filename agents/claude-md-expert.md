@@ -157,5 +157,5 @@ When creating or reviewing CLAUDE.md:
 ## Reference
 
 For latest documentation, use Context7 MCP or fetch:
-- https://docs.anthropic.com/en/docs/claude-code/memory
-- https://docs.anthropic.com/en/docs/claude-code/settings
+- https://code.claude.com/docs/en/memory
+- https://code.claude.com/docs/en/settings

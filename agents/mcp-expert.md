@@ -212,5 +212,5 @@ MCPs consume context tokens. Monitor usage:
 ## Reference
 
 To discover servers, browse the official MCP directory and marketplaces (there is no public MCP-registry API endpoint to curl):
-- Claude Code MCP directory: https://docs.claude.com/en/docs/claude-code/mcp
+- Claude Code MCP directory: https://code.claude.com/docs/en/mcp
 - Or use the Context7 MCP to pull a library's latest docs on demand.

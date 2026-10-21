@@ -101,6 +101,30 @@ assert "Grok inert hook omitted" "[[ ! -e '$target/.grok/hooks/director-mode.jso
 assert "advisory executable staged" "[[ -x '$target/.director-mode/hooks/advisory.sh' ]]"
 assert "Claude advisory match is exact" "python3 '$PROJECT_ROOT/scripts/director-hooks.py' check-advisory --config '$target/.claude/settings.local.json' >/dev/null"
 assert "Codex advisory match is exact" "python3 '$PROJECT_ROOT/scripts/director-hooks.py' check-advisory --config '$target/.codex/hooks.json' >/dev/null"
+assert "Claude advisory covers forked sessions" "grep -q '\"startup|resume|clear|compact|fork\"' '$target/.claude/settings.local.json'"
+
+echo "Test: an update refreshes the previous Director SessionStart matcher"
+target="$(fresh_target advisory-matcher-update)"
+"$PROJECT_ROOT/install.sh" --cli claude --hooks guide "$target" >/dev/null
+python3 - "$target/.claude/settings.local.json" <<'PY'
+import json, sys
+path = sys.argv[1]
+data = json.load(open(path))
+data["hooks"]["SessionStart"][0]["matcher"] = "startup|resume|clear|compact"
+json.dump(data, open(path, "w"), indent=2)
+PY
+"$PROJECT_ROOT/install.sh" --update --cli claude --hooks guide "$target" >/dev/null
+assert "legacy Director matcher gains fork" "grep -q '\"startup|resume|clear|compact|fork\"' '$target/.claude/settings.local.json'"
+assert "update keeps one advisory entry" "[[ \$(grep -c 'advisory.sh' '$target/.claude/settings.local.json') -eq 1 ]]"
+python3 - "$target/.claude/settings.local.json" <<'PY'
+import json, sys
+path = sys.argv[1]
+data = json.load(open(path))
+data["hooks"]["SessionStart"][0]["matcher"] = "startup"
+json.dump(data, open(path, "w"), indent=2)
+PY
+"$PROJECT_ROOT/install.sh" --update --cli claude --hooks guide "$target" >/dev/null
+assert "customized advisory matcher is preserved" "grep -q '\"matcher\": \"startup\"' '$target/.claude/settings.local.json'"
 
 echo "Test: a similarly named custom advisory cannot suppress Director registration"
 target="$(fresh_target custom-advisory-name)"

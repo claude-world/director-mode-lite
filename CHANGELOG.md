@@ -5,6 +5,73 @@ All notable changes to Director Mode Lite will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-10-21
+
+This release syncs Director Mode Lite with Claude Code 2.1.305 and re-verifies
+the cross-CLI handoffs against Codex CLI 0.163.0, Grok Build 1.0.62, and Gemini
+CLI 0.60.0, while keeping the guidance-first, zero-hook default.
+
+### Added
+
+- CI runs Claude Code's own `claude plugin validate --strict` (pinned to
+  2.1.305) on the marketplace and plugin manifests and on every skill, agent,
+  and hook
+- A CI ShellCheck gate at warning level for every shell script
+- The installation regression suite runs on Ubuntu with Python 3.9, 3.14, and
+  3.15 and on macOS with Python 3.15; 3.9 matches the macOS system `python3`
+  the installer supports
+- A README requirements section and the one-step
+  `/plugin install director-mode-lite --marketplace claude-world/director-mode-lite`
+  command (Claude Code 2.1.275 or later)
+- Deep frontmatter validation rejects unknown skill and agent fields, which
+  Claude Code ignores silently, and checks `effort`, `isolation`, `background`,
+  `omitClaudeMd`, `autoCompactWindow`, `permissionMode`,
+  `experimental.cacheTtl`, `context`, `shell`, agent name limits, and the
+  1,536-character skill listing cap
+
+### Changed
+
+- Hook guidance (HOOKS-GUIDE, `hooks-expert`, `/hook-template`, `/hooks-check`)
+  matches Claude Code 2.1.305: 33 events including `DirectoryAdded`,
+  `PreModelSwitch`, and `PostModelSwitch`; a 600-second default timeout for
+  command hooks; `once` only in skill frontmatter; `onFailure: "block"`,
+  exec-form `args`, `defer` decisions, exact-name matcher rules, and the
+  `{"ok": ...}` prompt-hook verdict
+- Subagent guidance (`agents-expert`, `/agent-template`, `/agent-check`)
+  documents `omitClaudeMd`, `autoCompactWindow`, and `experimental.cacheTtl`,
+  and states that `hooks`, `mcpServers`, `permissionMode`, and `initialPrompt`
+  are ignored for plugin subagents rather than unsupported everywhere
+- Skill guidance (`skills-expert`, `/skill-template`, `/skill-check`) documents
+  `background` for forked skills and accepts `metadata`, `license`, and
+  `compatibility` as official fields
+- Subagent `model` validation follows the documented values (`sonnet`, `opus`,
+  `haiku`, `fable`, `inherit`, the `[1m]` variants, or a full model ID such as
+  `claude-opus-5-5`); `default`, `best`, and `opusplan` remain valid for skills
+- `/plan` no longer assumes the TodoWrite tool, which current models offer only
+  with `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`
+- Grok guidance reflects Grok Build 1.0.62: it has no `grok import` command,
+  and `/import-claude` copies `~/.claude` settings but not conversations, so
+  the Director packet carries session state into Grok
+- GitHub Actions use `actions/checkout@v7`, `actions/setup-python@v7`, and
+  `actions/setup-node@v7` with read-only workflow permissions (supersedes
+  #14); Dependabot checks Actions monthly and groups minor and patch updates
+- Documentation links point to the canonical `code.claude.com/docs` pages
+
+### Fixed
+
+- The optional legacy `log-bash-event.sh` hook read a `tool_output` field that
+  Claude Code never sends, so every test run was logged as a generic
+  `test_run` without pass/fail counts, and commit SHAs were lost. It now reads
+  `tool_response` (`stdout` and `stderr`), still accepts the old key, and its
+  tests use the real payload
+- The optional Claude SessionStart advisory skipped forked sessions, which
+  Claude Code 2.1.214 and later report as `fork` instead of `resume`.
+  `--update --hooks guide` migrates the matcher Director Mode installed
+  earlier and keeps a customized one
+- Hook templates no longer show an invalid `permission_mode: "ask"`, `once` in
+  `settings.json`, a matcher on `Stop`, or unquoted `$CLAUDE_PROJECT_DIR` paths
+- ShellCheck warnings in the hooks, tests, and demo script
+
 ## [2.2.0] - 2026-08-31
 
 This release hardens Director Mode Lite's native Claude Code and Codex CLI

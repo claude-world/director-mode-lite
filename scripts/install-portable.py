@@ -118,12 +118,19 @@ def same_hook(entry: Any) -> bool:
     )
 
 
-def merge_hook(path: Path, entry: dict[str, Any]) -> None:
+def merge_hook(
+    path: Path, entry: dict[str, Any], legacy_matchers: tuple[str, ...] = ()
+) -> None:
     data = read_json(path)
     hooks = data.setdefault("hooks", {})
     session_start = hooks.setdefault("SessionStart", [])
-    if not any(same_hook(item) for item in session_start):
+    existing = [item for item in session_start if same_hook(item)]
+    if not existing:
         session_start.append(entry)
+    # Refresh only a matcher this installer wrote earlier; a customized one stays.
+    for item in existing:
+        if isinstance(item, dict) and item.get("matcher") in legacy_matchers:
+            item["matcher"] = entry["matcher"]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
@@ -297,15 +304,17 @@ def install() -> None:
 
     if args.hooks != "none":
         if selected(args.cli, "claude"):
+            # Claude Code 2.1.214+ reports forked sessions as "fork", not "resume".
             merge_hook(
                 target / ".claude" / "settings.local.json",
                 {
-                    "matcher": "startup|resume|clear|compact",
+                    "matcher": "startup|resume|clear|compact|fork",
                     "hooks": [{
                         "type": "command",
                         "command": 'root="${CLAUDE_PROJECT_DIR:-}"; [ -n "$root" ] || root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; bash "$root/.director-mode/hooks/advisory.sh" claude',
                     }],
                 },
+                legacy_matchers=("startup|resume|clear|compact",),
             )
         if selected(args.cli, "codex"):
             merge_hook(

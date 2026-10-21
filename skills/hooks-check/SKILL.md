@@ -18,7 +18,7 @@ Verify the `hooks` section exists and is valid.
 
 ### 2. Validate Hook Event Names
 
-Claude Code defines **30 hook events**. Accept any of them; flag unknown names
+Claude Code defines **33 hook events**. Accept any of them; flag unknown names
 with a typo hint (e.g. `PrePromptSubmit` -> `UserPromptSubmit`,
 `PostToolBatchFailure` -> `PostToolBatch`, `SubagentStarts` -> `SubagentStart`).
 
@@ -34,18 +34,30 @@ with a typo hint (e.g. `PrePromptSubmit` -> `UserPromptSubmit`,
 | Compaction | `PreCompact`, `PostCompact` |
 | Notification | `Notification`, `MessageDisplay` |
 | MCP elicitation | `Elicitation`, `ElicitationResult` |
-| Environment | `ConfigChange`, `CwdChanged`, `FileChanged`, `InstructionsLoaded`, `WorktreeCreate`, `WorktreeRemove`, `TeammateIdle` |
+| Model | `PreModelSwitch`, `PostModelSwitch` |
+| Environment | `ConfigChange`, `CwdChanged`, `DirectoryAdded`, `FileChanged`, `InstructionsLoaded`, `WorktreeCreate`, `WorktreeRemove`, `TeammateIdle` |
 
-That is all 30 events. See the official hooks docs for each event's payload.
+That is all 33 events. See the official hooks docs for each event's payload.
 
 ### 3. Validate Each Hook Entry
-- [ ] `type` is one of: `command`, `prompt`, `http`, `mcp_tool`, `agent` (default `command`)
-- [ ] If `type: command`: `command` path exists and script is executable
-- [ ] If `type: prompt`: `prompt` string is non-empty
-- [ ] `matcher` is a string if present (tool events: tool name, regex, or `*`)
-- [ ] `timeout` is a positive integer if present (default: 60s per hook)
-- [ ] `once` is boolean if present
-- [ ] `if` / `statusMessage` are strings if present
+- [ ] `type` is present and one of: `command`, `prompt`, `http`, `mcp_tool`, `agent`
+- [ ] If `type: command`: `command` path exists and script is executable; a
+      shell-form path variable is quoted (`"$CLAUDE_PROJECT_DIR"/...`), or the
+      hook uses exec form (`args`)
+- [ ] If `type: prompt` or `agent`: `prompt` string is non-empty
+- [ ] If `type: http`: `url` is set; if `type: mcp_tool`: `server` and `tool` are set
+- [ ] `matcher` is a string if present (exact names joined by `|` or `,`, `*`,
+      or a regex); warn when it sits on an event without matcher support
+      (`UserPromptSubmit`, `Stop`, `PostToolBatch`, `TeammateIdle`,
+      `TaskCreated`, `TaskCompleted`, `WorktreeCreate`, `WorktreeRemove`,
+      `MessageDisplay`, `CwdChanged`), where it is silently ignored
+- [ ] `timeout` is a positive integer if present (defaults: 600s command/http/mcp_tool, 30s prompt, 60s agent)
+- [ ] `if` is a permission rule such as `Bash(git *)`, used only on tool events
+- [ ] `onFailure` is `continue` or `block` (v2.1.295+); recommend `block` for security guards
+- [ ] `once` appears only in skill frontmatter hooks; settings files ignore it
+- [ ] `async` / `asyncRewake` appear only on command hooks
+- [ ] `statusMessage` is a string if present
+- [ ] `SessionEnd` matchers do not use `bypass_permissions_disabled` (removed in v2.1.234)
 
 ### 4. Validate Hook Scripts
 - [ ] File exists and is executable
@@ -60,8 +72,11 @@ That is all 30 events. See the official hooks docs for each event's payload.
 
 When a script does emit JSON, validate it against the event contract:
 
-- **PreToolUse**: `hookSpecificOutput.permissionDecision` is `allow`, `deny`, or
-  `ask`. The legacy top-level `{"decision": "approve" | "block"}` is still accepted.
+- **PreToolUse**: `hookSpecificOutput.permissionDecision` is `allow`, `deny`,
+  `ask`, or `defer` (`-p` only). The legacy top-level
+  `{"decision": "approve" | "block"}` is still accepted.
+- **Prompt / agent hooks**: the model's verdict is `{"ok": true}` or
+  `{"ok": false, "reason": "..."}`.
 - **Stop / SubagentStop**: continuation uses
   `{"decision": "block", "reason": "<next prompt>"}` — the key is `reason`.
 - Input JSON always carries the event under `hook_event_name` (not `hook_type`).

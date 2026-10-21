@@ -46,7 +46,7 @@ Generate a custom agent file based on requirements.
 
 ```yaml
 ---
-name: agent-name            # Required: lowercase, hyphenated, 3-50 chars
+name: agent-name            # Required: lowercase, hyphenated (official: <=256 chars, no ':')
 description: >              # Required: 200-1000 chars recommended, include <example> blocks.
   Use this agent PROACTIVELY when [triggering conditions]. Examples:
   <example>
@@ -57,8 +57,9 @@ description: >              # Required: 200-1000 chars recommended, include <exa
   </example>
 color: cyan                 # Required by Director Mode convention (CI-enforced); optional per spec
 model: inherit              # Required by Director Mode convention (CI-enforced); optional per spec.
-                            #   Valid: fable, opus, sonnet, haiku, inherit, default, best, sonnet[1m],
-                            #   opus[1m] (or a full model ID). inherit recommended. NOT opusplan.
+                            #   Valid: sonnet, opus, haiku, fable, inherit, sonnet[1m], opus[1m],
+                            #   or a full model ID (claude-opus-5-5). inherit recommended.
+                            #   /model-only values (default, best, opusplan) are not subagent values.
 effort: medium              # Optional: low, medium, high, xhigh, max
 tools:                      # Optional: YAML list (omit = all tools)
   - Read
@@ -70,22 +71,26 @@ tools:                      # Optional: YAML list (omit = all tools)
   - Agent
   - WebFetch
   - WebSearch
-  - TodoWrite
   - NotebookEdit
 disallowedTools:            # Optional: explicit tool blocking
   - NotebookEdit
-maxTurns: 20                # Optional: max agentic turns before stopping (positive integer)
-skills:                     # Optional: preloaded skill names (list)
+maxTurns: 20                # Optional: max agentic turns; output is marked partial at the cap
+skills:                     # Optional: preload full skill content (list, at most 32)
   - linked-skill
-memory: project             # Optional: one of user, project, local
-background: false           # Optional: run the agent in the background (boolean)
+memory: project             # Optional: persistent memory scope, one of user, project, local
+background: false           # Optional: true keeps the agent in the background even when Claude waits
 isolation: worktree         # Optional: run the agent in an isolated git worktree
+omitClaudeMd: false         # Optional (2.1.271+): true starts without CLAUDE.md files
+autoCompactWindow: 200000   # Optional (2.1.296+): auto-compact earlier, 100000-1000000 tokens
+experimental:               # Optional (2.1.248+): prompt cache lifetime, 5m or 1h
+  cacheTtl: 5m
 ---
 ```
 
-**Not supported in filesystem/plugin agent frontmatter** — do not emit these:
-`hooks`, `mcpServers`, `permissionMode` (security restriction), and `forkContext`
-(not an official field). Agents fork automatically when dispatched.
+**Ignored for plugin subagents** — do not emit these here: `hooks`, `mcpServers`,
+`permissionMode`, and `initialPrompt` work in `.claude/agents/`, but Director Mode
+also ships its agents as a plugin, where Claude Code ignores them. `forkContext`
+is not an official field, and unknown fields are silently ignored.
 
 ---
 

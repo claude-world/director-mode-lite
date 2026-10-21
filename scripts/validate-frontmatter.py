@@ -24,11 +24,30 @@ ROOT = Path(__file__).resolve().parent.parent
 # Skills that are knowledge bases / auto-triggered, not slash commands
 INTERNAL_SKILLS = {"code-reviewer", "debugger", "doc-writer", "test-runner"}
 
-VALID_MODELS = {"inherit", "default", "best", "fable", "opus", "sonnet", "haiku",
-                "opus[1m]", "sonnet[1m]"}
+# Field lists and values follow the Claude Code 2.1.305 subagent and skill docs.
+# Subagent `model`: an alias, a full model ID, or inherit. Skills also take
+# every /model value.
+AGENT_MODELS = {"inherit", "fable", "opus", "sonnet", "haiku", "opus[1m]", "sonnet[1m]"}
+SKILL_MODELS = AGENT_MODELS | {"default", "best", "opusplan"}
+FULL_MODEL_ID = re.compile(r"claude-[a-z0-9]+(?:-[a-z0-9]+)*(?:\[1m\])?")
 VALID_COLORS = {"red", "blue", "green", "yellow", "purple", "orange", "pink", "cyan"}
 VALID_MEMORY = {"user", "project", "local"}
-AGENT_UNSUPPORTED = {"hooks", "mcpServers", "permissionMode", "forkContext"}
+VALID_EFFORT = {"low", "medium", "high", "xhigh", "max"}
+VALID_PERMISSION_MODES = {"default", "acceptEdits", "auto", "dontAsk",
+                          "bypassPermissions", "plan", "manual"}
+AGENT_FIELDS = {"name", "description", "tools", "disallowedTools", "model",
+                "permissionMode", "maxTurns", "autoCompactWindow", "skills",
+                "mcpServers", "hooks", "memory", "background", "omitClaudeMd",
+                "effort", "isolation", "color", "initialPrompt", "experimental"}
+# Honored in .claude/agents/, ignored when the agent loads from a plugin.
+PLUGIN_IGNORED_AGENT_FIELDS = {"hooks", "mcpServers", "permissionMode", "initialPrompt"}
+SKILL_FIELDS = {"name", "description", "when_to_use", "argument-hint", "arguments",
+                "disable-model-invocation", "user-invocable", "allowed-tools",
+                "disallowed-tools", "model", "effort", "context", "agent",
+                "background", "hooks", "paths", "shell", "metadata", "license",
+                "compatibility"}
+SKILL_LISTING_CAP = 1536  # description + when_to_use, truncated beyond this
+BOOL_STRINGS = {"true", "false", "yes", "no", "on", "off", "1", "0"}
 CLAUDE_DISPATCH_TOOLS = {"Agent", "Task"}
 AGENT_DISPATCH_PATTERN = re.compile(
     r"\b(?P<tool>Agent|Task|spawn_agent)\s*\(\s*"
@@ -63,6 +82,22 @@ def frontmatter(path: Path):
         err(f"{path}: frontmatter is not a mapping")
         return None
     return fm
+
+
+def is_boolish(value):
+    if isinstance(value, bool):
+        return True
+    return str(value).strip().lower() in BOOL_STRINGS
+
+
+def valid_model(model, allowed):
+    model = str(model)
+    return model in allowed or FULL_MODEL_ID.fullmatch(model) is not None
+
+
+def check_unknown_fields(path: Path, fm, known):
+    for key in sorted(set(fm) - known):
+        err(f"{path}: unknown frontmatter field '{key}' (Claude Code ignores it)")
 
 
 def body(path: Path):
@@ -160,11 +195,16 @@ def check_skills():
             err(f"{f}: name '{name}' != directory '{d.name}'")
         if name and not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", str(name)):
             err(f"{f}: invalid name format '{name}'")
+        check_unknown_fields(f, fm, SKILL_FIELDS)
         desc = fm.get("description")
         if not desc:
             err(f"{f}: missing description")
         elif not (20 <= len(str(desc)) <= 1024):
             err(f"{f}: description length {len(str(desc))} outside 20-1024")
+        listing = len(str(desc or "")) + len(str(fm.get("when_to_use") or ""))
+        if listing > SKILL_LISTING_CAP:
+            err(f"{f}: description + when_to_use is {listing} chars; the skill "
+                f"listing truncates at {SKILL_LISTING_CAP}")
         ui = fm.get("user-invocable")
         if not isinstance(ui, bool):
             err(f"{f}: user-invocable must be explicitly true or false "
@@ -192,8 +232,26 @@ def check_skills():
             err(f"{f}: allowed-tools broadly pre-approves: {', '.join(broad)}")
         check_dispatch_contract(f, body(f))
         model = fm.get("model")
-        if model is not None and str(model) not in VALID_MODELS:
+        if model is not None and not valid_model(model, SKILL_MODELS):
             err(f"{f}: invalid model '{model}'")
+        effort = fm.get("effort")
+        if effort is not None and str(effort) not in VALID_EFFORT:
+            err(f"{f}: effort must be one of {sorted(VALID_EFFORT)}, got '{effort}'")
+        if fm.get("context") is not None and fm.get("context") != "fork":
+            err(f"{f}: context must be 'fork' when set, got '{fm.get('context')}'")
+        if "background" in fm:
+            if not is_boolish(fm["background"]):
+                err(f"{f}: background must be a boolean")
+            if fm.get("context") != "fork":
+                warn(f"{f}: background only applies with context: fork")
+        if fm.get("agent") is not None and fm.get("context") != "fork":
+            warn(f"{f}: agent only applies with context: fork")
+        if fm.get("shell") is not None and fm.get("shell") not in {"bash", "powershell"}:
+            err(f"{f}: shell must be 'bash' or 'powershell'")
+        if "disable-model-invocation" in fm and not is_boolish(fm["disable-model-invocation"]):
+            err(f"{f}: disable-model-invocation must be a boolean")
+        if len(str(fm.get("compatibility") or "")) > 500:
+            err(f"{f}: compatibility exceeds 500 characters")
         lines = f.read_text().count("\n") + 1
         if lines > 500:
             warn(f"{f}: {lines} lines (recommend <500)")
@@ -207,8 +265,12 @@ def check_agents(skill_names):
         fm = frontmatter(f)
         if fm is None:
             continue
-        if fm.get("name") != f.stem:
+        check_unknown_fields(f, fm, AGENT_FIELDS)
+        name = str(fm.get("name") or "")
+        if name != f.stem:
             err(f"{f}: name '{fm.get('name')}' != filename '{f.stem}'")
+        if ":" in name or name.startswith("-") or len(name) > 256:
+            err(f"{f}: name must be at most 256 chars, without ':' or a leading '-'")
         desc = str(fm.get("description") or "")
         if not desc:
             err(f"{f}: missing description")
@@ -218,8 +280,31 @@ def check_agents(skill_names):
             warn(f"{f}: description has no 'Use ...' trigger clause")
         if fm.get("color") not in VALID_COLORS:
             err(f"{f}: invalid color '{fm.get('color')}'")
-        if str(fm.get("model")) not in VALID_MODELS:
+        if not valid_model(fm.get("model"), AGENT_MODELS):
             err(f"{f}: invalid model '{fm.get('model')}'")
+        effort = fm.get("effort")
+        if effort is not None and str(effort) not in VALID_EFFORT:
+            err(f"{f}: effort must be one of {sorted(VALID_EFFORT)}, got '{effort}'")
+        if fm.get("isolation") is not None and fm.get("isolation") != "worktree":
+            err(f"{f}: isolation must be 'worktree' when set")
+        for flag in ("background", "omitClaudeMd"):
+            if flag in fm and not is_boolish(fm[flag]):
+                err(f"{f}: {flag} must be a boolean")
+        window = fm.get("autoCompactWindow")
+        if window is not None and not (
+            isinstance(window, int) and 100000 <= window <= 1000000
+        ):
+            err(f"{f}: autoCompactWindow must be an integer from 100000 to 1000000")
+        mode = fm.get("permissionMode")
+        if mode is not None and mode not in VALID_PERMISSION_MODES:
+            err(f"{f}: invalid permissionMode '{mode}'")
+        experimental = fm.get("experimental")
+        if experimental is not None and not (
+            isinstance(experimental, dict)
+            and set(experimental) <= {"cacheTtl"}
+            and experimental.get("cacheTtl", "5m") in {"5m", "1h"}
+        ):
+            err(f"{f}: experimental only supports cacheTtl: 5m | 1h")
         tools = fm.get("tools")
         if not (isinstance(tools, list) and all(isinstance(t, str) for t in tools)):
             err(f"{f}: tools must be a YAML list of strings (house convention)")
@@ -238,9 +323,9 @@ def check_agents(skill_names):
         for s in preloaded_skills:
             if s not in skill_names:
                 err(f"{f}: skills references '{s}' but skills/{s}/ does not exist")
-        for bad in AGENT_UNSUPPORTED & fm.keys():
-            warn(f"{f}: '{bad}' is not supported in filesystem/plugin agent "
-                 f"frontmatter — remove it")
+        for ignored in sorted(PLUGIN_IGNORED_AGENT_FIELDS & fm.keys()):
+            warn(f"{f}: '{ignored}' is ignored for plugin subagents, and this "
+                 f"catalog also ships as a plugin — remove it")
         check_dispatch_contract(f, body(f), fm.get("tools"))
     return count
 

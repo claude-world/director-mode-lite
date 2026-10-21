@@ -6,12 +6,15 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   validate-skills:
     name: Validate SKILL.md Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Validate Skills Format
         run: |
@@ -96,7 +99,7 @@ jobs:
     name: Validate Agent Files
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Validate Agent Format
         run: |
@@ -104,7 +107,8 @@ jobs:
 
           ERRORS=0
           VALID_COLORS="red blue green yellow purple orange pink cyan"
-          VALID_MODELS="inherit haiku sonnet opus fable default best"
+          # Subagent model values documented for Claude Code 2.1.305
+          VALID_MODELS="inherit haiku sonnet opus fable"
 
           for agent_file in agents/*.md; do
             if [[ ! -f "$agent_file" ]]; then
@@ -156,7 +160,7 @@ jobs:
             if [[ -z "$color_value" ]]; then
               echo "  FAIL: Missing required 'color' field"
               ERRORS=$((ERRORS + 1))
-            elif [[ ! " $VALID_COLORS " =~ " $color_value " ]]; then
+            elif [[ " $VALID_COLORS " != *" $color_value "* ]]; then
               echo "  FAIL: Invalid color: '$color_value' (valid: $VALID_COLORS)"
               ERRORS=$((ERRORS + 1))
             else
@@ -169,9 +173,9 @@ jobs:
               echo "  FAIL: Missing required 'model' field"
               ERRORS=$((ERRORS + 1))
             else
-              # Check base model name (strip [1m] suffix for validation)
-              base_model=$(echo "$model_value" | sed 's/\[1m\]$//')
-              if [[ ! " $VALID_MODELS " =~ " $base_model " ]] && [[ "$model_value" != "opusplan" ]]; then
+              # Alias (optionally with [1m]) or a full claude-* model ID
+              base_model="${model_value%\[1m\]}"
+              if [[ " $VALID_MODELS " != *" $base_model "* ]] && [[ ! "$base_model" =~ ^claude-[a-z0-9-]+$ ]]; then
                 echo "  FAIL: Invalid model: '$model_value'"
                 ERRORS=$((ERRORS + 1))
               else
@@ -207,10 +211,14 @@ jobs:
     name: Validate Frontmatter (deep)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
 
       - name: Install PyYAML
-        run: python3 -c "import yaml" 2>/dev/null || python3 -m pip install --quiet pyyaml
+        run: python -m pip install --quiet pyyaml
 
       - name: Deep frontmatter validation
         run: python3 scripts/validate-frontmatter.py
@@ -219,7 +227,7 @@ jobs:
     name: Check Links
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Check Internal Links
         run: |
@@ -260,7 +268,7 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Scan for Sensitive Data
         run: |
@@ -298,10 +306,27 @@ jobs:
           fi
 
   install-test:
-    name: Test Installation
-    runs-on: ubuntu-latest
+    name: Test Installation (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # 3.9 matches the macOS system python3 the installer must still run on
+          - os: ubuntu-latest
+            python: "3.9"
+          - os: ubuntu-latest
+            python: "3.14"
+          - os: ubuntu-latest
+            python: "3.15"
+          - os: macos-latest
+            python: "3.15"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
 
       - name: Run Installation Regression Suite
         run: ./tests/run-tests.sh
@@ -372,3 +397,51 @@ jobs:
           fi
 
           echo "PASS: Uninstall test passed!"
+
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Lint shell scripts
+        run: |
+          shellcheck --version
+          {
+            git ls-files '*.sh'
+            git ls-files | while read -r file; do
+              [[ "$file" == *.sh ]] && continue
+              head -1 "$file" 2>/dev/null | grep -qE '^#!.*\b(ba)?sh\b' && echo "$file"
+            done
+          } | sort -u | xargs shellcheck --severity=warning
+
+  plugin-validate:
+    name: Claude Code Plugin Validation
+    runs-on: ubuntu-latest
+    env:
+      CLAUDE_CODE_VERSION: "2.1.305"
+      DISABLE_AUTOUPDATER: "1"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install Claude Code
+        run: |
+          npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+          claude --version
+
+      - name: Validate marketplace and plugin manifests
+        run: claude plugin validate . --strict
+
+      - name: Validate plugin components
+        run: |
+          # The repository root also holds marketplace.json, which limits the
+          # check above to the manifests. Validate a copy without it so the
+          # skills, agents, and hooks are checked as a plugin too.
+          plugin_copy="$(mktemp -d)"
+          git archive HEAD | tar -x -C "$plugin_copy"
+          rm "$plugin_copy/.claude-plugin/marketplace.json"
+          claude plugin validate "$plugin_copy" --strict

@@ -78,10 +78,12 @@ rotate_if_needed() {
     line_count=$(wc -l < "$CHANGELOG_FILE" 2>/dev/null | tr -d ' ') || line_count=0
     
     if [[ "$line_count" -gt "$MAX_LINES" ]]; then
-        local archive_name="changelog.$(date +%Y%m%d_%H%M%S).jsonl"
+        local archive_name
+        archive_name="changelog.$(date +%Y%m%d_%H%M%S).jsonl"
         mv "$CHANGELOG_FILE" "$CHANGELOG_DIR/$archive_name" 2>/dev/null || true
         # Log rotation event
-        local ts=$(get_timestamp)
+        local ts
+        ts=$(get_timestamp)
         echo "{\"id\":\"evt_rotation\",\"timestamp\":\"$ts\",\"event_type\":\"changelog_rotated\",\"agent\":\"system\",\"iteration\":null,\"summary\":\"Rotated to $archive_name\",\"files\":[]}" > "$CHANGELOG_FILE" 2>/dev/null || true
     fi
 }
@@ -112,9 +114,10 @@ log_event() {
     ensure_dir
     rotate_if_needed
 
-    local id=$(generate_id)
-    local timestamp=$(get_timestamp)
-    local iteration=$(get_iteration)
+    local id timestamp iteration
+    id=$(generate_id)
+    timestamp=$(get_timestamp)
+    iteration=$(get_iteration)
     local session_id="${SESSION_ID:-default}"
 
     # Escape summary for JSON
@@ -131,7 +134,8 @@ archive_changelog() {
         line_count=$(wc -l < "$CHANGELOG_FILE" 2>/dev/null | tr -d ' ') || line_count=0
         
         if [[ "$line_count" -gt 0 ]]; then
-            local archive_name="changelog.$(date +%Y%m%d_%H%M%S).jsonl"
+            local archive_name
+            archive_name="changelog.$(date +%Y%m%d_%H%M%S).jsonl"
             mv "$CHANGELOG_FILE" "$CHANGELOG_DIR/$archive_name" 2>/dev/null
             echo "Archived to $CHANGELOG_DIR/$archive_name"
         fi
