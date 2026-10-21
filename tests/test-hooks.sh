@@ -59,12 +59,14 @@ test_changelog_logger() {
     assert "ensure_dir creates directory" "[[ -d '.director-mode' ]]"
 
     # Test generate_id
-    local id=$(generate_id)
+    local id
+    id=$(generate_id)
     assert "generate_id returns value" "[[ -n '$id' ]]"
     assert "generate_id starts with evt_" "[[ '$id' == evt_* ]]"
 
     # Test get_timestamp
-    local ts=$(get_timestamp)
+    local ts
+    ts=$(get_timestamp)
     assert "get_timestamp returns value" "[[ -n '$ts' ]]"
     assert "get_timestamp is ISO format" "[[ '$ts' =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T ]]"
 
@@ -73,7 +75,8 @@ test_changelog_logger() {
     assert "log_event creates changelog" "[[ -f '.director-mode/changelog.jsonl' ]]"
 
     # Verify JSON structure
-    local last_line=$(tail -1 .director-mode/changelog.jsonl)
+    local last_line
+    last_line=$(tail -1 .director-mode/changelog.jsonl)
     assert "Event has id field" "[[ '$last_line' == *'\"id\":'* ]]"
     assert "Event has event_type field" "[[ '$last_line' == *'\"event_type\":\"test_event\"'* ]]"
     assert "Event has session_id field" "[[ '$last_line' == *'\"session_id\":'* ]]"
@@ -94,7 +97,8 @@ test_log_file_change_write() {
     assert "Changelog file created" "[[ -f '.director-mode/changelog.jsonl' ]]"
 
     if [[ -f '.director-mode/changelog.jsonl' ]]; then
-        local content=$(cat .director-mode/changelog.jsonl)
+        local content
+        content=$(cat .director-mode/changelog.jsonl)
         assert "Event type is file_write" "[[ '$content' == *'file_write'* ]]"
         assert "File path logged" "[[ '$content' == *'file.ts'* ]]"
     fi
@@ -115,7 +119,8 @@ test_log_file_change_edit() {
     assert "Changelog file created" "[[ -f '.director-mode/changelog.jsonl' ]]"
 
     if [[ -f '.director-mode/changelog.jsonl' ]]; then
-        local content=$(cat .director-mode/changelog.jsonl)
+        local content
+        content=$(cat .director-mode/changelog.jsonl)
         assert "Event type is file_edit" "[[ '$content' == *'file_edit'* ]]"
     fi
 
@@ -127,16 +132,59 @@ test_log_bash_test() {
     echo "Test: log-bash-event.sh with test command"
     setup
 
-    # Simulate test command with pass output
-    local input='{"tool_name":"Bash","tool_input":{"command":"npm test"},"tool_output":"5 passing"}'
+    # Simulate test command with pass output (PostToolUse tool_response shape)
+    local input='{"tool_name":"Bash","tool_input":{"command":"npm test"},"tool_response":{"stdout":"5 passing","stderr":"","interrupted":false,"isImage":false}}'
 
     echo "$input" | "$TEST_DIR/.claude/hooks/log-bash-event.sh"
 
     assert "Changelog file created" "[[ -f '.director-mode/changelog.jsonl' ]]"
 
     if [[ -f '.director-mode/changelog.jsonl' ]]; then
-        local content=$(cat .director-mode/changelog.jsonl)
+        local content
+        content=$(cat .director-mode/changelog.jsonl)
         assert "Event type is test_pass" "[[ '$content' == *'test_pass'* ]]"
+        assert "Pass count read from tool_response" "[[ '$content' == *'5 tests passing'* ]]"
+    fi
+
+    teardown
+}
+
+# Test: log-bash-event.sh reads failures from tool_response stderr
+test_log_bash_test_fail() {
+    echo "Test: log-bash-event.sh with failing test output"
+    setup
+
+    local input='{"tool_name":"Bash","tool_input":{"command":"pytest"},"tool_response":{"stdout":"","stderr":"2 failed, 3 passed","interrupted":false,"isImage":false}}'
+
+    echo "$input" | "$TEST_DIR/.claude/hooks/log-bash-event.sh"
+
+    if [[ -f '.director-mode/changelog.jsonl' ]]; then
+        local content
+        content=$(cat .director-mode/changelog.jsonl)
+        assert "Event type is test_fail" "[[ '$content' == *'test_fail'* ]]"
+        assert "Fail count read from tool_response" "[[ '$content' == *'2 tests failing'* ]]"
+    else
+        assert "Changelog file created" "false"
+    fi
+
+    teardown
+}
+
+# Test: log-bash-event.sh still accepts the legacy tool_output key
+test_log_bash_legacy_output() {
+    echo "Test: log-bash-event.sh with legacy tool_output"
+    setup
+
+    local input='{"tool_name":"Bash","tool_input":{"command":"npm test"},"tool_output":"5 passing"}'
+
+    echo "$input" | "$TEST_DIR/.claude/hooks/log-bash-event.sh"
+
+    if [[ -f '.director-mode/changelog.jsonl' ]]; then
+        local content
+        content=$(cat .director-mode/changelog.jsonl)
+        assert "Legacy tool_output still yields test_pass" "[[ '$content' == *'test_pass'* ]]"
+    else
+        assert "Changelog file created" "false"
     fi
 
     teardown
@@ -148,15 +196,28 @@ test_log_bash_commit() {
     setup
 
     # Simulate git commit
-    local input='{"tool_name":"Bash","tool_input":{"command":"git commit -m \"feat: add feature\""},"tool_output":"[main abc1234] feat: add feature"}'
+    local input='{"tool_name":"Bash","tool_input":{"command":"git commit -m \"feat: add feature\""},"tool_response":{"stdout":"[main abc1234] feat: add feature","stderr":"","interrupted":false,"isImage":false}}'
 
     echo "$input" | "$TEST_DIR/.claude/hooks/log-bash-event.sh"
 
     assert "Changelog file created" "[[ -f '.director-mode/changelog.jsonl' ]]"
 
     if [[ -f '.director-mode/changelog.jsonl' ]]; then
-        local content=$(cat .director-mode/changelog.jsonl)
+        local content
+        content=$(cat .director-mode/changelog.jsonl)
         assert "Event type is commit" "[[ '$content' == *'\"event_type\":\"commit\"'* ]]"
+    fi
+
+    # Without -m, the summary falls back to the SHA in tool_response.stdout
+    rm -f .director-mode/changelog.jsonl
+    input='{"tool_name":"Bash","tool_input":{"command":"git commit -F msg.txt"},"tool_response":{"stdout":"[main abc1234] feat: add feature","stderr":"","interrupted":false,"isImage":false}}'
+    echo "$input" | "$TEST_DIR/.claude/hooks/log-bash-event.sh"
+    if [[ -f '.director-mode/changelog.jsonl' ]]; then
+        local sha_content
+        sha_content=$(cat .director-mode/changelog.jsonl)
+        assert "Commit SHA read from tool_response" "[[ '$sha_content' == *'commit: abc1234'* ]]"
+    else
+        assert "Changelog file created for -F commit" "false"
     fi
 
     teardown
@@ -170,7 +231,8 @@ test_pre_tool_validator_env() {
     # Simulate Write to .env
     local input='{"tool_name":"Write","tool_input":{"file_path":"/project/.env"}}'
 
-    local output=$(echo "$input" | "$TEST_DIR/.claude/hooks/pre-tool-validator.sh")
+    local output
+    output=$(echo "$input" | "$TEST_DIR/.claude/hooks/pre-tool-validator.sh")
 
     assert "Returns JSON with hookSpecificOutput" "[[ '$output' == *'hookSpecificOutput'* ]]"
     assert "Has hookEventName PreToolUse" "[[ '$output' == *'PreToolUse'* ]]"
@@ -188,7 +250,8 @@ test_pre_tool_validator_regular() {
     # Simulate Write to regular file
     local input='{"tool_name":"Write","tool_input":{"file_path":"/project/src/app.ts"}}'
 
-    local output=$(echo "$input" | "$TEST_DIR/.claude/hooks/pre-tool-validator.sh")
+    local output
+    output=$(echo "$input" | "$TEST_DIR/.claude/hooks/pre-tool-validator.sh")
 
     # Per Hooks guide: allow without context = exit 0, no output
     assert "Returns empty for regular files (allow)" "[[ -z '$output' ]]"
@@ -223,6 +286,10 @@ echo ""
 test_log_file_change_edit
 echo ""
 test_log_bash_test
+echo ""
+test_log_bash_test_fail
+echo ""
+test_log_bash_legacy_output
 echo ""
 test_log_bash_commit
 echo ""

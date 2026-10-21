@@ -5,7 +5,6 @@
 set +e  # Don't exit on error
 
 STATE_DIR=".self-evolving-loop"
-CHECKPOINT="$STATE_DIR/state/checkpoint.json"
 PHASE_FILE="$STATE_DIR/state/phase.txt"
 
 # Read current phase

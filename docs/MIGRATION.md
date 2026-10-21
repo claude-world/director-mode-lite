@@ -1,5 +1,24 @@
 # Migrating Director Mode Lite
 
+## 2.2 → 2.3
+
+No configuration changes are required. Re-run the installer with the hook mode
+you already use to pick up this release's fixes:
+
+```bash
+git pull
+./install.sh --update --cli all --hooks guide /path/to/project   # or none / automation
+./scripts/verify-install.sh /path/to/project
+```
+
+- With `--hooks guide`, the Claude SessionStart advisory now also matches
+  forked sessions (`fork`, reported by Claude Code 2.1.214 and later). The
+  update rewrites only the matcher Director Mode installed earlier; a matcher
+  you customized is kept.
+- With `--hooks automation`, the refreshed `log-bash-event.sh` reads Bash
+  results from `tool_response`, so `test_pass`, `test_fail`, and commit SHAs
+  are logged again instead of a generic `test_run`.
+
 ## 1.x → 2.1
 
 Version 2 is a major behavior change: Director Mode is now guidance-first and

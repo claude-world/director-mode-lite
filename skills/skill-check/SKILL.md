@@ -29,8 +29,8 @@ description: What it does      # Recommended: shown in / menu and used for trigg
 when_to_use: When to reach for it  # Optional: appended to description for triggering
                               #   (description + when_to_use truncated at 1,536 chars in listings)
 user-invocable: true          # Optional: default true; false hides from / menu (Skill tool still works)
-model: sonnet                 # Optional: fable, opus, sonnet, haiku, inherit, default, best,
-                              #   sonnet[1m], opus[1m] (or a full model ID). NOT opusplan (session-only)
+model: sonnet                 # Optional: any /model value (sonnet, opus, haiku, fable, best,
+                              #   default, opusplan, sonnet[1m], opus[1m], a full model ID) or inherit
 effort: medium                # Optional: low, medium, high, xhigh, max
 allowed-tools:                # Optional: pre-approved tools. Accepts a comma-separated string
   - Read                      #   OR a YAML list — BOTH are official (list shown here as house style)
@@ -40,6 +40,8 @@ disallowed-tools:             # Optional: explicitly blocked tools (string or YA
   - WebFetch
 context: fork                 # Optional: run the skill in a subagent
 agent: agent-name             # Optional: subagent type when context: fork (default: general-purpose)
+background: false             # Optional (2.1.218+): with context: fork, false waits for the result;
+                              #   forked skills run in the background by default
 argument-hint: "[issue-number]"  # Optional: autocomplete hint shown after the skill name
 arguments: target flags       # Optional: space-separated argument NAMES for $name substitution
                               #   (e.g. arguments "target flags" -> use $target and $flags in the body).
@@ -86,13 +88,15 @@ once                         # Valid ONLY inside a hooks[] entry, never at skill
 - [ ] `allowed-tools` / `disallowed-tools` are valid tool names
 - [ ] `allowed-tools` / `disallowed-tools` are a comma-separated string OR a YAML list (both valid)
 - [ ] `allowed-tools` does not broadly preapprove bare `Bash`, `Edit`, `Write`, `Agent`, `Task`, or `Skill`; omit it when normal runtime approval is required
-- [ ] `model` is a valid value: fable, opus, sonnet, haiku, inherit, default, best, sonnet[1m], opus[1m], or a full model ID (NOT opusplan)
+- [ ] `model` is a /model value (fable, opus, sonnet, haiku, best, default, opusplan, sonnet[1m], opus[1m], a full model ID) or inherit
 - [ ] `effort` is one of: low, medium, high, xhigh, max
 - [ ] `context` is `fork` (if specified)
 - [ ] `agent` only set alongside `context: fork` (defaults to general-purpose)
+- [ ] `background` is boolean and only set alongside `context: fork` (default true since 2.1.218)
 - [ ] `argument-hint` is a string
 - [ ] `arguments` is a space-separated string of argument names (NOT a structured array)
 - [ ] `when_to_use` is a descriptive string (appended to description for triggering)
+- [ ] `description` + `when_to_use` stay within 1,536 characters (the listing truncates beyond it)
 - [ ] `disable-model-invocation` is boolean
 - [ ] `paths` is a list of glob patterns
 - [ ] `shell` is `bash` or `powershell`
@@ -100,7 +104,8 @@ once                         # Valid ONLY inside a hooks[] entry, never at skill
 - [ ] `hooks` has valid structure (matcher + hooks[] with type/command)
 
 ### Unknown / Non-official Fields
-- [ ] Warn (do not error) on `metadata`, `license`, `version`
+- [ ] Accept `metadata` (map), `license`, and `compatibility` (<=500 chars): official but not acted on
+- [ ] Warn on `version` and any other field outside the official list; Claude Code ignores them silently
 - [ ] Warn on `once` used at the top level (only valid inside a hooks[] entry)
 
 ### Content Structure

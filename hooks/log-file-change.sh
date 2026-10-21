@@ -22,7 +22,8 @@ else
     # Minimal inline fallback (includes session_id for Claude Code 2.1.9+)
     log_event() {
         mkdir -p ".director-mode" 2>/dev/null
-        local ts=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")
+        local ts
+        ts=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")
         local iter="null"
         local sid="${CLAUDE_SESSION_ID:-default}"
         [[ -f ".auto-loop/iteration.txt" ]] && iter=$(cat ".auto-loop/iteration.txt" 2>/dev/null || echo "null")

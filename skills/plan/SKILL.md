@@ -21,7 +21,8 @@ Create a detailed execution plan for the current task.
    - Estimate relative complexity (small/medium/large)
 
 3. **Create Task List**
-   - Use TodoWrite tool to track progress
+   - Track progress in the plan's checklist (use a task tool such as
+     TodoWrite only when the active CLI and model offer it)
    - Mark priorities and dependencies
    - Keep tasks granular
 

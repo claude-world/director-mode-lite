@@ -55,8 +55,8 @@ description: What it does      # Recommended: shown in / menu and used for trigg
 when_to_use: When to reach for it  # Optional: appended to description for triggering
                               #   (description + when_to_use truncated at 1,536 chars in listings)
 user-invocable: true          # Optional: default true; false hides from / menu (Skill tool still works)
-model: sonnet                 # Optional: fable, opus, sonnet, haiku, inherit, default, best,
-                              #   sonnet[1m], opus[1m] (or a full model ID). NOT opusplan (session-only)
+model: sonnet                 # Optional: any /model value (sonnet, opus, haiku, fable, best,
+                              #   default, opusplan, sonnet[1m], opus[1m], a full model ID) or inherit
 effort: medium                # Optional: low, medium, high, xhigh, max
 allowed-tools:                # Optional: pre-approved tools. Accepts a comma-separated string
   - Read                      #   OR a YAML list — BOTH are official (list shown here as house style)
@@ -66,6 +66,8 @@ disallowed-tools:             # Optional: explicitly blocked tools (string or YA
   - WebFetch
 context: fork                 # Optional: run the skill in a subagent
 agent: agent-name             # Optional: subagent type when context: fork (default: general-purpose)
+background: false             # Optional (2.1.218+): with context: fork, false waits for the result;
+                              #   forked skills run in the background by default
 argument-hint: "[issue-number]"  # Optional: autocomplete hint shown after the skill name
 arguments: target flags       # Optional: space-separated argument NAMES for $name substitution
                               #   (arguments "target flags" -> use $target and $flags in the body).
@@ -88,8 +90,10 @@ hooks:                        # Optional: skill-scoped lifecycle hooks (same sch
 ---
 ```
 
-Non-official fields to avoid: `metadata`, `license`, `version` (not part of the
-spec). `once` is valid only inside a `hooks[]` entry, never at the top level.
+`metadata` (a free-form map), `license`, and `compatibility` (up to 500
+characters) are accepted but not acted on. `version` is not a skill field, and
+Claude Code silently ignores unknown fields. `once` is valid only inside a
+`hooks[]` entry, never at the top level.
 
 Do not emit bare `Bash`, `Edit`, `Write`, `Agent`, `Task`, or `Skill` entries in
 `allowed-tools`; those rules preapprove broad mutation or delegation. Omit the

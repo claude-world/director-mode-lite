@@ -51,6 +51,16 @@ policy can still override the flags, and existing global hooks can still run.
 Start with the `director-mode` skill. When another CLI should continue, use
 `session-relay`.
 
+## Requirements
+
+- Bash, Git, and Python 3.9 or later (the macOS system `python3` works).
+- `jq` only for the optional legacy automation hooks.
+- At least one of Claude Code, Codex CLI, or Grok Build. Gemini CLI is optional
+  and used only by the `handoff-gemini` skill.
+
+Version 2.3.0 was verified against Claude Code 2.1.305, Codex CLI 0.163.0,
+Grok Build 1.0.62, and Gemini CLI 0.60.0.
+
 ## What gets shared
 
 | Capability | Canonical source | Claude Code | Codex CLI | Grok Build |
@@ -154,8 +164,10 @@ uses `--continue` / `--resume`, Codex uses `resume` / `exec resume`, and Grok
 uses `--continue` / `--resume`. Cross-provider work always starts a new native
 session with the portable packet.
 
-Grok Build also provides `grok import` for Claude Code sessions. That is a
-helpful Claude→Grok shortcut; the portable packet remains the three-way format.
+Grok Build 1.0.62 no longer has a `grok import` command. Its `/import-claude`
+command imports `~/.claude` settings (permissions, environment, MCP servers,
+hooks, and paths), not conversations, and its Claude session resume is not yet
+active. The portable packet is the way to carry session state into Grok.
 
 ## Agents, skills, and hooks
 
@@ -278,6 +290,16 @@ continuation behavior is Claude-specific and is not presented as a universal
 control mechanism.
 
 ## Plugin installs
+
+Install the Claude Code plugin from this repository's marketplace in one step
+(Claude Code 2.1.275 or later):
+
+```text
+/plugin install director-mode-lite --marketplace claude-world/director-mode-lite
+```
+
+On older releases, run `/plugin marketplace add claude-world/director-mode-lite`
+and then `/plugin install director-mode-lite@director-mode-lite`.
 
 The repository retains a Claude Code marketplace manifest and adds a Codex
 plugin manifest. The two core skills bundle their own shared guide, relay, and

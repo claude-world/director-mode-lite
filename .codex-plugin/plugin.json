@@ -1,6 +1,6 @@
 {
   "name": "director-mode-lite",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Guidance-first workflows and portable Claude Code, Codex CLI, and Grok Build handoffs.",
   "skills": "./skills/"
 }

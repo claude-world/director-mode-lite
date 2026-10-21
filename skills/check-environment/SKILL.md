@@ -67,16 +67,16 @@ Auto-detect project type and check relevant tools:
 ## Environment Check Results
 
 ### Director Mode Dependencies
-- [x] git: 2.39.0
-- [x] python3: 3.11.0
-- [x] jq: 1.7
+- [x] git: 2.54.0
+- [x] python3: 3.14.8
+- [x] jq: 1.8.2
 
 ### Claude Code
-- [x] Version: 2.1.201
+- [x] Version: 2.1.305
 
 ### Project Tools (Node.js detected)
-- [x] node: 20.10.0
-- [x] pnpm: 8.12.0
+- [x] node: 24.11.0
+- [x] pnpm: 11.22.0
 
 ### Director Mode Installation
 - [x] .claude/ directory exists

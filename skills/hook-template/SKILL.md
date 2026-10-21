@@ -14,7 +14,7 @@ Generate a hook script and configuration based on requirements.
 
 ## Hook Events
 
-Claude Code defines **30 hook events**. The common ones, grouped:
+Claude Code defines **33 hook events**. The common ones, grouped:
 
 | Group | Events |
 |-------|--------|
@@ -28,9 +28,10 @@ Claude Code defines **30 hook events**. The common ones, grouped:
 | Compaction | `PreCompact`, `PostCompact` |
 | Notification | `Notification`, `MessageDisplay` |
 | MCP elicitation | `Elicitation`, `ElicitationResult` |
-| Environment | `ConfigChange`, `CwdChanged`, `FileChanged`, `InstructionsLoaded`, `WorktreeCreate`, `WorktreeRemove`, `TeammateIdle` |
+| Model | `PreModelSwitch`, `PostModelSwitch` |
+| Environment | `ConfigChange`, `CwdChanged`, `DirectoryAdded`, `FileChanged`, `InstructionsLoaded`, `WorktreeCreate`, `WorktreeRemove`, `TeammateIdle` |
 
-That is all 30 events. See the official Claude Code hooks docs for the full list
+That is all 33 events. See the official Claude Code hooks docs for the full list
 and each event's payload. The templates below cover the practical 90%.
 
 ---
@@ -39,13 +40,16 @@ and each event's payload. The templates below cover the practical 90%.
 
 | Field | Type | Required | Default | Notes |
 |-------|------|----------|---------|-------|
-| `type` | String | No | `command` | `command`, `prompt`, `http`, `mcp_tool`, or `agent` |
-| `command` | String | If type=command | - | Shell command to execute |
-| `prompt` | String | If type=prompt | - | Natural language prompt evaluated by an LLM |
-| `matcher` | String | No | - | For tool events: tool name, regex, or `*` |
-| `timeout` | Integer | No | 60 | Seconds, per hook |
-| `once` | Boolean | No | false | Run hook only once per session |
-| `if` | String | No | - | Conditional guard for the hook |
+| `type` | String | Yes | - | `command`, `prompt`, `http`, `mcp_tool`, or `agent` |
+| `command` | String | If type=command | - | Shell command, or the executable when `args` is set |
+| `args` | Array | No | - | Exec form: no shell, each element is one argument |
+| `prompt` | String | If type=prompt/agent | - | Prompt for the model; `$ARGUMENTS` receives the input JSON |
+| `matcher` | String | No | all | Exact names (`Edit\|Write`), `*`, or a regex; ignored by events without matcher support |
+| `timeout` | Integer | No | 600 (command), 30 (prompt), 60 (agent) | Seconds, per hook |
+| `if` | String | No | - | Permission-rule filter such as `Bash(git *)`; tool events only |
+| `onFailure` | String | No | continue | `block` makes a hook that cannot run or times out block the action (v2.1.295+) |
+| `async` | Boolean | No | false | Command hooks only: run in the background, cannot block |
+| `once` | Boolean | No | false | Remove after the first successful run; honored only in skill frontmatter |
 | `statusMessage` | String | No | - | Message shown while the hook runs |
 
 `type: command` (default) and `type: prompt` (LLM-evaluated) cover most needs.
@@ -61,9 +65,9 @@ All hooks receive JSON on stdin. The event name is in `hook_event_name`:
 ```json
 {
   "session_id": "abc123",
-  "transcript_path": "/path/to/transcript.txt",
+  "transcript_path": "/path/to/transcript.jsonl",
   "cwd": "/current/working/dir",
-  "permission_mode": "ask",
+  "permission_mode": "default",
   "hook_event_name": "PreToolUse",
   "tool_name": "Write",
   "tool_input": { "file_path": "/path/to/file" }
@@ -73,8 +77,13 @@ All hooks receive JSON on stdin. The event name is in `hook_event_name`:
 ### Decision output cheatsheet
 
 - **PreToolUse**: return `hookSpecificOutput.permissionDecision` of `allow`,
-  `deny`, or `ask`. Exit code 2 with a stderr message is the shorthand for
-  `deny`. The legacy top-level `{"decision": "approve" | "block"}` is still accepted.
+  `deny`, `ask`, or `defer` (`-p` only). Exit code 2 with a stderr message is
+  the shorthand for `deny`. The legacy top-level `{"decision": "approve" | "block"}`
+  is still accepted.
+- **PostToolUse**: Bash output arrives as `tool_response` (`stdout`, `stderr`,
+  `interrupted`, `isImage`).
+- **Prompt / agent hooks**: the model answers `{"ok": true}` or
+  `{"ok": false, "reason": "..."}`.
 - **Stop / SubagentStop**: to continue the loop, return
   `{"decision": "block", "reason": "<next prompt>"}` — the key is `reason`.
 - Silent success is exit `0` with no output.
@@ -174,7 +183,8 @@ exit 0
 ```bash
 #!/bin/bash
 cat > /dev/null
-echo "Loading project context..." >&2
+# Plain stdout from SessionStart is added to Claude's context
+echo "Project context: run the test suite before committing."
 exit 0
 ```
 
@@ -187,11 +197,10 @@ Instead of a bash script, use `type: "prompt"` in settings.json:
   "hooks": {
     "Stop": [
       {
-        "matcher": "*",
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "Review the work done. Return 'approve' if complete, or 'block' with reason.",
+            "prompt": "Review the work done: $ARGUMENTS. Respond {\"ok\": true} if complete, or {\"ok\": false, \"reason\": \"what remains\"}.",
             "timeout": 30
           }
         ]
@@ -214,7 +223,7 @@ Instead of a bash script, use `type: "prompt"` in settings.json:
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validate.sh",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/validate.sh",
             "timeout": 60
           }
         ]
@@ -222,12 +231,11 @@ Instead of a bash script, use `type: "prompt"` in settings.json:
     ],
     "SessionStart": [
       {
-        "matcher": "*",
+        "matcher": "startup|resume|clear|compact|fork",
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/load-context.sh",
-            "once": true
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/load-context.sh"
           }
         ]
       }

@@ -33,11 +33,11 @@ Automatically activate when:
 
 ## Keeping Current
 
-Before answering spec questions about hook events or the JSON I/O schema, verify against the official docs — fetch **https://code.claude.com/docs/en/hooks** with WebFetch when it is available, since events and fields change between releases. The inline reference below was last verified against **Claude Code v2.1.201 (2026-07-06)**; treat the live docs as authoritative if they differ.
+Before answering spec questions about hook events or the JSON I/O schema, verify against the official docs — fetch **https://code.claude.com/docs/en/hooks** with WebFetch when it is available, since events and fields change between releases. The inline reference below was last verified against **Claude Code v2.1.305 (2026-10-21)**; treat the live docs as authoritative if they differ.
 
 ## Core Knowledge
 
-> Inline reference last verified against Claude Code v2.1.201 (2026-07-06). Confirm against the official hooks docs if in doubt (see **Keeping Current** above).
+> Inline reference last verified against Claude Code v2.1.305 (2026-10-21). Confirm against the official hooks docs if in doubt (see **Keeping Current** above).
 
 ### What are Hooks?
 Hooks are handlers that run in response to Claude Code events. They enable automation, validation, and workflow customization.
@@ -58,7 +58,7 @@ The most commonly used events:
 | SessionEnd | When a session ends | Persist state, cleanup |
 | PreCompact | Before context compaction | Save or summarize state |
 
-These are the events you will use most often. Claude Code defines **30 hook events** in total — see the official hooks reference for the complete list. Note: the event is `UserPromptSubmit` (there is no `PrePromptSubmit`).
+These are the events you will use most often. Claude Code defines **33 hook events** in total — see the official hooks reference for the complete list. Note: the event is `UserPromptSubmit` (there is no `PrePromptSubmit`).
 
 ### Configuration File
 
@@ -73,7 +73,7 @@ Location: `.claude/settings.json`
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/pre-edit.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre-edit.sh"
           }
         ]
       }
@@ -84,7 +84,7 @@ Location: `.claude/settings.json`
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/post-bash.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-bash.sh"
           }
         ]
       }
@@ -94,7 +94,7 @@ Location: `.claude/settings.json`
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/auto-loop-stop.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/auto-loop-stop.sh"
           }
         ]
       }
@@ -115,7 +115,9 @@ Each hook entry declares a `type`:
 | `mcp_tool` | An MCP tool invocation |
 | `agent` | A subagent |
 
-Nearly all examples below use `command`.
+Nearly all examples below use `command`. A `prompt` or `agent` hook's model
+answers `{"ok": true}` to allow or `{"ok": false, "reason": "..."}` to block;
+on `Stop`, the reason sends Claude back to work.
 
 ### Hook Script Format
 
@@ -156,7 +158,7 @@ There are two ways to respond: exit code, or JSON on stdout.
   }
 }
 ```
-`permissionDecision` is one of `allow` | `deny` | `ask`. (Legacy form, still accepted: `{"decision": "approve" | "block", "reason": "..."}`.)
+`permissionDecision` is one of `allow` | `deny` | `ask` | `defer` (`defer` only in non-interactive `-p` runs). (Legacy form, still accepted: `{"decision": "approve" | "block", "reason": "..."}`.)
 
 **JSON — Stop / SubagentStop continuation:**
 ```json
@@ -246,8 +248,12 @@ if [[ ! "$FILE" =~ \.(ts|js|py)$ ]]; then
   exit 0
 fi
 
-# Run related tests (output surfaces to Claude via exit code / stderr)
-npm test --findRelatedTests "$FILE" 2>/dev/null
+# Run related tests; exit 2 shows stderr to Claude (the edit already happened)
+if ! OUTPUT=$(npm test -- --findRelatedTests "$FILE" 2>&1); then
+  echo "Related tests failed:" >&2
+  echo "$OUTPUT" | tail -20 >&2
+  exit 2
+fi
 
 exit 0
 ```
@@ -278,7 +284,8 @@ exit 0
   "matcher": "Edit"           // Exact tool match
   "matcher": "Bash"           // Exact tool match
   "matcher": "*"              // All tools
-  "matcher": "Edit|Write"     // Multiple tools (regex)
+  "matcher": "Edit|Write"     // Exact names, | or , separated
+  "matcher": "^Notebook"      // Any other character: unanchored regex
 }
 ```
 
@@ -298,8 +305,10 @@ fi
 npm test  # This blocks Claude
 ```
 
-#### 2. Fail Open
-If the hook errors, default to letting the operation proceed.
+#### 2. Fail Open, Except for Guards
+Advisory hooks should let the operation proceed when they error. A security
+guard should fail closed instead: add `"onFailure": "block"` (Claude Code
+2.1.295+) so a missing, crashing, or timed-out script blocks the action.
 
 ```bash
 # Always have a fallback that proceeds
@@ -318,7 +327,7 @@ Hooks may run multiple times; ensure safety.
 
 ### Hook Timeout
 
-Each hook has its own timeout. The default is **60 seconds**. Override it per hook with the `timeout` field (value in **seconds**):
+Each hook has its own timeout. Defaults: **600 seconds** for `command`, `http`, and `mcp_tool` hooks (30 on `UserPromptSubmit`, `PreModelSwitch`, and `PostModelSwitch`; 10 on `MessageDisplay`), **30** for `prompt` hooks, and **60** for `agent` hooks. `SessionEnd` hooks share a 1.5-second budget unless a longer per-hook timeout raises it (up to 60). Override it per hook with the `timeout` field (value in **seconds**):
 
 ```json
 {
@@ -367,5 +376,5 @@ Each hook has its own timeout. The default is **60 seconds**. Override it per ho
 
 ## Reference
 
-Official hooks documentation (authoritative list of all 30 events, the input/output schema, and the `type` field):
-- https://docs.claude.com/en/docs/claude-code/hooks
+Official hooks documentation (authoritative list of all 33 events, the input/output schema, and the `type` field):
+- https://code.claude.com/docs/en/hooks

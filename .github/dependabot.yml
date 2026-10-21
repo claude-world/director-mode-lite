@@ -1,7 +1,14 @@
 version: 2
 updates:
+  # The toolkit ships shell and standard-library Python with no package
+  # manifest, so GitHub Actions is the only dependency ecosystem to track.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     open-pull-requests-limit: 5
+    groups:
+      github-actions-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"

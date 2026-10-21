@@ -93,9 +93,10 @@ a new native session with a Director packet.
 
 ## Grok's native Claude import
 
-Grok Build can import Claude Code sessions with `grok import`. That is a useful
-Claude→Grok fast path, but still leave a Director packet when the workflow may
-later move to Codex or back to Claude.
+Grok Build 1.0.62 has no `grok import` command. Its `/import-claude` command
+imports `~/.claude` settings (permissions, environment, MCP servers, hooks, and
+paths), not conversations, so use a Director packet to move Claude session
+state into Grok.
 
 Packets default to `review_status: unreviewed`. `--reviewed` records that the
 user-supplied summary and captured path metadata were reviewed before sharing;

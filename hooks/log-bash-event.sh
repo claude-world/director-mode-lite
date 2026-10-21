@@ -28,7 +28,8 @@ else
     # Minimal inline fallback if changelog-logger.sh not found (includes session_id for Claude Code 2.1.9+)
     log_event() {
         mkdir -p ".director-mode" 2>/dev/null
-        local ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")
+        local ts
+        ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")
         local iter="null"
         local sid="${CLAUDE_SESSION_ID:-default}"
         [[ -f ".auto-loop/iteration.txt" ]] && iter=$(cat ".auto-loop/iteration.txt" 2>/dev/null || echo "null")
@@ -44,7 +45,11 @@ INPUT=$(cat 2>/dev/null) || INPUT=""
 if $HAS_JQ; then
     TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null) || TOOL_NAME=""
     COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null) || COMMAND=""
-    OUTPUT=$(echo "$INPUT" | jq -r '.tool_output // empty' 2>/dev/null) || OUTPUT=""
+    # PostToolUse delivers the Bash result as tool_response {stdout, stderr, ...};
+    # a plain string and the legacy tool_output key are still accepted.
+    OUTPUT=$(echo "$INPUT" | jq -r '(.tool_response // .tool_output // empty)
+        | if type == "object" then ([.stdout, .stderr] | map(strings | select(length > 0)) | join("\n"))
+          elif type == "string" then . else empty end' 2>/dev/null) || OUTPUT=""
 else
     TOOL_NAME=$(echo "$INPUT" | grep -o '"tool_name"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*:.*"\([^"]*\)".*/\1/' 2>/dev/null) || TOOL_NAME=""
     COMMAND=$(echo "$INPUT" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*:.*"\([^"]*\)".*/\1/' 2>/dev/null) || COMMAND=""
